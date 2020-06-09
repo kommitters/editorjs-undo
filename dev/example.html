@@ -1,0 +1,59 @@
+<script src="https://cdn.jsdelivr.net/npm/@editorjs/editorjs@latest"></script>
+<script src="../dist/bundle.js"></script>
+
+<button id="save-button">Save</button>
+<button id="undo-button">Undo</button>
+<button id="redo-button">Redo</button>
+
+<div id="editorjs" style="font-family: sans-serif;"></div>
+
+<pre id="output"></pre>
+
+<script>
+  const initialData = {
+  blocks: [
+    {
+      type: 'paragraph',
+      data: {
+        text: 'a paragraph',
+      },
+    },
+  ],
+};
+
+let dataHistory;
+
+const editor = new EditorJS({
+  onChange: () => {
+    dataHistory.registerChange();
+  },
+  onReady: () => {
+    dataHistory = new DataHistory({
+      editor,
+      maxLength: 10,
+    });
+
+    dataHistory.initialize(initialData.blocks);
+
+    const undoButton = document.getElementById('undo-button');
+    undoButton.addEventListener('click', () => {
+      dataHistory.undo();
+    });
+
+    const redoButton = document.getElementById('redo-button');
+    redoButton.addEventListener('click', () => {
+      dataHistory.redo();
+    });
+  },
+  autofocus: true,
+  data: initialData,
+});
+
+const saveButton = document.getElementById('save-button');
+const output = document.getElementById('output');
+saveButton.addEventListener('click', () => {
+  editor.save().then((savedData) => {
+    output.innerHTML = JSON.stringify(savedData, null, 4);
+  });
+});
+</script>
