@@ -1,3 +1,4 @@
+/* eslint-disable consistent-return */
 export default class DataHistory {
   constructor(options) {
     const defaultOptions = {
@@ -8,8 +9,12 @@ export default class DataHistory {
     this.editor = options.editor;
     this.shouldSaveHistory = true;
 
-    this.maxLength = options.maxLength ? options.maxLength : defaultOptions.maxLength;
-    this.onUpdate = options.onUpdate ? options.onUpdate : defaultOptions.onUpdate;
+    this.maxLength = options.maxLength
+      ? options.maxLength
+      : defaultOptions.maxLength;
+    this.onUpdate = options.onUpdate
+      ? options.onUpdate
+      : defaultOptions.onUpdate;
 
     this.initialItem = null;
     this.clear();
@@ -26,7 +31,6 @@ export default class DataHistory {
     this.initialItem = initialItem;
   }
 
-
   clear() {
     this.stack = [this.initialItem];
     this.position = 0;
@@ -36,14 +40,39 @@ export default class DataHistory {
   registerChange() {
     if (this.shouldSaveHistory) {
       this.editor.save().then((savedData) => {
-        this.save(savedData.blocks);
+        if (this.editorDidUpdate(savedData.blocks)) this.save(savedData.blocks);
       });
     }
     this.shouldSaveHistory = true;
   }
 
+  editorDidUpdate(newData) {
+    if (!this.count()) return true;
+
+    const currentData = this.stack[this.count()];
+    if (newData.length !== currentData.length) return true;
+
+    Object.keys(currentData).forEach((key) => {
+      if (this.blockDidChange(currentData[key], newData[key])) return true;
+    });
+
+    return false;
+  }
+
+  blockDidChange(currentBlock, newBlock) {
+    if (currentBlock.type !== newBlock.type) return true;
+
+    Object.keys(currentBlock.data).forEach((key) => {
+      if (currentBlock.data[key] !== newBlock.data[key]) return true;
+    });
+
+    return false;
+  }
+
   save(current) {
-    if (this.position >= this.maxLength) this.truncate(this.stack, this.maxLength);
+    if (this.position >= this.maxLength) {
+      this.truncate(this.stack, this.maxLength);
+    }
     this.position = Math.min(this.position, this.stack.length - 1);
 
     this.stack = this.stack.slice(0, this.position + 1);
@@ -55,7 +84,7 @@ export default class DataHistory {
   undo() {
     this.shouldSaveHistory = false;
     if (this.canUndo()) {
-      const item = this.stack[this.position -= 1];
+      const item = this.stack[(this.position -= 1)];
       this.onUpdate();
 
       this.editor.blocks.render({ blocks: item });
@@ -65,7 +94,7 @@ export default class DataHistory {
   redo() {
     this.shouldSaveHistory = false;
     if (this.canRedo()) {
-      const item = this.stack[this.position += 1];
+      const item = this.stack[(this.position += 1)];
       this.onUpdate();
 
       this.editor.blocks.render({ blocks: item });
