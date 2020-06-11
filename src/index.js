@@ -16,6 +16,7 @@ export default class DataHistory {
       ? options.onUpdate
       : defaultOptions.onUpdate;
 
+    this.setEventListeners();
     this.initialItem = null;
     this.clear();
   }
@@ -52,21 +53,17 @@ export default class DataHistory {
     const currentData = this.stack[this.count()];
     if (newData.length !== currentData.length) return true;
 
-    Object.keys(currentData).forEach((key) => {
-      if (this.blockDidChange(currentData[key], newData[key])) return true;
-    });
-
-    return false;
+    return Object.keys(currentData).some(
+      (key) => this.blockDidChange(currentData[key].data, newData[key].data),
+    );
   }
 
   blockDidChange(currentBlock, newBlock) {
     if (currentBlock.type !== newBlock.type) return true;
 
-    Object.keys(currentBlock.data).forEach((key) => {
-      if (currentBlock.data[key] !== newBlock.data[key]) return true;
-    });
-
-    return false;
+    return Object.keys(currentBlock).some(
+      (key) => currentBlock[key] !== newBlock[key],
+    );
   }
 
   save(current) {
@@ -111,5 +108,21 @@ export default class DataHistory {
 
   count() {
     return this.stack.length - 1; // -1 because of initial item
+  }
+
+  setEventListeners() {
+    document.addEventListener('keydown', (e) => {
+      if (e.ctrlKey && e.key === 'z') {
+        e.preventDefault();
+        this.undo();
+      }
+    });
+
+    document.addEventListener('keydown', (e) => {
+      if (e.ctrlKey && e.key === 'y') {
+        e.preventDefault();
+        this.redo();
+      }
+    });
   }
 }
