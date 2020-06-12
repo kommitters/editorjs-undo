@@ -54,15 +54,15 @@ export default class DataHistory {
     if (newData.length !== currentData.length) return true;
 
     return Object.keys(currentData).some(
-      (key) => this.blockDidChange(currentData[key].data, newData[key].data),
+      (key) => this.blockDidChange(currentData[key], newData[key]),
     );
   }
 
   blockDidChange(currentBlock, newBlock) {
     if (currentBlock.type !== newBlock.type) return true;
 
-    return Object.keys(currentBlock).some(
-      (key) => currentBlock[key] !== newBlock[key],
+    return Object.keys(currentBlock.data).some(
+      (key) => typeof currentBlock.data[key] !== 'object' && currentBlock.data[key] !== newBlock.data[key],
     );
   }
 
