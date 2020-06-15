@@ -26,8 +26,6 @@ import Undo from 'editorjs-undo';
 
 ## Usage
 
-Add a new Tool to the `tools` property of the Editor.js initial config.
-
 ```javascript
 let dataHistory;
 
@@ -41,8 +39,7 @@ const editor = new EditorJS({
 });
 ```
 
-Perform an undo action using <kbd>Ctrl</kbd> + <kbd>Z</kbd> or <kbd>⌘</kbd> + <kbd>Z</kbd>.
-Perform a redo action using <kbd>Ctrl</kbd> + <kbd>Y</kbd> or <kbd>⌘</kbd> + <kbd>Y</kbd>.
+On the editor, use <kbd>Ctrl</kbd> + <kbd>Z</kbd> or <kbd>⌘</kbd> + <kbd>Z</kbd> to undo or use <kbd>Ctrl</kbd> + <kbd>Y</kbd> or <kbd>⌘</kbd> + <kbd>Y</kbd> to redo.
 
 ## Available Options
 
