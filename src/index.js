@@ -1,4 +1,3 @@
-/* eslint-disable consistent-return */
 export default class DataHistory {
   constructor(options) {
     const defaultOptions = {
@@ -48,9 +47,9 @@ export default class DataHistory {
   }
 
   editorDidUpdate(newData) {
-    if (!this.count()) return true;
+    if (!this.count() && !this.initialItem) return true;
 
-    const currentData = this.stack[this.count()];
+    const currentData = this.stack[this.position];
     if (newData.length !== currentData.length) return true;
 
     return Object.keys(currentData).some(
