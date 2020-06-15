@@ -4,10 +4,6 @@
 
 Undo/Redo feature for [Editor.js](https://editorjs.io).
 
-## Notes
-
-Requires no server-side uploader.
-
 ## Installation
 
 ### Install via NPM
