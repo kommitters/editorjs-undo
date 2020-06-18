@@ -11,7 +11,8 @@
   "main": "./dist/bundle.js",
   "scripts": {
     "build": "webpack --mode production",
-    "build:dev": "webpack --mode development --watch"
+    "build:dev": "webpack --mode development --watch",
+    "test": "jest"
   },
   "repository": {
     "type": "git",
@@ -29,11 +30,24 @@
   "devDependencies": {
     "@babel/core": "^7.10.2",
     "@babel/preset-env": "^7.10.2",
+    "@testing-library/jest-dom": "^5.10.1",
+    "babel-jest": "^26.0.1",
     "babel-loader": "^8.1.0",
     "eslint": "^7.1.0",
     "eslint-config-airbnb-base": "^14.1.0",
     "eslint-plugin-import": "^2.20.2",
+    "eslint-plugin-jest": "^23.13.2",
+    "jest": "^26.0.1",
     "webpack": "^4.43.0",
     "webpack-cli": "^3.3.11"
+  },
+  "jest": {
+    "setupFilesAfterEnv": [
+      "<rootDir>/test/config/setupTests.js"
+    ],
+    "transform": {
+      "^.+\\.jsx?$": "babel-jest",
+      "^.+\\.(css|svg)$": "<rootDir>/test/config/assetsTransform.js"
+    }
   }
 }
