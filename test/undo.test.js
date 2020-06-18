@@ -1,4 +1,5 @@
 import DataHistory from '../src/index';
+import { initialData, newData } from './fixtures/data';
 import editor from './fixtures/editor';
 
 const dataHistory = new DataHistory({ editor });
@@ -14,29 +15,11 @@ describe('DataHistory', () => {
     expect(dataHistory.stack[0]).toBeNull();
   });
 
-  const initialData = {
-    blocks: [
-      {
-        type: 'paragraph',
-        data: {
-          text: 'Initial data',
-        },
-      },
-    ],
-  };
-
   it('initializes the plugin with initial data', () => {
     dataHistory.initialize(initialData.blocks);
     expect(dataHistory.count()).toEqual(0);
     expect(dataHistory.stack[0]).toEqual(initialData.blocks);
   });
-
-  const newData = {
-    blocks: [
-      { type: 'paragraph', data: { text: 'First paragraph' } },
-      { type: 'paragraph', data: { text: 'Second paragraph' } },
-    ],
-  };
 
   it('registers a change in the stack', () => {
     dataHistory.save(newData.blocks);
