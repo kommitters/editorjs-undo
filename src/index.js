@@ -52,17 +52,7 @@ export default class DataHistory {
     const currentData = this.stack[this.position];
     if (newData.length !== currentData.length) return true;
 
-    return Object.keys(currentData).some(
-      (key) => this.blockDidChange(currentData[key], newData[key]),
-    );
-  }
-
-  blockDidChange(currentBlock, newBlock) {
-    if (currentBlock.type !== newBlock.type) return true;
-
-    return Object.keys(currentBlock.data).some(
-      (key) => typeof currentBlock.data[key] !== 'object' && currentBlock.data[key] !== newBlock.data[key],
-    );
+    return JSON.stringify(currentData) !== JSON.stringify(newData);
   }
 
   save(current) {
