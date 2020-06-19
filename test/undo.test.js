@@ -2,9 +2,13 @@ import DataHistory from '../src/index';
 import { initialData, newData } from './fixtures/data';
 import editor from './fixtures/editor';
 
-const dataHistory = new DataHistory({ editor });
+describe('Operations without changes', () => {
+  let dataHistory;
 
-describe('DataHistory', () => {
+  beforeEach(() => {
+    dataHistory = new DataHistory({ editor });
+  });
+
   it('is unable to perform an undo operation in an empty stack', () => {
     expect(dataHistory.canUndo()).toBe(false);
     expect(dataHistory.stack[0]).toBeNull();
@@ -20,9 +24,18 @@ describe('DataHistory', () => {
     expect(dataHistory.count()).toEqual(0);
     expect(dataHistory.stack[0]).toEqual(initialData.blocks);
   });
+});
+
+describe('Operations with changes', () => {
+  let dataHistory;
+
+  beforeEach(() => {
+    dataHistory = new DataHistory({ editor });
+    dataHistory.initialize(initialData.blocks);
+    dataHistory.save(newData.blocks);
+  });
 
   it('registers a change in the stack', () => {
-    dataHistory.save(newData.blocks);
     expect(dataHistory.count()).toEqual(1);
     expect(dataHistory.position).toEqual(1);
     expect(dataHistory.stack[1]).toEqual(newData.blocks);
