@@ -6,13 +6,40 @@ const initialData = {
 };
 
 /**
- * Mocks new data to be recorded at the history stack.
+ * Mocks first data to be recorded at the history stack.
  */
-const newData = {
+const firstChange = {
   blocks: [
     { type: 'paragraph', data: { text: 'First paragraph' } },
     { type: 'paragraph', data: { text: 'Second paragraph' } },
   ],
 };
 
-export { initialData, newData };
+/**
+ * Mocks second data to be recorded at the history stack.
+ */
+const secondChange = {
+  blocks: [
+    { type: 'paragraph', data: { text: 'First paragraph' } },
+    { type: 'paragraph', data: { text: 'Second paragraph' } },
+    { type: 'paragraph', data: { text: 'Third paragraph' } },
+  ],
+};
+
+/**
+ * Mocks new data to be recorded at the history stack.
+ */
+const newChange = {
+  blocks: [
+    { type: 'paragraph', data: { text: 'First paragraph' } },
+    { type: 'paragraph', data: { text: 'Second paragraph' } },
+    { type: 'paragraph', data: { text: 'New paragraph' } },
+  ],
+};
+
+export {
+  initialData,
+  firstChange,
+  secondChange,
+  newChange,
+};
