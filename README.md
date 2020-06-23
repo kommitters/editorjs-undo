@@ -37,6 +37,17 @@ const editor = new EditorJS({
 
 On the editor, use <kbd>Ctrl</kbd> + <kbd>Z</kbd> or <kbd>⌘</kbd> + <kbd>Z</kbd> to undo, or use <kbd>Ctrl</kbd> + <kbd>Y</kbd> or <kbd>⌘</kbd> + <kbd>Y</kbd> to redo.
 
+## Initialize the plugin with data
+
+To initialize the plugin with data, use the `initialize` method inside the editor's onReady callback.
+
+```javascript
+onReady: () => {
+  dataHistory = new DataHistory({ editor });
+  dataHistory.initialize(initialData);
+},
+```
+
 ## Available Options
 
 | Field      | Type       | Description                                                    |
