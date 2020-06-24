@@ -2,6 +2,7 @@
 src/
 test/
 assets/
+dev/
 .eslintrc.js
 babel.config.json
 webpack.config.js

@@ -52,8 +52,9 @@ export default class DataHistory {
    * @param {Object} initialItem  Initial data provided by the user.
    */
   initialize(initialItem) {
-    this.stack[0] = initialItem;
-    this.initialItem = initialItem;
+    const initialData = 'blocks' in initialItem ? initialItem.blocks : initialItem;
+    this.stack[0] = initialData;
+    this.initialItem = initialData;
   }
 
   /**
@@ -164,15 +165,16 @@ export default class DataHistory {
    * Sets events listeners to allow keyboard actions support.
    */
   setEventListeners() {
+    const buttonKey = /(Mac)/i.test(navigator.platform) ? 'metaKey' : 'ctrlKey';
     document.addEventListener('keydown', (e) => {
-      if (e.ctrlKey && e.key === 'z') {
+      if (e[buttonKey] && e.key === 'z') {
         e.preventDefault();
         this.undo();
       }
     });
 
     document.addEventListener('keydown', (e) => {
-      if (e.ctrlKey && e.key === 'y') {
+      if (e[buttonKey] && e.key === 'y') {
         e.preventDefault();
         this.redo();
       }

@@ -23,14 +23,14 @@ import Undo from 'editorjs-undo';
 ## Usage
 
 ```javascript
-let dataHistory;
+let undo;
 
 const editor = new EditorJS({
   onChange: () => {
-    dataHistory.registerChange();
+    undo.registerChange();
   },
   onReady: () => {
-    dataHistory = new DataHistory({ editor });
+    undo = new Undo({ editor });
   },
 });
 ```
@@ -43,8 +43,8 @@ To initialize the plugin with data, use the `initialize` method inside the edito
 
 ```javascript
 onReady: () => {
-  dataHistory = new DataHistory({ editor });
-  dataHistory.initialize(initialData);
+  undo = new Undo({ editor });
+  undo.initialize(initialData);
 },
 ```
 
