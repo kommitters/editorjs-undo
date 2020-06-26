@@ -29,6 +29,12 @@ export default class DataHistory {
       ? options.onUpdate
       : defaultOptions.onUpdate;
 
+    this.observer = null;
+    this.debounceTimer = 200;
+    this.mutationDebouncer = this.debounce(() => {
+      this.registerChange();
+    }, this.debounceTimer);
+    this.setMutationObserver();
     this.setEventListeners();
     this.initialItem = null;
     this.clear();
@@ -112,8 +118,8 @@ export default class DataHistory {
    * Decreases the current position and renders the data in the editor.
    */
   undo() {
-    this.shouldSaveHistory = false;
     if (this.canUndo()) {
+      this.shouldSaveHistory = false;
       const item = this.stack[(this.position -= 1)];
       this.onUpdate();
 
@@ -125,8 +131,8 @@ export default class DataHistory {
    * Increases the current position and renders the data in the editor.
    */
   redo() {
-    this.shouldSaveHistory = false;
     if (this.canRedo()) {
+      this.shouldSaveHistory = false;
       const item = this.stack[(this.position += 1)];
       this.onUpdate();
 
@@ -179,5 +185,65 @@ export default class DataHistory {
         this.redo();
       }
     });
+  }
+
+  /**
+   * Sets a mutation observer to catch every change in the editor.
+   */
+  setMutationObserver() {
+    const observerOptions = {
+      childList: true,
+      attributes: true,
+      subtree: true,
+      characterData: true,
+      characterDataOldValue: true,
+    };
+
+    const target = document.querySelector(`#${this.editor.configuration.holder}`);
+
+    this.observer = new MutationObserver((mutationList) => {
+      this.mutationHandler(mutationList);
+    });
+    this.observer.observe(target, observerOptions);
+  }
+
+  /**
+   * Handles the mutations and checks if a new mutation has been produced.
+   * @param {*} mutationList The registered mutations
+   */
+  mutationHandler(mutationList) {
+    let contentMutated = false;
+
+    mutationList.forEach((mutation) => {
+      switch (mutation.type) {
+        case 'childList':
+        case 'characterData':
+          contentMutated = true;
+          break;
+        case 'attributes':
+          if (!mutation.target.classList.contains('ce-block')) {
+            contentMutated = true;
+          }
+          break;
+        default:
+          break;
+      }
+    });
+
+    if (contentMutated) this.mutationDebouncer();
+  }
+
+  /**
+   * Delays invoking a function until after wait millis have elapsed.
+   * @param {*} callback The function to be delayed.
+   * @param {*} wait The deplay time in millis.
+   */
+  debounce(callback, wait) {
+    let timeout;
+    return (...args) => {
+      const context = this;
+      clearTimeout(timeout);
+      timeout = setTimeout(() => callback.apply(context, args), wait);
+    };
   }
 }
