@@ -1,7 +1,9 @@
+import Observer from './observer';
+
 /**
  * Undo/Redo feature for Editor.js.
  *
- * @typedef {Object} DataHistory
+ * @typedef {Object} Undo
  * @description Feature's initialization class.
  * @property {Object} editor — Editor.js instance object.
  * @property {Number} maxLength - Max amount of changes recorded by the history stack.
@@ -9,7 +11,7 @@
  * @property {Boolean} shouldSaveHistory - Defines if the plugin should save the change in the stack
  * @property {Object} initialItem - Initial data object.
  */
-export default class DataHistory {
+export default class Undo {
   /**
    * @param options — Plugin custom options.
    */
@@ -29,6 +31,11 @@ export default class DataHistory {
       ? options.onUpdate
       : defaultOptions.onUpdate;
 
+    const observer = new Observer(
+      () => this.registerChange(),
+      this.editor.configuration.holder,
+    );
+    observer.setMutationObserver();
     this.setEventListeners();
     this.initialItem = null;
     this.clear();
@@ -112,8 +119,8 @@ export default class DataHistory {
    * Decreases the current position and renders the data in the editor.
    */
   undo() {
-    this.shouldSaveHistory = false;
     if (this.canUndo()) {
+      this.shouldSaveHistory = false;
       const item = this.stack[(this.position -= 1)];
       this.onUpdate();
 
@@ -125,8 +132,8 @@ export default class DataHistory {
    * Increases the current position and renders the data in the editor.
    */
   redo() {
-    this.shouldSaveHistory = false;
     if (this.canRedo()) {
+      this.shouldSaveHistory = false;
       const item = this.stack[(this.position += 1)];
       this.onUpdate();
 

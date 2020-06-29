@@ -1,4 +1,4 @@
-import DataHistory from '../src/index';
+import Undo from '../src/index';
 import {
   initialData,
   firstChange,
@@ -7,87 +7,93 @@ import {
 } from './fixtures/data';
 import editor from './fixtures/editor';
 
-describe('Operations without changes', () => {
-  let dataHistory;
-
+describe('Undo', () => {
   beforeEach(() => {
-    dataHistory = new DataHistory({ editor });
+    document.body.innerHTML = '<div id="editorjs"></div>';
   });
 
-  it('is unable to perform an undo operation in an empty stack', () => {
-    expect(dataHistory.canUndo()).toBe(false);
-    expect(dataHistory.stack[0]).toBeNull();
+  describe('Operations without changes', () => {
+    let undo;
+
+    beforeEach(() => {
+      undo = new Undo({ editor });
+    });
+
+    it('is unable to perform an undo operation in an empty stack', () => {
+      expect(undo.canUndo()).toBe(false);
+      expect(undo.stack[0]).toBeNull();
+    });
+
+    it('is unable to perform a redo operation in an empty stack', () => {
+      expect(undo.canRedo()).toBe(false);
+      expect(undo.stack[0]).toBeNull();
+    });
+
+    it('initializes the plugin with initial data', () => {
+      undo.initialize(initialData.blocks);
+      expect(undo.count()).toEqual(0);
+      expect(undo.stack[0]).toEqual(initialData.blocks);
+    });
   });
 
-  it('is unable to perform a redo operation in an empty stack', () => {
-    expect(dataHistory.canRedo()).toBe(false);
-    expect(dataHistory.stack[0]).toBeNull();
+  describe('Operations with one change', () => {
+    let undo;
+
+    beforeEach(() => {
+      undo = new Undo({ editor });
+      undo.initialize(initialData.blocks);
+      undo.save(firstChange.blocks);
+    });
+
+    it('registers a change in the stack', () => {
+      expect(undo.count()).toEqual(1);
+      expect(undo.position).toEqual(1);
+      expect(undo.stack[1]).toEqual(firstChange.blocks);
+    });
+
+    it('decreases stack position when undo action is called', () => {
+      undo.undo();
+      expect(undo.position).toEqual(0);
+      expect(undo.stack[undo.position]).toEqual(initialData.blocks);
+    });
+
+    it('increases stack position when redo action is called', () => {
+      undo.redo();
+      expect(undo.position).toEqual(1);
+      expect(undo.stack[undo.position]).toEqual(firstChange.blocks);
+    });
   });
 
-  it('initializes the plugin with initial data', () => {
-    dataHistory.initialize(initialData.blocks);
-    expect(dataHistory.count()).toEqual(0);
-    expect(dataHistory.stack[0]).toEqual(initialData.blocks);
-  });
-});
+  describe('Operations with two changes', () => {
+    let undo;
 
-describe('Operations with one change', () => {
-  let dataHistory;
+    beforeEach(() => {
+      undo = new Undo({ editor });
+      undo.initialize(initialData.blocks);
+      undo.save(firstChange.blocks);
+      undo.save(secondChange.blocks);
+    });
 
-  beforeEach(() => {
-    dataHistory = new DataHistory({ editor });
-    dataHistory.initialize(initialData.blocks);
-    dataHistory.save(firstChange.blocks);
-  });
+    it('performs an undo and redo operation', () => {
+      undo.undo();
+      undo.redo();
+      expect(undo.position).toEqual(undo.count());
+      expect(undo.stack[undo.position]).toEqual(secondChange.blocks);
+    });
 
-  it('registers a change in the stack', () => {
-    expect(dataHistory.count()).toEqual(1);
-    expect(dataHistory.position).toEqual(1);
-    expect(dataHistory.stack[1]).toEqual(firstChange.blocks);
-  });
+    it('performs a redo and undo operation', () => {
+      undo.undo();
+      undo.redo();
+      undo.undo();
+      expect(undo.position).toEqual(1);
+      expect(undo.stack[undo.position]).toEqual(firstChange.blocks);
+    });
 
-  it('decreases stack position when undo action is called', () => {
-    dataHistory.undo();
-    expect(dataHistory.position).toEqual(0);
-    expect(dataHistory.stack[dataHistory.position]).toEqual(initialData.blocks);
-  });
-
-  it('increases stack position when redo action is called', () => {
-    dataHistory.redo();
-    expect(dataHistory.position).toEqual(1);
-    expect(dataHistory.stack[dataHistory.position]).toEqual(firstChange.blocks);
-  });
-});
-
-describe('Operations with two changes', () => {
-  let dataHistory;
-
-  beforeEach(() => {
-    dataHistory = new DataHistory({ editor });
-    dataHistory.initialize(initialData.blocks);
-    dataHistory.save(firstChange.blocks);
-    dataHistory.save(secondChange.blocks);
-  });
-
-  it('performs an undo and redo operation', () => {
-    dataHistory.undo();
-    dataHistory.redo();
-    expect(dataHistory.position).toEqual(dataHistory.count());
-    expect(dataHistory.stack[dataHistory.position]).toEqual(secondChange.blocks);
-  });
-
-  it('performs a redo and undo operation', () => {
-    dataHistory.undo();
-    dataHistory.redo();
-    dataHistory.undo();
-    expect(dataHistory.position).toEqual(1);
-    expect(dataHistory.stack[dataHistory.position]).toEqual(firstChange.blocks);
-  });
-
-  it('performs an undo operation and creates a new change', () => {
-    dataHistory.undo();
-    dataHistory.save(newChange.blocks);
-    expect(dataHistory.position).toEqual(dataHistory.position);
-    expect(dataHistory.stack[dataHistory.position]).toEqual(newChange.blocks);
+    it('performs an undo operation and creates a new change', () => {
+      undo.undo();
+      undo.save(newChange.blocks);
+      expect(undo.position).toEqual(undo.position);
+      expect(undo.stack[undo.position]).toEqual(newChange.blocks);
+    });
   });
 });
