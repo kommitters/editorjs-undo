@@ -1,7 +1,9 @@
+import Observer from './observer';
+
 /**
  * Undo/Redo feature for Editor.js.
  *
- * @typedef {Object} DataHistory
+ * @typedef {Object} Undo
  * @description Feature's initialization class.
  * @property {Object} editor — Editor.js instance object.
  * @property {Number} maxLength - Max amount of changes recorded by the history stack.
@@ -9,7 +11,7 @@
  * @property {Boolean} shouldSaveHistory - Defines if the plugin should save the change in the stack
  * @property {Object} initialItem - Initial data object.
  */
-export default class DataHistory {
+export default class Undo {
   /**
    * @param options — Plugin custom options.
    */
@@ -29,12 +31,11 @@ export default class DataHistory {
       ? options.onUpdate
       : defaultOptions.onUpdate;
 
-    this.observer = null;
-    this.debounceTimer = 200;
-    this.mutationDebouncer = this.debounce(() => {
-      this.registerChange();
-    }, this.debounceTimer);
-    this.setMutationObserver();
+    const observer = new Observer(
+      () => this.registerChange(),
+      this.editor.configuration.holder,
+    );
+    observer.setMutationObserver();
     this.setEventListeners();
     this.initialItem = null;
     this.clear();
@@ -185,65 +186,5 @@ export default class DataHistory {
         this.redo();
       }
     });
-  }
-
-  /**
-   * Sets a mutation observer to catch every change in the editor.
-   */
-  setMutationObserver() {
-    const observerOptions = {
-      childList: true,
-      attributes: true,
-      subtree: true,
-      characterData: true,
-      characterDataOldValue: true,
-    };
-
-    const target = document.querySelector(`#${this.editor.configuration.holder}`);
-
-    this.observer = new MutationObserver((mutationList) => {
-      this.mutationHandler(mutationList);
-    });
-    this.observer.observe(target, observerOptions);
-  }
-
-  /**
-   * Handles the mutations and checks if a new mutation has been produced.
-   * @param {*} mutationList The registered mutations
-   */
-  mutationHandler(mutationList) {
-    let contentMutated = false;
-
-    mutationList.forEach((mutation) => {
-      switch (mutation.type) {
-        case 'childList':
-        case 'characterData':
-          contentMutated = true;
-          break;
-        case 'attributes':
-          if (!mutation.target.classList.contains('ce-block')) {
-            contentMutated = true;
-          }
-          break;
-        default:
-          break;
-      }
-    });
-
-    if (contentMutated) this.mutationDebouncer();
-  }
-
-  /**
-   * Delays invoking a function until after wait millis have elapsed.
-   * @param {*} callback The function to be delayed.
-   * @param {*} wait The deplay time in millis.
-   */
-  debounce(callback, wait) {
-    let timeout;
-    return (...args) => {
-      const context = this;
-      clearTimeout(timeout);
-      timeout = setTimeout(() => callback.apply(context, args), wait);
-    };
   }
 }

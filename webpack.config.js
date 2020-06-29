@@ -19,7 +19,7 @@ module.exports = {
     path: path.join(__dirname, '/dist'),
     publicPath: '/',
     filename: 'bundle.js',
-    library: 'DataHistory',
+    library: 'Undo',
     libraryTarget: 'umd',
     libraryExport: 'default',
   },
