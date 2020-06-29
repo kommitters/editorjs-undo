@@ -37,11 +37,9 @@ On the editor, use <kbd>Ctrl</kbd> + <kbd>Z</kbd> or <kbd>⌘</kbd> + <kbd>Z</kb
 To initialize the plugin with data, use the `initialize` method inside the editor's onReady callback.
 
 ```javascript
-let undo;
-
 const editor = new EditorJS({
   onReady: () => {
-    undo = new Undo({ editor });
+    const undo = new Undo({ editor });
     undo.initialize(initialData);
   },
 });
