@@ -23,14 +23,9 @@ import Undo from 'editorjs-undo';
 ## Usage
 
 ```javascript
-let undo;
-
 const editor = new EditorJS({
-  onChange: () => {
-    undo.registerChange();
-  },
   onReady: () => {
-    undo = new Undo({ editor });
+    new Undo({ editor });
   },
 });
 ```
@@ -42,10 +37,14 @@ On the editor, use <kbd>Ctrl</kbd> + <kbd>Z</kbd> or <kbd>⌘</kbd> + <kbd>Z</kb
 To initialize the plugin with data, use the `initialize` method inside the editor's onReady callback.
 
 ```javascript
-onReady: () => {
-  undo = new Undo({ editor });
-  undo.initialize(initialData);
-},
+let undo;
+
+const editor = new EditorJS({
+  onReady: () => {
+    undo = new Undo({ editor });
+    undo.initialize(initialData);
+  },
+});
 ```
 
 ## Available Options
