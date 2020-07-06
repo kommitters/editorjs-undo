@@ -77,3 +77,5 @@ $ yarn build
 ```shell
 $ yarn test
 ```
+
+Made with 💙 by [kommit](https://www.kommit.co)
