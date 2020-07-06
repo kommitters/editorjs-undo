@@ -4,6 +4,8 @@
 
 Undo/Redo feature for [Editor.js](https://editorjs.io).
 
+![](assets/demo.gif)
+
 ## Installation
 
 ### Install via NPM
