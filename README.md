@@ -78,4 +78,11 @@ $ yarn build
 $ yarn test
 ```
 
-Made with 💙 by [kommit](https://www.kommit.co)
+## Contributing and Development
+Bug reports and pull requests are welcome on GitHub https://github.com/kommitters/editorjs-undo. Everyone is welcome to participate in the project.
+
+## License
+See [LICENSE](https://github.com/kommitters/editorjs-undo/blob/master/LICENSE) for details.
+
+## Credits
+Made with 💙 by [kommit](https://kommit.co)
