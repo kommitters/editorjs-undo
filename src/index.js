@@ -77,11 +77,18 @@ export default class Undo {
    * Registers the data returned by API's save method into the history stack.
    */
   registerChange() {
+    // Prevent any saving in case the editor has been destroyed
+    if(Object.keys(this.editor).length === 0) {
+      this.shouldSaveHistory = false;
+      this.clear();
+    }
+
     if (this.shouldSaveHistory) {
       this.editor.save().then((savedData) => {
         if (this.editorDidUpdate(savedData.blocks)) this.save(savedData.blocks);
       });
     }
+
     this.shouldSaveHistory = true;
   }
 
