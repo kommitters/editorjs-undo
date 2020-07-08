@@ -79,7 +79,7 @@ $ yarn test
 ```
 
 ## Contributing and Development
-Bug reports and pull requests are welcome on GitHub https://github.com/kommitters/editorjs-undo. Everyone is welcome to participate in the project.
+Bug reports and pull requests are welcome on GitHub https://github.com/kommitters/editorjs-undo. Everyone is welcome to participate in the project. If you are thinking about contributing to the project, please check our [Contributing Guide](https://github.com/kommitters/editorjs-undo/blob/master/CONTRIBUTING.md).
 
 ## Changelog
 See the [CHANGELOG](https://github.com/kommitters/editorjs-undo/blob/master/CHANGELOG.md) for versions details.
