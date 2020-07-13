@@ -51,7 +51,7 @@ export default class Observer {
     mutationList.forEach((mutation) => {
       switch (mutation.type) {
         case 'childList':
-          if (!mutation.target.id === this.holder) contentMutated = true;
+          if (!(mutation.target.id === this.holder)) contentMutated = true;
           break;
         case 'characterData':
           contentMutated = true;
