@@ -1,6 +1,6 @@
 # Changelog
 
-## 0.1.3 (29.06.2020)
+## 0.1.3 (13.07.2020)
 
 * Modify custom MutationObserver to avoid saving changes related to the editor destroy process.
 
