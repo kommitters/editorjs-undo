@@ -173,18 +173,27 @@ export default class Undo {
    */
   setEventListeners() {
     const buttonKey = /(Mac)/i.test(navigator.platform) ? 'metaKey' : 'ctrlKey';
-    document.addEventListener('keydown', (e) => {
+    const handleUndo = (e) => {
       if (e[buttonKey] && e.key === 'z') {
         e.preventDefault();
         this.undo();
       }
-    });
+    };
 
-    document.addEventListener('keydown', (e) => {
+    const handleRedo = (e) => {
       if (e[buttonKey] && e.key === 'y') {
         e.preventDefault();
         this.redo();
       }
-    });
+    };
+
+    const handleDestroy = () => {
+      document.removeEventListener('keydown', handleUndo);
+      document.removeEventListener('keydown', handleRedo);
+    };
+
+    document.addEventListener('keydown', handleUndo);
+    document.addEventListener('keydown', handleRedo);
+    document.addEventListener('destroy', handleDestroy);
   }
 }
