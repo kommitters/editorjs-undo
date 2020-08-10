@@ -19,20 +19,23 @@ describe('Undo', () => {
       undo = new Undo({ editor });
     });
 
+    const intialStackData = { index: 0, state: [] };
+
     it('is unable to perform an undo operation in an empty stack', () => {
       expect(undo.canUndo()).toBe(false);
-      expect(undo.stack[0]).toBeNull();
+      expect(undo.stack[0]).toEqual(intialStackData);
     });
 
     it('is unable to perform a redo operation in an empty stack', () => {
       expect(undo.canRedo()).toBe(false);
-      expect(undo.stack[0]).toBeNull();
+      expect(undo.stack[0]).toEqual(intialStackData);
     });
 
     it('initializes the plugin with initial data', () => {
       undo.initialize(initialData.blocks);
       expect(undo.count()).toEqual(0);
-      expect(undo.stack[0]).toEqual(initialData.blocks);
+      const { state } = undo.stack[0];
+      expect(state).toEqual(initialData.blocks);
     });
   });
 
@@ -48,19 +51,22 @@ describe('Undo', () => {
     it('registers a change in the stack', () => {
       expect(undo.count()).toEqual(1);
       expect(undo.position).toEqual(1);
-      expect(undo.stack[1]).toEqual(firstChange.blocks);
+      const { state } = undo.stack[1];
+      expect(state).toEqual(firstChange.blocks);
     });
 
     it('decreases stack position when undo action is called', () => {
       undo.undo();
       expect(undo.position).toEqual(0);
-      expect(undo.stack[undo.position]).toEqual(initialData.blocks);
+      const { state } = undo.stack[undo.position];
+      expect(state).toEqual(initialData.blocks);
     });
 
     it('increases stack position when redo action is called', () => {
       undo.redo();
       expect(undo.position).toEqual(1);
-      expect(undo.stack[undo.position]).toEqual(firstChange.blocks);
+      const { state } = undo.stack[undo.position];
+      expect(state).toEqual(firstChange.blocks);
     });
   });
 
@@ -78,7 +84,8 @@ describe('Undo', () => {
       undo.undo();
       undo.redo();
       expect(undo.position).toEqual(undo.count());
-      expect(undo.stack[undo.position]).toEqual(secondChange.blocks);
+      const { state } = undo.stack[undo.position];
+      expect(state).toEqual(secondChange.blocks);
     });
 
     it('performs a redo and undo operation', () => {
@@ -86,14 +93,16 @@ describe('Undo', () => {
       undo.redo();
       undo.undo();
       expect(undo.position).toEqual(1);
-      expect(undo.stack[undo.position]).toEqual(firstChange.blocks);
+      const { state } = undo.stack[undo.position];
+      expect(state).toEqual(firstChange.blocks);
     });
 
     it('performs an undo operation and creates a new change', () => {
       undo.undo();
       undo.save(newChange.blocks);
       expect(undo.position).toEqual(undo.position);
-      expect(undo.stack[undo.position]).toEqual(newChange.blocks);
+      const { state } = undo.stack[undo.position];
+      expect(state).toEqual(newChange.blocks);
     });
   });
 });
