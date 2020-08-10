@@ -77,7 +77,7 @@ export default class Undo {
    * Registers the data returned by API's save method into the history stack.
    */
   registerChange() {
-    if (this.shouldSaveHistory) {
+    if (this.editor && this.editor.save && this.shouldSaveHistory) {
       this.editor.save().then((savedData) => {
         if (this.editorDidUpdate(savedData.blocks)) this.save(savedData.blocks);
       });
