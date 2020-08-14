@@ -6,7 +6,11 @@ import { firstChange } from './data';
 const editor = {
   blocks: {
     save: () => new Promise((resolve) => resolve(firstChange)),
-    render() {},
+    render: () => new Promise((resolve) => resolve(true)),
+    getCurrentBlockIndex: () => 0,
+  },
+  caret: {
+    setToBlock() {},
   },
   configuration: {
     holder: 'editorjs',
