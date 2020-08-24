@@ -60,15 +60,19 @@ export default class Undo {
    */
   initialize(initialItem) {
     const initialData = 'blocks' in initialItem ? initialItem.blocks : initialItem;
-    this.stack[0] = initialData;
-    this.initialItem = initialData;
+    const initialIndex = initialData.length - 1;
+    const firstElement = { index: initialIndex, state: initialData };
+    this.stack[0] = firstElement;
+    this.initialItem = firstElement;
   }
 
   /**
    * Clears the history stack.
    */
   clear() {
-    this.stack = [this.initialItem];
+    this.stack = this.initialItem
+      ? [this.initialItem]
+      : [{ index: 0, state: [] }];
     this.position = 0;
     this.onUpdate();
   }
@@ -77,7 +81,7 @@ export default class Undo {
    * Registers the data returned by API's save method into the history stack.
    */
   registerChange() {
-    if (this.shouldSaveHistory) {
+    if (this.editor && this.editor.save && this.shouldSaveHistory) {
       this.editor.save().then((savedData) => {
         if (this.editorDidUpdate(savedData.blocks)) this.save(savedData.blocks);
       });
@@ -92,25 +96,25 @@ export default class Undo {
    * @returns {Boolean}
    */
   editorDidUpdate(newData) {
-    if (!this.count() && !this.initialItem) return true;
+    const { state } = this.stack[this.position];
+    if (newData.length !== state.length) return true;
 
-    const currentData = this.stack[this.position];
-    if (newData.length !== currentData.length) return true;
-
-    return JSON.stringify(currentData) !== JSON.stringify(newData);
+    return JSON.stringify(state) !== JSON.stringify(newData);
   }
 
   /**
    * Adds the saved data in the history stack and updates current position.
    */
-  save(current) {
+  save(state) {
     if (this.position >= this.maxLength) {
       this.truncate(this.stack, this.maxLength);
     }
     this.position = Math.min(this.position, this.stack.length - 1);
 
     this.stack = this.stack.slice(0, this.position + 1);
-    this.stack.push(current);
+
+    const index = this.editor.blocks.getCurrentBlockIndex();
+    this.stack.push({ index, state });
     this.position += 1;
     this.onUpdate();
   }
@@ -121,10 +125,12 @@ export default class Undo {
   undo() {
     if (this.canUndo()) {
       this.shouldSaveHistory = false;
-      const item = this.stack[(this.position -= 1)];
+      const { index, state } = this.stack[(this.position -= 1)];
       this.onUpdate();
 
-      this.editor.blocks.render({ blocks: item });
+      this.editor.blocks
+        .render({ blocks: state })
+        .then(() => this.editor.caret.setToBlock(index, 'end'));
     }
   }
 
@@ -134,10 +140,12 @@ export default class Undo {
   redo() {
     if (this.canRedo()) {
       this.shouldSaveHistory = false;
-      const item = this.stack[(this.position += 1)];
+      const { index, state } = this.stack[(this.position += 1)];
       this.onUpdate();
 
-      this.editor.blocks.render({ blocks: item });
+      this.editor.blocks
+        .render({ blocks: state })
+        .then(() => this.editor.caret.setToBlock(index, 'end'));
     }
   }
 
@@ -173,18 +181,27 @@ export default class Undo {
    */
   setEventListeners() {
     const buttonKey = /(Mac)/i.test(navigator.platform) ? 'metaKey' : 'ctrlKey';
-    document.addEventListener('keydown', (e) => {
+    const handleUndo = (e) => {
       if (e[buttonKey] && e.key === 'z') {
         e.preventDefault();
         this.undo();
       }
-    });
+    };
 
-    document.addEventListener('keydown', (e) => {
+    const handleRedo = (e) => {
       if (e[buttonKey] && e.key === 'y') {
         e.preventDefault();
         this.redo();
       }
-    });
+    };
+
+    const handleDestroy = () => {
+      document.removeEventListener('keydown', handleUndo);
+      document.removeEventListener('keydown', handleRedo);
+    };
+
+    document.addEventListener('keydown', handleUndo);
+    document.addEventListener('keydown', handleRedo);
+    document.addEventListener('destroy', handleDestroy);
   }
 }

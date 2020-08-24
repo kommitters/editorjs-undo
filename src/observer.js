@@ -51,7 +51,11 @@ export default class Observer {
     mutationList.forEach((mutation) => {
       switch (mutation.type) {
         case 'childList':
-          if (!(mutation.target.id === this.holder)) contentMutated = true;
+          if (mutation.target.id === this.holder) {
+            this.onDestroy();
+          } else {
+            contentMutated = true;
+          }
           break;
         case 'characterData':
           contentMutated = true;
@@ -81,5 +85,11 @@ export default class Observer {
       clearTimeout(timeout);
       timeout = setTimeout(() => callback.apply(context, args), wait);
     };
+  }
+
+  onDestroy() {
+    const destroyEvent = new CustomEvent('destroy');
+    document.dispatchEvent(destroyEvent);
+    this.observer.disconnect();
   }
 }

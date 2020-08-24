@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.1.4 (14.08.2020)
+
+* Bug fix: The editor is not registering any change if its instance is destroyed.
+* New feature: The caret state is saved and recovered on each undo/redo operation.
+
 ## 0.1.3 (13.07.2020)
 
 * Modify custom MutationObserver to avoid saving changes related to the editor destroy process.
