@@ -33,7 +33,7 @@ export default class Observer {
       characterDataOldValue: true,
     };
 
-    const target = document.querySelector(`#${this.holder}`);
+    const target = typeof this.holder === 'string' ? document.querySelector(`#${this.holder}`) : this.holder;
 
     this.observer = new MutationObserver((mutationList) => {
       this.mutationHandler(mutationList);
