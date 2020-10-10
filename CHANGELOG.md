@@ -1,5 +1,36 @@
 # Changelog
 
+## BigBrother (10.10.2020)
+
+@sosie-js : BigBrother (branch) is now watching your change blocks and informs you throughout changeBlocks event..It's the upgrade/merge of the Observer with the one more spying one, hughfenghen provided on [y-editorjs](https://github.com/hughfenghen/y-editorjs.git). 
+
+In your script this and watch the console..
+
+```javascript
+    //Blocks Listener(s) may need to be upated on enter or remove,
+        document.addEventListener('changeBlocks', function(evt){
+            var changedSet=evt.detail.changed;
+            changedSet.forEach(entry => {
+                //console.log('changeBlocks',entry);
+                var block=entry.blockElement;
+                var blockId=block.dataset.blockId;
+                var blockData= block.innerText ? [block.innerText] : block;
+                switch(entry.changeType) {
+                    case 'add':
+                        console.log('Block ('+blockId+') added', blockData);
+                    break;
+                    case 'remove':
+                        console.log('Block ('+blockId+') removed', blockData);
+                    break;
+                    case 'update':
+                    default:
+                        console.log('Block ('+blockId+') updated', blockData);
+                }
+            });
+        });
+```
+
+
 ## 0.1.4 (14.08.2020)
 
 * Bug fix: The editor is not registering any change if its instance is destroyed.
