@@ -195,13 +195,20 @@ export default class Undo {
       }
     };
 
+    const holder = this.editor.configuration.holder;
+    const target = typeof holder === 'string' ? document.querySelector(`#${holder}`) : holder;
+
+    if (!(target instanceof HTMLElement)) {
+      throw new Error("Couldn't find Editor.js holder. ");
+    }
+
     const handleDestroy = () => {
-      document.removeEventListener('keydown', handleUndo);
-      document.removeEventListener('keydown', handleRedo);
+      target.removeEventListener('keydown', handleUndo);
+      target.removeEventListener('keydown', handleRedo);
     };
 
-    document.addEventListener('keydown', handleUndo);
-    document.addEventListener('keydown', handleRedo);
-    document.addEventListener('destroy', handleDestroy);
+    target.addEventListener('keydown', handleUndo);
+    target.addEventListener('keydown', handleRedo);
+    target.addEventListener('destroy', handleDestroy);
   }
 }
