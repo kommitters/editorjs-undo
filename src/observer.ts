@@ -1,3 +1,5 @@
+import type { EditorConfig } from '@editorjs/editorjs';
+
 /**
  * @typedef {Object} Observer
  * @description Custom MutationObserver to detect changes in the editor.
@@ -7,12 +9,17 @@
  * @property {Function} mutationDebouncer - Debouncer to delay the changes registration.
  */
 export default class Observer {
+  private debounceTimer;
+  private holder;
+  private mutationDebouncer;
+  private observer: MutationObserver | null;
+
   /**
    * Creates a new instance of the Observer object.
    * @param {Function} registerChange - Function that register a change in the history stack.
    * @param {String} holder - Editor.js holder id.
    */
-  constructor(registerChange, holder) {
+  constructor(registerChange: Function, holder: EditorConfig['holder']) {
     this.holder = holder;
     this.observer = null;
     this.debounceTimer = 200;
@@ -35,9 +42,14 @@ export default class Observer {
 
     const target = typeof this.holder === 'string' ? document.querySelector(`#${this.holder}`) : this.holder;
 
+    if (!target) {
+      throw new Error("Couldn't find Editor.js holder. ");
+    }
+
     this.observer = new MutationObserver((mutationList) => {
       this.mutationHandler(mutationList);
     });
+
     this.observer.observe(target, observerOptions);
   }
 
@@ -45,26 +57,29 @@ export default class Observer {
    * Handles the mutations and checks if a new mutation has been produced.
    * @param {Object} mutationList The registered mutations
    */
-  mutationHandler(mutationList) {
+  private mutationHandler(mutationList: MutationRecord[]) {
     let contentMutated = false;
 
     mutationList.forEach((mutation) => {
       switch (mutation.type) {
         case 'childList':
-          if (mutation.target.id === this.holder) {
+          if (mutation.target instanceof Element && mutation.target.id === this.holder) {
             this.onDestroy();
           } else {
             contentMutated = true;
           }
           break;
+
         case 'characterData':
           contentMutated = true;
           break;
+
         case 'attributes':
-          if (!mutation.target.classList.contains('ce-block')) {
+          if (!(mutation.target instanceof Element) || !mutation.target.classList.contains('ce-block')) {
             contentMutated = true;
           }
           break;
+
         default:
           break;
       }
@@ -78,18 +93,19 @@ export default class Observer {
    * @param {Function} callback The function to be delayed.
    * @param {Number} wait The deplay time in millis.
    */
-  debounce(callback, wait) {
-    let timeout;
-    return (...args) => {
+  private debounce(callback: Function, wait: number) {
+    let timeout: NodeJS.Timeout;
+
+    return (...args: any[]) => {
       const context = this;
       clearTimeout(timeout);
       timeout = setTimeout(() => callback.apply(context, args), wait);
     };
   }
 
-  onDestroy() {
+  private onDestroy() {
     const destroyEvent = new CustomEvent('destroy');
     document.dispatchEvent(destroyEvent);
-    this.observer.disconnect();
+    this.observer?.disconnect();
   }
 }
