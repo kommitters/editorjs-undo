@@ -1,4 +1,21 @@
+import type EditorJS from '@editorjs/editorjs';
+import type { EditorConfig } from '@editorjs/editorjs';
 import Observer from './observer';
+
+interface EditorJSWithConfig extends EditorJS {
+  configuration: EditorConfig;
+}
+
+interface EditorJSUndoOptions {
+  editor: EditorJS;
+  maxLength: number;
+  onUpdate: Function;
+}
+
+interface Item {
+  index: number;
+  state: any;
+}
 
 /**
  * Undo/Redo feature for Editor.js.
@@ -12,21 +29,30 @@ import Observer from './observer';
  * @property {Object} initialItem - Initial data object.
  */
 export default class Undo {
+  private editor;
+  private initialItem: Item | null;
+  private maxLength;
+  private position!: number;
+  private shouldSaveHistory;
+  private stack!: Item[];
+  private onUpdate;
+
   /**
    * @param options — Plugin custom options.
    */
-  constructor(options) {
+  constructor(options: EditorJSUndoOptions) {
     const defaultOptions = {
       maxLength: 30,
       onUpdate() {},
     };
 
-    this.editor = options.editor;
+    this.editor = options.editor as EditorJSWithConfig;
     this.shouldSaveHistory = true;
 
     this.maxLength = options.maxLength
       ? options.maxLength
       : defaultOptions.maxLength;
+  
     this.onUpdate = options.onUpdate
       ? options.onUpdate
       : defaultOptions.onUpdate;
@@ -35,6 +61,7 @@ export default class Undo {
       () => this.registerChange(),
       this.editor.configuration.holder,
     );
+
     observer.setMutationObserver();
     this.setEventListeners();
     this.initialItem = null;
@@ -47,7 +74,7 @@ export default class Undo {
    * @param {Object} stack  Changes history stack.
    * @param {Number} stack  Limit of changes recorded by the history stack.
    */
-  truncate(stack, limit) {
+  private truncate(stack: Item[], limit: number) {
     while (stack.length > limit) {
       stack.shift();
     }
@@ -58,10 +85,11 @@ export default class Undo {
    *
    * @param {Object} initialItem  Initial data provided by the user.
    */
-  initialize(initialItem) {
+  initialize(initialItem: any) {
     const initialData = 'blocks' in initialItem ? initialItem.blocks : initialItem;
     const initialIndex = initialData.length - 1;
-    const firstElement = { index: initialIndex, state: initialData };
+    const firstElement: Item = { index: initialIndex, state: initialData };
+
     this.stack[0] = firstElement;
     this.initialItem = firstElement;
   }
@@ -69,10 +97,11 @@ export default class Undo {
   /**
    * Clears the history stack.
    */
-  clear() {
+  private clear() {
     this.stack = this.initialItem
       ? [this.initialItem]
       : [{ index: 0, state: [] }];
+  
     this.position = 0;
     this.onUpdate();
   }
@@ -80,12 +109,13 @@ export default class Undo {
   /**
    * Registers the data returned by API's save method into the history stack.
    */
-  registerChange() {
+  private registerChange() {
     if (this.editor && this.editor.save && this.shouldSaveHistory) {
       this.editor.save().then((savedData) => {
         if (this.editorDidUpdate(savedData.blocks)) this.save(savedData.blocks);
       });
     }
+
     this.shouldSaveHistory = true;
   }
 
@@ -95,7 +125,7 @@ export default class Undo {
    * @param {Object} newData  New data to be saved in the history stack.
    * @returns {Boolean}
    */
-  editorDidUpdate(newData) {
+  private editorDidUpdate(newData: any) {
     const { state } = this.stack[this.position];
     if (newData.length !== state.length) return true;
 
@@ -105,7 +135,7 @@ export default class Undo {
   /**
    * Adds the saved data in the history stack and updates current position.
    */
-  save(state) {
+  private save(state: any) {
     if (this.position >= this.maxLength) {
       this.truncate(this.stack, this.maxLength);
     }
@@ -122,7 +152,7 @@ export default class Undo {
   /**
    * Decreases the current position and renders the data in the editor.
    */
-  undo() {
+  private undo() {
     if (this.canUndo()) {
       this.shouldSaveHistory = false;
       const { index, state } = this.stack[(this.position -= 1)];
@@ -137,7 +167,7 @@ export default class Undo {
   /**
    * Increases the current position and renders the data in the editor.
    */
-  redo() {
+  private redo() {
     if (this.canRedo()) {
       this.shouldSaveHistory = false;
       const { index, state } = this.stack[(this.position += 1)];
@@ -154,7 +184,7 @@ export default class Undo {
    *
    * @returns {Boolean}
    */
-  canUndo() {
+  private canUndo() {
     return this.position > 0;
   }
 
@@ -163,7 +193,7 @@ export default class Undo {
    *
    * @returns {Boolean}
    */
-  canRedo() {
+  private canRedo() {
     return this.position < this.count();
   }
 
@@ -172,23 +202,23 @@ export default class Undo {
    *
    * @returns {Number}
    */
-  count() {
+  private count() {
     return this.stack.length - 1; // -1 because of initial item
   }
 
   /**
    * Sets events listeners to allow keyboard actions support.
    */
-  setEventListeners() {
+  private setEventListeners() {
     const buttonKey = /(Mac)/i.test(navigator.platform) ? 'metaKey' : 'ctrlKey';
-    const handleUndo = (e) => {
+    const handleUndo = (e: KeyboardEvent) => {
       if (e[buttonKey] && e.key === 'z') {
         e.preventDefault();
         this.undo();
       }
     };
 
-    const handleRedo = (e) => {
+    const handleRedo = (e: KeyboardEvent) => {
       if (e[buttonKey] && e.key === 'y') {
         e.preventDefault();
         this.redo();
@@ -205,3 +235,5 @@ export default class Undo {
     document.addEventListener('destroy', handleDestroy);
   }
 }
+
+export { EditorJSUndoOptions };

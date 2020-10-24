@@ -1,11 +1,11 @@
 const path = require('path');
 
 module.exports = {
-  entry: './src/index.js',
+  entry: './src/index.ts',
   module: {
     rules: [
       {
-        test: /\.js$/,
+        test: /\.[jt]s$/,
         exclude: /node_modules/,
         use: [
           {
@@ -22,5 +22,8 @@ module.exports = {
     library: 'Undo',
     libraryTarget: 'umd',
     libraryExport: 'default',
+  },
+  resolve: {
+    extensions: ['.js', '.ts'],
   },
 };
