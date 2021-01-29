@@ -81,12 +81,19 @@ export default class Undo {
    * Registers the data returned by API's save method into the history stack.
    */
   registerChange() {
-    if (this.editor && this.editor.save && this.shouldSaveHistory) {
-      this.editor.save().then((savedData) => {
-        if (this.editorDidUpdate(savedData.blocks)) this.save(savedData.blocks);
-      });
+    if(this.editor){
+      const {configuration} = this.editor;
+      if(configuration && configuration.readOnly){
+        return;
+      }
+      const {save} = this.editor;
+      if (save && this.shouldSaveHistory) {
+        save().then((savedData) => {
+          if (this.editorDidUpdate(savedData.blocks)) this.save(savedData.blocks);
+        });
+      }
+      this.shouldSaveHistory = true;
     }
-    this.shouldSaveHistory = true;
   }
 
   /**
@@ -195,13 +202,17 @@ export default class Undo {
       }
     };
 
+    // Add/Remove the listeners only to/from the holder-element (if possible)
+    const {holder} = this.editor.configuration;
+    const eventable = holder?document.getElementById(holder):document;
+
     const handleDestroy = () => {
-      document.removeEventListener('keydown', handleUndo);
-      document.removeEventListener('keydown', handleRedo);
+      eventable.removeEventListener('keydown', handleUndo);
+      eventable.removeEventListener('keydown', handleRedo);
     };
 
-    document.addEventListener('keydown', handleUndo);
-    document.addEventListener('keydown', handleRedo);
-    document.addEventListener('destroy', handleDestroy);
+    eventable.addEventListener('keydown', handleUndo);
+    eventable.addEventListener('keydown', handleRedo);
+    eventable.addEventListener('destroy', handleDestroy);
   }
 }
