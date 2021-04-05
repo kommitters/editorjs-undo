@@ -13,7 +13,7 @@ export default class Observer {
    * @param {String} holder - Editor.js holder id.
    */
   constructor(registerChange, holder) {
-    this.holder = holder;
+    this.holder = typeof holder === 'string' ? document.getElementById(holder) : holder;
     this.observer = null;
     this.debounceTimer = 200;
     this.mutationDebouncer = this.debounce(() => {
@@ -33,7 +33,7 @@ export default class Observer {
       characterDataOldValue: true,
     };
 
-    const target = document.querySelector(`#${this.holder}`);
+    const target = this.holder;
 
     this.observer = new MutationObserver((mutationList) => {
       this.mutationHandler(mutationList);
@@ -51,7 +51,7 @@ export default class Observer {
     mutationList.forEach((mutation) => {
       switch (mutation.type) {
         case 'childList':
-          if (mutation.target.id === this.holder) {
+          if (mutation.target === this.holder) {
             this.onDestroy();
           } else {
             contentMutated = true;
