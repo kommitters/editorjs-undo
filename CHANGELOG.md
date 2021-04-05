@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.1.5 (05.04.2021)
+
+* Bug fix: Cannot read property 'holder' of undefined.
+* Dependencies updated. Security breaches covered.
+
 ## 0.1.4 (14.08.2020)
 
 * Bug fix: The editor is not registering any change if its instance is destroyed.
