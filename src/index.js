@@ -15,30 +15,38 @@ export default class Undo {
   /**
    * @param options — Plugin custom options.
    */
-  constructor(options) {
+  constructor({ editor, onUpdate, maxLength }) {
     const defaultOptions = {
       maxLength: 30,
       onUpdate() {},
     };
 
-    this.editor = options.editor;
-    this.shouldSaveHistory = true;
+    const { configuration } = editor;
 
-    this.maxLength = options.maxLength
-      ? options.maxLength
-      : defaultOptions.maxLength;
-    this.onUpdate = options.onUpdate
-      ? options.onUpdate
-      : defaultOptions.onUpdate;
+    this.editor = editor;
+    this.shouldSaveHistory = true;
+    this.readOnly = configuration.readOnly;
+    this.maxLength = maxLength || defaultOptions.maxLength;
+    this.onUpdate = onUpdate || defaultOptions.onUpdate;
 
     const observer = new Observer(
       () => this.registerChange(),
-      this.editor.configuration.holder,
+      configuration.holder,
     );
     observer.setMutationObserver();
+
     this.setEventListeners();
     this.initialItem = null;
     this.clear();
+  }
+
+  /**
+   * Notify core that read-only mode is suppoorted
+   *
+   * @returns {boolean}
+   */
+  static get isReadOnlySupported() {
+    return true;
   }
 
   /**
@@ -81,12 +89,14 @@ export default class Undo {
    * Registers the data returned by API's save method into the history stack.
    */
   registerChange() {
-    if (this.editor && this.editor.save && this.shouldSaveHistory) {
-      this.editor.save().then((savedData) => {
-        if (this.editorDidUpdate(savedData.blocks)) this.save(savedData.blocks);
-      });
+    if (!this.readOnly) {
+      if (this.editor && this.editor.save && this.shouldSaveHistory) {
+        this.editor.save().then((savedData) => {
+          if (this.editorDidUpdate(savedData.blocks)) this.save(savedData.blocks);
+        });
+      }
+      this.shouldSaveHistory = true;
     }
-    this.shouldSaveHistory = true;
   }
 
   /**
@@ -155,7 +165,7 @@ export default class Undo {
    * @returns {Boolean}
    */
   canUndo() {
-    return this.position > 0;
+    return !this.readOnly && this.position > 0;
   }
 
   /**
@@ -164,7 +174,7 @@ export default class Undo {
    * @returns {Boolean}
    */
   canRedo() {
-    return this.position < this.count();
+    return !this.readOnly && this.position < this.count();
   }
 
   /**
