@@ -5,11 +5,24 @@ import {
   secondChange,
   newChange,
 } from './fixtures/data';
-import editor from './fixtures/editor';
+import { editor } from './fixtures/editor';
 
 describe('Undo', () => {
   beforeEach(() => {
     document.body.innerHTML = '<div id="editorjs"></div>';
+  });
+
+  describe('Read-only mode active', () => {
+    let undo;
+
+    beforeEach(() => {
+      undo = new Undo({ readOnlyEditor });
+    });
+
+    it('is unable to perform an undo/redo operation', () => {
+      expect(undo.canUndo()).toBe(false);
+      expect(undo.canRedo()).toBe(false);
+    });
   });
 
   describe('Operations without changes', () => {
