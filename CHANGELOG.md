@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.1.6 (04.05.2021)
+
+* Read-only mode support added.
+* Dependencies updated. Security breaches covered.
+* CI with github actions added.
+* Minor bug fixes.
+
 ## 0.1.5 (05.04.2021)
 
 * Bug fix: Cannot read property 'holder' of undefined.
