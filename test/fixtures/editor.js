@@ -1,7 +1,7 @@
 import { firstChange } from './data';
 
 /**
- * Mocks Editor.js instance object.
+ * Mocks for Editor.js instance object.
  */
 const editor = {
   blocks: {
@@ -17,4 +17,19 @@ const editor = {
   },
 };
 
-export default editor;
+const readOnlyEditor = {
+  blocks: {
+    save: () => new Promise((resolve) => resolve(firstChange)),
+    render: () => new Promise((resolve) => resolve(true)),
+    getCurrentBlockIndex: () => 0,
+  },
+  caret: {
+    setToBlock() {},
+  },
+  configuration: {
+    holder: 'editorjs',
+    readOnly: true,
+  },
+};
+
+export { editor, readOnlyEditor };
