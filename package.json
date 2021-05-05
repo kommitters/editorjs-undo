@@ -1,6 +1,6 @@
 {
   "name": "editorjs-undo",
-  "version": "0.1.5",
+  "version": "0.1.6",
   "keywords": [
     "undo",
     "redo",
@@ -38,7 +38,7 @@
     "eslint-plugin-jest": "^23.13.2",
     "jest": "^26.0.1",
     "webpack": "^4.43.0",
-    "webpack-cli": "^3.3.11"
+    "webpack-cli": "^4.6.0"
   },
   "jest": {
     "transform": {
