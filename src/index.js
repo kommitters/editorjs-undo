@@ -201,9 +201,17 @@ export default class Undo {
   verifyKeyboardAction(e, letter) {
     const buttonKey = /(Mac)/i.test(navigator.platform) ? META_KEY : CTRL_KEY;
 
-    if (!e[buttonKey] || !e[SHIFT_KEY]) return false;
+    if (!e[buttonKey]) return false;
 
-    const charCode = typeof e.which === 'number' ? e.which : e.keyCode;
+    let charCode = '';
+    if (typeof e.which === 'number') {
+      e.preventDefault();
+      charCode = e.which;;
+    } else {
+      e.preventDefault();
+      charCode = e.keyCode;
+    }
+
     const typedChar = String.fromCharCode(charCode);
 
     return letter === typedChar;
