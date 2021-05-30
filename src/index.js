@@ -1,5 +1,11 @@
 import Observer from './observer';
 
+const META_KEY = 'metaKey';
+const CTRL_KEY = 'ctrlKey';
+const SHIFT_KEY = 'shiftKey';
+const KEY_Y = 'Y';
+const KEY_Z = 'Z';
+
 /**
  * Undo/Redo feature for Editor.js.
  *
@@ -130,6 +136,24 @@ export default class Undo {
   }
 
   /**
+   * Checks if the history stack can perform an undo action.
+   *
+   * @returns {Boolean}
+   */
+  canUndo() {
+    return !this.readOnly && this.position > 0;
+  }
+
+  /**
+   * Checks if the history stack can perform a redo action.
+   *
+   * @returns {Boolean}
+   */
+  canRedo() {
+    return !this.readOnly && this.position < this.count();
+  }
+
+  /**
    * Decreases the current position and renders the data in the editor.
    */
   undo() {
@@ -160,24 +184,6 @@ export default class Undo {
   }
 
   /**
-   * Checks if the history stack can perform an undo action.
-   *
-   * @returns {Boolean}
-   */
-  canUndo() {
-    return !this.readOnly && this.position > 0;
-  }
-
-  /**
-   * Checks if the history stack can perform a redo action.
-   *
-   * @returns {Boolean}
-   */
-  canRedo() {
-    return !this.readOnly && this.position < this.count();
-  }
-
-  /**
    * Returns the number of changes recorded in the history stack.
    *
    * @returns {Number}
@@ -187,31 +193,39 @@ export default class Undo {
   }
 
   /**
+   * verify that the keyboard events generate the combination of keys for undo or redo.
+   * @param {Object} e key board event
+   * @param {string} letter  Z to undo and Y to redo
+   * @returns {Boolean}
+   */
+  verifyKeyboardAction(e, letter) {
+    const buttonKey = /(Mac)/i.test(navigator.platform) ? META_KEY : CTRL_KEY;
+
+    if (!e[buttonKey] || !e[SHIFT_KEY]) return false;
+
+    const charCode = typeof e.which === 'number' ? e.which : e.keyCode;
+    const typedChar = String.fromCharCode(charCode);
+
+    return letter === typedChar;
+  }
+
+  /**
    * Sets events listeners to allow keyboard actions support.
    */
   setEventListeners() {
-    const buttonKey = /(Mac)/i.test(navigator.platform) ? 'metaKey' : 'ctrlKey';
-    const handleUndo = (e) => {
-      if (e[buttonKey] && e.key === 'z') {
-        e.preventDefault();
+    const handleKeyboardEvents = (e) => {
+      if (this.verifyKeyboardAction(e, KEY_Z)) {
         this.undo();
-      }
-    };
-
-    const handleRedo = (e) => {
-      if (e[buttonKey] && e.key === 'y') {
-        e.preventDefault();
+      } else if (this.verifyKeyboardAction(e, KEY_Y)) {
         this.redo();
       }
     };
 
     const handleDestroy = () => {
-      document.removeEventListener('keydown', handleUndo);
-      document.removeEventListener('keydown', handleRedo);
+      document.removeEventListener('keydown', handleKeyboardEvents);
     };
 
-    document.addEventListener('keydown', handleUndo);
-    document.addEventListener('keydown', handleRedo);
+    document.addEventListener('keydown', handleKeyboardEvents);
     document.addEventListener('destroy', handleDestroy);
   }
 }

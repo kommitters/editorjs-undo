@@ -32,7 +32,7 @@ const editor = new EditorJS({
 });
 ```
 
-On the editor, use <kbd>Ctrl</kbd> + <kbd>Z</kbd> or <kbd>⌘</kbd> + <kbd>Z</kbd> to undo, or use <kbd>Ctrl</kbd> + <kbd>Y</kbd> or <kbd>⌘</kbd> + <kbd>Y</kbd> to redo.
+On the editor, use <kbd>Ctrl</kbd> + <kbd>Shift</kbd> + <kbd>Z</kbd> or <kbd>⌘</kbd> +  <kbd>Shift</kbd> + <kbd>Z</kbd> to undo, or use <kbd>Ctrl</kbd> + <kbd>Shift</kbd> + <kbd>Y</kbd> or <kbd>⌘</kbd> + <kbd>Shift</kbd> + <kbd>Y</kbd> to redo.
 
 ## Initialize the plugin with data
 
