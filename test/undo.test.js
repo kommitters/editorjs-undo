@@ -134,7 +134,7 @@ describe('Undo', () => {
       undo.save(secondChange.blocks);
     });
 
-    it('undo event outside Editor\'s holder has not to cause changes in Undo stack', () => {
+    it('undo event outside Editor\'s holder has not to cause changes in Undo Plugin stack', () => {
       // Set metaKey and ctrlKey to true in order to work in Mac and other OSs.
       const keyboardEvent = new KeyboardEvent('keydown', {
         key: 'z',
@@ -150,7 +150,7 @@ describe('Undo', () => {
       expect(state).toEqual(secondChange.blocks);
     });
 
-    it('undo event inside Editor\'s holder has to cause changes in Undo stack', () => {
+    it('undo event inside Editor\'s holder has to cause changes in Undo Plugin stack', () => {
       const keyboardEvent = new KeyboardEvent('keydown', {
         key: 'z',
         metaKey: true,
