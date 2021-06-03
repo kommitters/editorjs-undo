@@ -9,7 +9,7 @@ import { editor, readOnlyEditor } from './fixtures/editor';
 
 describe('Undo', () => {
   beforeEach(() => {
-    document.body.innerHTML = '<div id="editorjs"></div><input id="input" type="text" />';
+    document.body.innerHTML = '<div id="editorjs"></div>';
     // EditorJS uses as a holder an HTMLElement instead of a query selector.
     // This has to be assigned each time that DOM is reset.
     editor.configuration.holder = document.querySelector('#editorjs');
