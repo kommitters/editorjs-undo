@@ -12,9 +12,7 @@ const editor = {
   caret: {
     setToBlock() {},
   },
-  configuration: {
-    holder: 'editorjs',
-  },
+  configuration: {},
 };
 
 const readOnlyEditor = {
@@ -27,7 +25,6 @@ const readOnlyEditor = {
     setToBlock() {},
   },
   configuration: {
-    holder: 'editorjs',
     readOnly: true,
   },
 };

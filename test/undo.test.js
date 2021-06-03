@@ -10,6 +10,10 @@ import { editor, readOnlyEditor } from './fixtures/editor';
 describe('Undo', () => {
   beforeEach(() => {
     document.body.innerHTML = '<div id="editorjs"></div>';
+    // EditorJS uses as a holder an HTMLElement instead of a query selector.
+    // This has to be assigned each time that DOM is reset.
+    editor.configuration.holder = document.querySelector('#editorjs');
+    readOnlyEditor.configuration.holder = document.querySelector('#editorjs');
   });
 
   describe('Read-only mode active', () => {
@@ -117,6 +121,82 @@ describe('Undo', () => {
       expect(undo.position).toEqual(undo.position);
       const { state } = undo.stack[undo.position];
       expect(state).toEqual(newChange.blocks);
+    });
+  });
+
+  describe('Undo/redo events fired inside and outside Editor\'s holder', () => {
+    let undo;
+
+    beforeEach(() => {
+      undo = new Undo({ editor });
+      undo.initialize(initialData.blocks);
+      undo.save(firstChange.blocks);
+      undo.save(secondChange.blocks);
+    });
+
+    it('undo event outside Editor\'s holder has not to cause changes in Undo Plugin stack', () => {
+      // Set metaKey and ctrlKey to true in order to work in Mac and other OSs.
+      const keyboardEvent = new KeyboardEvent('keydown', {
+        key: 'z',
+        metaKey: true,
+        ctrlKey: true,
+      });
+
+      document.dispatchEvent(keyboardEvent);
+
+      expect(undo.count()).toEqual(2);
+      expect(undo.position).toEqual(2);
+      const { state } = undo.stack[2];
+      expect(state).toEqual(secondChange.blocks);
+    });
+
+    it('undo event inside Editor\'s holder has to cause changes in Undo Plugin stack', () => {
+      const keyboardEvent = new KeyboardEvent('keydown', {
+        key: 'z',
+        metaKey: true,
+        ctrlKey: true,
+      });
+
+      editor.configuration.holder.dispatchEvent(keyboardEvent);
+
+      expect(undo.count()).toEqual(2);
+      expect(undo.position).toEqual(1);
+      const { state } = undo.stack[1];
+      expect(state).toEqual(firstChange.blocks);
+    });
+
+    it('redo event outside Editor\'s holder has not to cause changes in Undo Plugin stack', () => {
+      undo.undo();
+
+      const keyboardEvent = new KeyboardEvent('keydown', {
+        key: 'y',
+        metaKey: true,
+        ctrlKey: true,
+      });
+
+      document.dispatchEvent(keyboardEvent);
+
+      expect(undo.count()).toEqual(2);
+      expect(undo.position).toEqual(1);
+      const { state } = undo.stack[1];
+      expect(state).toEqual(firstChange.blocks);
+    });
+
+    it('redo event inside Editor\'s holder has to cause changes in Undo Plugin stack', () => {
+      undo.undo();
+
+      const keyboardEvent = new KeyboardEvent('keydown', {
+        key: 'y',
+        metaKey: true,
+        ctrlKey: true,
+      });
+
+      editor.configuration.holder.dispatchEvent(keyboardEvent);
+
+      expect(undo.count()).toEqual(2);
+      expect(undo.position).toEqual(2);
+      const { state } = undo.stack[2];
+      expect(state).toEqual(secondChange.blocks);
     });
   });
 });
