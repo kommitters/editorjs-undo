@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.1.7 (16.06.2021)
+
+* Set the undo/redo event listeners in the holder element instead of the whole document.
+
 ## 0.1.6 (04.05.2021)
 
 * Read-only mode support added.
