@@ -190,7 +190,9 @@ export default class Undo {
    * Sets events listeners to allow keyboard actions support.
    */
   setEventListeners() {
+    const { holder } = this.editor.configuration;
     const buttonKey = /(Mac)/i.test(navigator.platform) ? 'metaKey' : 'ctrlKey';
+
     const handleUndo = (e) => {
       if (e[buttonKey] && e.key === 'z') {
         e.preventDefault();
@@ -206,12 +208,13 @@ export default class Undo {
     };
 
     const handleDestroy = () => {
-      document.removeEventListener('keydown', handleUndo);
-      document.removeEventListener('keydown', handleRedo);
+      holder.removeEventListener('keydown', handleUndo);
+      holder.removeEventListener('keydown', handleRedo);
     };
 
-    document.addEventListener('keydown', handleUndo);
-    document.addEventListener('keydown', handleRedo);
-    document.addEventListener('destroy', handleDestroy);
+    holder.addEventListener('keydown', handleUndo);
+    holder.addEventListener('keydown', handleRedo);
+    holder.addEventListener('destroy', handleDestroy);
   }
+
 }
