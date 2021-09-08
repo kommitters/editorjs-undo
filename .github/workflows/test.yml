@@ -2,12 +2,10 @@ name: Test
 on:
   push:
     branches:
-      - develop
       - master
+      - 'v*.[0-9]'
   pull_request:
-    branches:
-      - develop
-      - master
+
 jobs:
   test:
     runs-on: ubuntu-latest
