@@ -35,7 +35,7 @@ export default class Undo {
     );
     observer.setMutationObserver();
 
-    this.setEventListeners();
+    this.setEventListeners(observer.holder);
     this.initialItem = null;
     this.clear();
   }
@@ -189,8 +189,8 @@ export default class Undo {
   /**
    * Sets events listeners to allow keyboard actions support.
    */
-  setEventListeners() {
-    const { holder } = this.editor.configuration;
+  setEventListeners(observerHolder) {
+    const holder = observerHolder;
     const buttonKey = /(Mac)/i.test(navigator.platform) ? 'metaKey' : 'ctrlKey';
 
     const handleUndo = (e) => {
