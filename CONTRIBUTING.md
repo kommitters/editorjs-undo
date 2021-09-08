@@ -57,5 +57,5 @@ alternatives.
 [repo]: https://github.com/kommitters/editorjs-undo
 [coc]: https://github.com/kommitters/editorjs-undo/blob/master/CODE_OF_CONDUCT.md
 [commit-msg]: https://github.com/erlang/otp/wiki/Writing-good-commit-messages
-[good-first-issue]: https://github.com/kommitters/editorjs-undo/labels/%F0%9F%91%8B%20%20Good%20first%20issue
-[help-wanted]: https://github.com/kommitters/editorjs-undo/labels/%3Asos%3A%20Help%20wanted
+[good-first-issue]: https://github.com/kommitters/editorjs-undo/issues?q=label%3A%22%F0%9F%91%8B+Good+first+issue%22
+[help-wanted]: https://github.com/kommitters/editorjs-undo/issues?q=label%3A%22%F0%9F%86%98+Help+wanted%22
