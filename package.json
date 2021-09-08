@@ -1,6 +1,6 @@
 {
   "name": "editorjs-undo",
-  "version": "0.1.7",
+  "version": "0.2.0",
   "keywords": [
     "undo",
     "redo",
@@ -19,8 +19,8 @@
     "url": "git+https://github.com/kommitters/editorjs-undo"
   },
   "author": {
-    "name": "kommit",
-    "email": "info@kommit.co"
+    "name": "kommitters Open Source",
+    "email": "oss@kommit.co"
   },
   "license": "MIT",
   "bugs": {
