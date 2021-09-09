@@ -22,8 +22,9 @@ export default class Undo {
     };
 
     const { configuration } = editor;
+    const { holder } = configuration;
 
-    this.holder = typeof configuration.holder === 'string' ? document.getElementById(configuration.holder) : configuration.holder;
+    this.holder = typeof holder === 'string' ? document.getElementById(holder) : holder;
     this.editor = editor;
     this.shouldSaveHistory = true;
     this.readOnly = configuration.readOnly;
