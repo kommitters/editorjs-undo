@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.2.0 (09.09.2021)
+* Accept strings in the holder key.
+* Updated packages with known security breaches.
+* Docs updated.
+
 ## 0.1.7 (16.06.2021)
 
 * Set the undo/redo event listeners in the holder element instead of the whole document.

@@ -13,7 +13,7 @@ export default class Observer {
    * @param {String} holder - Editor.js holder id.
    */
   constructor(registerChange, holder) {
-    this.holder = typeof holder === 'string' ? document.getElementById(holder) : holder;
+    this.holder = holder;
     this.observer = null;
     this.debounceTimer = 200;
     this.mutationDebouncer = this.debounce(() => {
