@@ -199,4 +199,28 @@ describe('Undo', () => {
       expect(state).toEqual(secondChange.blocks);
     });
   });
+
+  describe('the holder key accept strings', () => {
+    let undo;
+
+    beforeEach(() => {
+      editor.configuration.holder = 'editorjs';
+      undo = new Undo({ editor });
+      undo.initialize(initialData.blocks);
+      undo.save(firstChange.blocks);
+      undo.save(secondChange.blocks);
+    });
+
+    it('holder is assign to the correct html element', () => {
+      expect(undo.holder).toBe(document.querySelector('#editorjs'));
+    });
+
+    it('performs an undo and redo operation with two changes', () => {
+      undo.undo();
+      undo.redo();
+      expect(undo.position).toEqual(undo.count());
+      const { state } = undo.stack[undo.position];
+      expect(state).toEqual(secondChange.blocks);
+    });
+  });
 });
