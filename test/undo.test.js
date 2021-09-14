@@ -134,7 +134,7 @@ describe('Undo', () => {
       undo.save(secondChange.blocks);
     });
 
-    it('undo event outside Editor\'s holder has not to cause changes in Undo Plugin stack', () => {
+    it('undo event, with default shortcut, outside Editor\'s holder has not to cause changes in Undo Plugin stack', () => {
       // Set metaKey and ctrlKey to true in order to work in Mac and other OSs.
       const keyboardEvent = new KeyboardEvent('keydown', {
         key: 'z',
@@ -150,7 +150,7 @@ describe('Undo', () => {
       expect(state).toEqual(secondChange.blocks);
     });
 
-    it('undo event inside Editor\'s holder has to cause changes in Undo Plugin stack', () => {
+    it('undo event, with default shortcut, inside Editor\'s holder has to cause changes in Undo Plugin stack', () => {
       const keyboardEvent = new KeyboardEvent('keydown', {
         key: 'z',
         metaKey: true,
@@ -165,7 +165,39 @@ describe('Undo', () => {
       expect(state).toEqual(firstChange.blocks);
     });
 
-    it('redo event outside Editor\'s holder has not to cause changes in Undo Plugin stack', () => {
+    it('undo event, with custom shortcut, inside Editor\'s holder has to cause changes in Undo Plugin stack', () => {
+      undo.shortcut('ctrlKey+x', 'ctrlKey+c');
+      const keyboardEvent = new KeyboardEvent('keydown', {
+        key: 'x',
+        metaKey: true,
+        ctrlKey: true,
+      });
+
+      editor.configuration.holder.dispatchEvent(keyboardEvent);
+
+      expect(undo.count()).toEqual(2);
+      expect(undo.position).toEqual(1);
+      const { state } = undo.stack[1];
+      expect(state).toEqual(firstChange.blocks);
+    });
+
+    it('undo event, with default shortcut if the shortcuts has been customized, inside Editor\'s holder has not to cause changes in Undo Plugin stack', () => {
+      undo.shortcut('ctrlKey+x', 'ctrlKey+c');
+      const keyboardEvent = new KeyboardEvent('keydown', {
+        key: 'z',
+        metaKey: true,
+        ctrlKey: true,
+      });
+
+      editor.configuration.holder.dispatchEvent(keyboardEvent);
+
+      expect(undo.count()).toEqual(2);
+      expect(undo.position).toEqual(2);
+      const { state } = undo.stack[2];
+      expect(state).toEqual(secondChange.blocks);
+    });
+
+    it('redo event, with default shortcut, outside Editor\'s holder has not to cause changes in Undo Plugin stack', () => {
       undo.undo();
 
       const keyboardEvent = new KeyboardEvent('keydown', {
@@ -182,7 +214,7 @@ describe('Undo', () => {
       expect(state).toEqual(firstChange.blocks);
     });
 
-    it('redo event inside Editor\'s holder has to cause changes in Undo Plugin stack', () => {
+    it('redo event, with default shortcut, inside Editor\'s holder has to cause changes in Undo Plugin stack', () => {
       undo.undo();
 
       const keyboardEvent = new KeyboardEvent('keydown', {
@@ -197,6 +229,41 @@ describe('Undo', () => {
       expect(undo.position).toEqual(2);
       const { state } = undo.stack[2];
       expect(state).toEqual(secondChange.blocks);
+    });
+
+    it('redo event, with custom shortcut, inside Editor\'s holder has to cause changes in Undo Plugin stack', () => {
+      undo.shortcut('ctrlKey+x', 'ctrlKey+c');
+      undo.undo();
+
+      const keyboardEvent = new KeyboardEvent('keydown', {
+        key: 'c',
+        metaKey: true,
+        ctrlKey: true,
+      });
+
+      editor.configuration.holder.dispatchEvent(keyboardEvent);
+
+      expect(undo.count()).toEqual(2);
+      expect(undo.position).toEqual(2);
+      const { state } = undo.stack[2];
+      expect(state).toEqual(secondChange.blocks);
+    });
+
+    it('redo event, with default shortcut if the shortcuts has been customized, inside Editor\'s holder has not to cause changes in Undo Plugin stack', () => {
+      undo.shortcut('ctrlKey+x', 'ctrlKey+c');
+      undo.undo();
+      const keyboardEvent = new KeyboardEvent('keydown', {
+        key: 'y',
+        metaKey: true,
+        ctrlKey: true,
+      });
+
+      editor.configuration.holder.dispatchEvent(keyboardEvent);
+
+      expect(undo.count()).toEqual(2);
+      expect(undo.position).toEqual(1);
+      const { state } = undo.stack[1];
+      expect(state).toEqual(firstChange.blocks);
     });
   });
 

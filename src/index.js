@@ -31,6 +31,10 @@ export default class Undo {
     this.maxLength = maxLength || defaultOptions.maxLength;
     this.onUpdate = onUpdate || defaultOptions.onUpdate;
 
+    const buttonKey = /(Mac)/i.test(navigator.platform) ? 'metaKey' : 'ctrlKey';
+    this.shortcutUndo = `${buttonKey}+z`;
+    this.shortcutRedo = `${buttonKey}+y`;
+
     const observer = new Observer(
       () => this.registerChange(),
       this.holder,
@@ -189,34 +193,42 @@ export default class Undo {
   }
 
   /**
-   * Sets events listeners to allow keyboard actions support.
+   * Sets up the shortcuts to undo and redo
+   * @param {string} shortcutUndo shortcut to the Undo action, it is by default ctrlKey+z
+   * @param {string} shortcutRedo shortcut to the Redo action, it is by default ctrlKey+y
    */
+
+  shortcut(shortcutUndo = this.shortcutUndo, shortcutRedo = this.shortcutRedo) {
+    this.shortcutRedo = shortcutRedo;
+    this.shortcutUndo = shortcutUndo;
+  }
+
+  /**
+   * Sets events listeners to allow keyboard actions support
+   */
+
   setEventListeners() {
     const { holder } = this;
-    const buttonKey = /(Mac)/i.test(navigator.platform) ? 'metaKey' : 'ctrlKey';
 
     const handleUndo = (e) => {
-      if (e[buttonKey] && e.key === 'z') {
+      const buttonKeyUndo = this.shortcutUndo.replace(/ /g, '').split('+')[0];
+      const keyUndo = this.shortcutUndo.replace(/ /g, '').split('+')[1];
+      if (e[buttonKeyUndo] && e.key === keyUndo) {
         e.preventDefault();
         this.undo();
       }
     };
 
     const handleRedo = (e) => {
-      if (e[buttonKey] && e.key === 'y') {
+      const buttonKeyRedo = this.shortcutRedo.replace(/ /g, '').split('+')[0];
+      const keyRedo = this.shortcutRedo.replace(/ /g, '').split('+')[1];
+      if (e[buttonKeyRedo] && e.key === keyRedo) {
         e.preventDefault();
         this.redo();
       }
     };
 
-    const handleDestroy = () => {
-      holder.removeEventListener('keydown', handleUndo);
-      holder.removeEventListener('keydown', handleRedo);
-    };
-
     holder.addEventListener('keydown', handleUndo);
     holder.addEventListener('keydown', handleRedo);
-    holder.addEventListener('destroy', handleDestroy);
   }
-
 }
