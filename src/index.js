@@ -15,10 +15,17 @@ export default class Undo {
   /**
    * @param options — Plugin custom options.
    */
-  constructor({ editor, onUpdate, maxLength }) {
+  constructor({ editor, config, onUpdate, maxLength }) {
+    const buttonKey = /(Mac)/i.test(navigator.platform) ? 'metaKey' : 'ctrlKey';
     const defaultOptions = {
       maxLength: 30,
       onUpdate() {},
+      config: {
+        shortcuts: {
+          undo: `${buttonKey}+z`,
+          redo: `${buttonKey}+y`,
+        },
+      },
     };
 
     const { configuration } = editor;
@@ -30,10 +37,17 @@ export default class Undo {
     this.readOnly = configuration.readOnly;
     this.maxLength = maxLength || defaultOptions.maxLength;
     this.onUpdate = onUpdate || defaultOptions.onUpdate;
+    this.config = {
+      shortcuts: {
+        undo: defaultOptions.config.shortcuts.undo,
+        redo: defaultOptions.config.shortcuts.redo,
+      },
+    };
 
-    const buttonKey = /(Mac)/i.test(navigator.platform) ? 'metaKey' : 'ctrlKey';
-    this.shortcutUndo = `${buttonKey}+z`;
-    this.shortcutRedo = `${buttonKey}+y`;
+    if (config && config.shortcuts) {
+      this.config.shortcuts.undo = config.shortcuts.undo;
+      this.config.shortcuts.redo = config.shortcuts.redo;
+    }
 
     const observer = new Observer(
       () => this.registerChange(),
@@ -192,16 +206,6 @@ export default class Undo {
     return this.stack.length - 1; // -1 because of initial item
   }
 
-  /**
-   * Sets up the shortcuts to undo and redo
-   * @param {string} shortcutUndo shortcut to the Undo action, it is by default ctrlKey+z
-   * @param {string} shortcutRedo shortcut to the Redo action, it is by default ctrlKey+y
-   */
-
-  shortcut(shortcutUndo = this.shortcutUndo, shortcutRedo = this.shortcutRedo) {
-    this.shortcutRedo = shortcutRedo;
-    this.shortcutUndo = shortcutUndo;
-  }
 
   /**
    * Sets events listeners to allow keyboard actions support
@@ -209,26 +213,36 @@ export default class Undo {
 
   setEventListeners() {
     const { holder } = this;
+    const keysUndo = this.config.shortcuts.undo.replace(/ /g, '').split('+');
+    const keysRedo = this.config.shortcuts.redo.replace(/ /g, '').split('+');
+
+    const pressedKeys = (e, keys) => {
+      if (keys.length === 2 && e[keys[0]] && e.key === keys[1]) return true;
+      if (keys.length === 3 && e[keys[0]] && e[keys[1]] && e.key === keys[2]) return true;
+      return false;
+    };
 
     const handleUndo = (e) => {
-      const buttonKeyUndo = this.shortcutUndo.replace(/ /g, '').split('+')[0];
-      const keyUndo = this.shortcutUndo.replace(/ /g, '').split('+')[1];
-      if (e[buttonKeyUndo] && e.key === keyUndo) {
+      if (pressedKeys(e, keysUndo)) {
         e.preventDefault();
         this.undo();
       }
     };
 
     const handleRedo = (e) => {
-      const buttonKeyRedo = this.shortcutRedo.replace(/ /g, '').split('+')[0];
-      const keyRedo = this.shortcutRedo.replace(/ /g, '').split('+')[1];
-      if (e[buttonKeyRedo] && e.key === keyRedo) {
+      if (pressedKeys(e, keysRedo)) {
         e.preventDefault();
         this.redo();
       }
     };
 
+    const handleDestroy = () => {
+      holder.removeEventListener('keydown', handleUndo);
+      holder.removeEventListener('keydown', handleRedo);
+    };
+
     holder.addEventListener('keydown', handleUndo);
     holder.addEventListener('keydown', handleRedo);
+    holder.addEventListener('destroy', handleDestroy);
   }
 }
