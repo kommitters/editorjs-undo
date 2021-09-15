@@ -55,7 +55,7 @@ const editor = new EditorJS({
 
 **Note:** If you do not add any shortcut, the default shortcuts will be set up.
 
-If you want to add custom shortcuts, add a new Tool to the `tools` property of the Editor.js initial config, then pass the shortcuts inside the config property, the shortcuts must be called `undo` and `redo`.
+If you want to add custom shortcuts, pass a config object with a shortcut key in the undo instance, the shortcuts must be called `undo` and `redo`.
 
 ```javascript
 const config = {
@@ -65,39 +65,13 @@ const config = {
   }
 }
 const editor = new EditorJS({
-  tools: {
-    undo : {
-      class: Undo,
-      config: config,
-    },
-  }
-});
-```
-You can set up each shortcut with two or three keys, remember the special keys (ctrlKey, altKey, shiftKey, metaKey). 
-
-Finally, you must pass the config property in the undo instance. 
-
-```javascript
-const config = {
-  shortcuts: {
-    undo: 'ctrlKey+x',
-    redo: 'ctrlKey+altKey+c'
-  }
-}
-const editor = new EditorJS({
-  holder: 'editorjs',
-  tools: {
-    undo: {
-      class: Undo,
-      config: config,
-    },
-  },
-
   onReady: () => {
     const undo = new Undo({ editor, config });
   },
 });
 ```
+
+You can set each shortcut with two or three keys, remember the special keys (ctrlKey, altKey, shiftKey, metaKey). 
 
 ### Available Options
 

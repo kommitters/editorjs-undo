@@ -15,7 +15,7 @@ export default class Undo {
   /**
    * @param options — Plugin custom options.
    */
-  constructor({ editor, config, onUpdate, maxLength }) {
+  constructor({ editor, config = {}, onUpdate, maxLength }) {
     const buttonKey = /(Mac)/i.test(navigator.platform) ? 'metaKey' : 'ctrlKey';
     const defaultOptions = {
       maxLength: 30,
@@ -30,6 +30,8 @@ export default class Undo {
 
     const { configuration } = editor;
     const { holder } = configuration;
+    const defaultShortcuts = defaultOptions.config.shortcuts;
+    const { shortcuts = defaultShortcuts } = config;
 
     this.holder = typeof holder === 'string' ? document.getElementById(holder) : holder;
     this.editor = editor;
@@ -37,17 +39,7 @@ export default class Undo {
     this.readOnly = configuration.readOnly;
     this.maxLength = maxLength || defaultOptions.maxLength;
     this.onUpdate = onUpdate || defaultOptions.onUpdate;
-    this.config = {
-      shortcuts: {
-        undo: defaultOptions.config.shortcuts.undo,
-        redo: defaultOptions.config.shortcuts.redo,
-      },
-    };
-
-    if (config && config.shortcuts) {
-      this.config.shortcuts.undo = config.shortcuts.undo;
-      this.config.shortcuts.redo = config.shortcuts.redo;
-    }
+    this.config = { shortcuts };
 
     const observer = new Observer(
       () => this.registerChange(),
@@ -213,8 +205,10 @@ export default class Undo {
 
   setEventListeners() {
     const { holder } = this;
-    const keysUndo = this.config.shortcuts.undo.replace(/ /g, '').split('+');
-    const keysRedo = this.config.shortcuts.redo.replace(/ /g, '').split('+');
+    const { shortcuts } = this.config;
+    const { undo, redo } = shortcuts;
+    const keysUndo = undo.replace(/ /g, '').split('+');
+    const keysRedo = redo.replace(/ /g, '').split('+');
 
     const pressedKeys = (e, keys) => {
       if (keys.length === 2 && e[keys[0]] && e.key === keys[1]) return true;
