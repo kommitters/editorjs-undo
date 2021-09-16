@@ -16,14 +16,13 @@ export default class Undo {
    * @param options — Plugin custom options.
    */
   constructor({ editor, config = {}, onUpdate, maxLength }) {
-    const buttonKey = /(Mac)/i.test(navigator.platform) ? 'metaKey' : 'ctrlKey';
     const defaultOptions = {
       maxLength: 30,
       onUpdate() {},
       config: {
         shortcuts: {
-          undo: `${buttonKey}+z`,
-          redo: `${buttonKey}+y`,
+          undo: 'CMD+Z',
+          redo: 'CMD+Y',
         },
       },
     };
@@ -198,6 +197,24 @@ export default class Undo {
     return this.stack.length - 1; // -1 because of initial item
   }
 
+  /**
+   * Parses the keys passed in the shortcut property to accept CMD,ALT and SHIFT
+   *
+   * @param {Array} keys are the keys passed in shortcuts in config
+   * @returns {Array}
+   */
+
+  parseKeys(keys) {
+    const specialKeys = {
+      CMD: (/(Mac)/i.test(navigator.platform) ? 'metaKey' : 'ctrlKey'),
+      ALT: 'altKey',
+      SHIFT: 'shiftKey',
+    };
+    const parsedKeys = keys.slice(0, -1).map((key) => specialKeys[key]);
+    const letterKey = parsedKeys.includes('shiftKey') ? keys[keys.length - 1].toUpperCase() : keys[keys.length - 1].toLowerCase();
+    parsedKeys.push(letterKey);
+    return parsedKeys;
+  }
 
   /**
    * Sets events listeners to allow keyboard actions support
@@ -210,6 +227,9 @@ export default class Undo {
     const keysUndo = undo.replace(/ /g, '').split('+');
     const keysRedo = redo.replace(/ /g, '').split('+');
 
+    const keysUndoParsed = this.parseKeys(keysUndo);
+    const keysRedoParsed = this.parseKeys(keysRedo);
+
     const pressedKeys = (e, keys) => {
       if (keys.length === 2 && e[keys[0]] && e.key === keys[1]) return true;
       if (keys.length === 3 && e[keys[0]] && e[keys[1]] && e.key === keys[2]) return true;
@@ -217,14 +237,14 @@ export default class Undo {
     };
 
     const handleUndo = (e) => {
-      if (pressedKeys(e, keysUndo)) {
+      if (pressedKeys(e, keysUndoParsed)) {
         e.preventDefault();
         this.undo();
       }
     };
 
     const handleRedo = (e) => {
-      if (pressedKeys(e, keysRedo)) {
+      if (pressedKeys(e, keysRedoParsed)) {
         e.preventDefault();
         this.redo();
       }

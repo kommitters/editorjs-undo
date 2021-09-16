@@ -205,7 +205,6 @@ describe('Undo', () => {
     let undo;
 
     beforeEach(() => {
-      editor.configuration.tools = tools;
       const { config } = tools.undo;
       undo = new Undo({ editor, config });
       undo.initialize(initialData.blocks);

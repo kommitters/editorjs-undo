@@ -60,8 +60,8 @@ If you want to add custom shortcuts, pass a config object with a shortcut key in
 ```javascript
 const config = {
   shortcuts: {
-    undo: 'ctrlKey+x',
-    redo: 'ctrlKey+altKey+c'
+    undo: 'CMD+X',
+    redo: 'CMD+ALT+C'
   }
 }
 const editor = new EditorJS({
@@ -71,7 +71,7 @@ const editor = new EditorJS({
 });
 ```
 
-You can set each shortcut with two or three keys, remember the special keys (ctrlKey, altKey, shiftKey, metaKey). 
+You can set each shortcut with two or three keys, the available special keys are: CMD, ALT, SHIFT. CMD will be set up automatically as <kbd>Ctrl</kbd> or <kbd>⌘</kbd> depending on your OS.
 
 ### Available Options
 

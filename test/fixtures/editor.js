@@ -33,8 +33,8 @@ const tools = {
   undo: {
     config: {
       shortcuts: {
-        undo: 'ctrlKey+x',
-        redo: 'ctrlKey+altKey+c',
+        undo: 'CMD+X',
+        redo: 'CMD+C',
       },
     },
   },
