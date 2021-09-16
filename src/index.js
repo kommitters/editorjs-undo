@@ -211,7 +211,8 @@ export default class Undo {
       SHIFT: 'shiftKey',
     };
     const parsedKeys = keys.slice(0, -1).map((key) => specialKeys[key]);
-    const letterKey = parsedKeys.includes('shiftKey') ? keys[keys.length - 1].toUpperCase() : keys[keys.length - 1].toLowerCase();
+    const lastItem = keys[keys.length - 1];
+    const letterKey = parsedKeys.includes('shiftKey') ? lastItem.toUpperCase() : lastItem.toLowerCase();
     parsedKeys.push(letterKey);
     return parsedKeys;
   }
