@@ -51,6 +51,28 @@ const editor = new EditorJS({
 });
 ```
 
+### Add a custom shortcut to undo and redo
+
+**Note:** If you do not add any shortcut, the default shortcuts will be set up.
+
+If you want to add custom shortcuts, pass a config object with a shortcut key in the undo instance, the shortcuts must be called `undo` and `redo`.
+
+```javascript
+const config = {
+  shortcuts: {
+    undo: 'CMD+X',
+    redo: 'CMD+ALT+C'
+  }
+}
+const editor = new EditorJS({
+  onReady: () => {
+    const undo = new Undo({ editor, config });
+  },
+});
+```
+
+You can set each shortcut with two or three keys, the available special keys are: CMD, ALT, SHIFT. CMD will be set up automatically as <kbd>Ctrl</kbd> or <kbd>⌘</kbd> depending on your OS.
+
 ### Available Options
 
 | Field      | Type       | Description                                                    |
@@ -58,6 +80,7 @@ const editor = new EditorJS({
 | editor     | `EditorJS`   | **Required.** The EditorJS instance.                         |
 | maxLength  | `Number`   | Max amount of changes recorded by the history stack.           |
 | onUpdate() | `function` | Callback called when the user performs an undo or redo action. |
+| config     | `object`   | Set up the configuration to editorjs-undo like the shortcuts   |
 
 ## Development
 
