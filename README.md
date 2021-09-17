@@ -82,6 +82,36 @@ You can set each shortcut with two or three keys, the available special keys are
 | onUpdate() | `function` | Callback called when the user performs an undo or redo action. |
 | config     | `object`   | Set up the configuration to editorjs-undo like the shortcuts   |
 
+### Usage with [react-editor-js](https://github.com/Jungwoo-An/react-editor-js).
+
+If you are using [react-editor-js](https://github.com/Jungwoo-An/react-editor-js), you could create a function to handle the onReady property, the function will store the undo instance and the respective configuration or initialize method if you want to use them. Then, you must call the function in onReady in the editorJS instance.   
+
+```javascript
+const handleReady = (editor) => {
+  new Undo({ editor });
+};
+
+class ReactEditor extends Component {
+  render() {
+    return (
+      <EditorJs
+        onReady = { handleReady }
+        tools = { ... }
+      />
+    )
+  }
+}
+```
+**Note:** If you are already using [editorjs-drag-drop](https://github.com/kommitters/editorjs-drag-drop) your handleReady function must have the editorjs-drag-drop instance.
+
+```javascript
+const handleReady = (editor) => {
+  new Undo({ editor });
+  new DragDrop(editor);
+};
+
+```
+
 ## Development
 
 **Development mode**
