@@ -206,13 +206,15 @@ export default class Undo {
 
   parseKeys(keys) {
     const specialKeys = {
-      CMD: (/(Mac)/i.test(navigator.platform) ? 'metaKey' : 'ctrlKey'),
+      CMD: /(Mac)/i.test(navigator.platform) ? 'metaKey' : 'ctrlKey',
       ALT: 'altKey',
       SHIFT: 'shiftKey',
     };
     const parsedKeys = keys.slice(0, -1).map((key) => specialKeys[key]);
-    const lastItem = keys[keys.length - 1];
-    const letterKey = parsedKeys.includes('shiftKey') ? lastItem.toUpperCase() : lastItem.toLowerCase();
+    const letterKey = parsedKeys.includes('shiftKey')
+      ? keys[keys.length - 1].toUpperCase()
+      : keys[keys.length - 1].toLowerCase();
+
     parsedKeys.push(letterKey);
     return parsedKeys;
   }
@@ -233,7 +235,9 @@ export default class Undo {
 
     const pressedKeys = (e, keys) => {
       if (keys.length === 2 && e[keys[0]] && e.key === keys[1]) return true;
-      if (keys.length === 3 && e[keys[0]] && e[keys[1]] && e.key === keys[2]) return true;
+      if (keys.length === 3 && e[keys[0]] && e[keys[1]] && e.key === keys[2]) {
+        return true;
+      }
       return false;
     };
 
