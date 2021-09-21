@@ -29,4 +29,15 @@ const readOnlyEditor = {
   },
 };
 
-export { editor, readOnlyEditor };
+const tools = {
+  undo: {
+    config: {
+      shortcuts: {
+        undo: 'CMD+X',
+        redo: 'CMD+C',
+      },
+    },
+  },
+};
+
+export { editor, readOnlyEditor, tools };

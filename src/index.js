@@ -15,14 +15,22 @@ export default class Undo {
   /**
    * @param options — Plugin custom options.
    */
-  constructor({ editor, onUpdate, maxLength }) {
+  constructor({ editor, config = {}, onUpdate, maxLength }) {
     const defaultOptions = {
       maxLength: 30,
       onUpdate() {},
+      config: {
+        shortcuts: {
+          undo: 'CMD+Z',
+          redo: 'CMD+Y',
+        },
+      },
     };
 
     const { configuration } = editor;
     const { holder } = configuration;
+    const defaultShortcuts = defaultOptions.config.shortcuts;
+    const { shortcuts = defaultShortcuts } = config;
 
     this.holder = typeof holder === 'string' ? document.getElementById(holder) : holder;
     this.editor = editor;
@@ -30,6 +38,7 @@ export default class Undo {
     this.readOnly = configuration.readOnly;
     this.maxLength = maxLength || defaultOptions.maxLength;
     this.onUpdate = onUpdate || defaultOptions.onUpdate;
+    this.config = { shortcuts };
 
     const observer = new Observer(
       () => this.registerChange(),
@@ -189,21 +198,58 @@ export default class Undo {
   }
 
   /**
-   * Sets events listeners to allow keyboard actions support.
+   * Parses the keys passed in the shortcut property to accept CMD,ALT and SHIFT
+   *
+   * @param {Array} keys are the keys passed in shortcuts in config
+   * @returns {Array}
    */
+
+  parseKeys(keys) {
+    const specialKeys = {
+      CMD: /(Mac)/i.test(navigator.platform) ? 'metaKey' : 'ctrlKey',
+      ALT: 'altKey',
+      SHIFT: 'shiftKey',
+    };
+    const parsedKeys = keys.slice(0, -1).map((key) => specialKeys[key]);
+    const letterKey = parsedKeys.includes('shiftKey')
+      ? keys[keys.length - 1].toUpperCase()
+      : keys[keys.length - 1].toLowerCase();
+
+    parsedKeys.push(letterKey);
+    return parsedKeys;
+  }
+
+  /**
+   * Sets events listeners to allow keyboard actions support
+   */
+
   setEventListeners() {
     const { holder } = this;
-    const buttonKey = /(Mac)/i.test(navigator.platform) ? 'metaKey' : 'ctrlKey';
+    const { shortcuts } = this.config;
+    const { undo, redo } = shortcuts;
+    const keysUndo = undo.replace(/ /g, '').split('+');
+    const keysRedo = redo.replace(/ /g, '').split('+');
+
+    const keysUndoParsed = this.parseKeys(keysUndo);
+    const keysRedoParsed = this.parseKeys(keysRedo);
+
+    const pressedKeys = (e, keys) => {
+      if (keys.length === 2 && e[keys[0]] && e.key === keys[1]) return true;
+      if (keys.length === 3 && e[keys[0]] && e[keys[1]] && e.key === keys[2]) {
+        return true;
+      }
+      return false;
+    };
 
     const handleUndo = (e) => {
-      if (e[buttonKey] && e.key === 'z') {
+      if (pressedKeys(e, keysUndoParsed)) {
         e.preventDefault();
         this.undo();
       }
     };
 
     const handleRedo = (e) => {
-      if (e[buttonKey] && e.key === 'y') {
+      if (pressedKeys(e, keysRedoParsed)) {
         e.preventDefault();
         this.redo();
       }
@@ -218,5 +264,4 @@ export default class Undo {
     holder.addEventListener('keydown', handleRedo);
     holder.addEventListener('destroy', handleDestroy);
   }
-
 }

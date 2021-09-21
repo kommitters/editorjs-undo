@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.3.0 (21.09.2021)
+* Custom undo/redo keyboard shortcuts allowed.
+* Updated packages with known security breaches.
+
 ## 0.2.0 (09.09.2021)
 * Accept strings in the holder key.
 * Updated packages with known security breaches.
