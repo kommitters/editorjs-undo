@@ -1,3 +1,6 @@
+/**
+ * @jest-environment jsdom
+ */
 import Undo from '../src/index';
 import {
   initialData,
