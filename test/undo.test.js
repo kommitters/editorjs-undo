@@ -40,7 +40,7 @@ describe('Undo', () => {
       undo = new Undo({ editor });
     });
 
-    const intialStackData = { index: 0, state: [] };
+    const intialStackData = { index: 0, state: [{ type: 'paragraph', data: { text: '' } }] };
 
     it('is unable to perform an undo operation in an empty stack', () => {
       expect(undo.canUndo()).toBe(false);
