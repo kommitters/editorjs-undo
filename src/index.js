@@ -91,7 +91,7 @@ export default class Undo {
   clear() {
     this.stack = this.initialItem
       ? [this.initialItem]
-      : [{ index: 0, state: [] }];
+      : [{ index: 0, state: [{ type: 'paragraph', data: { text: '' } }] }];
     this.position = 0;
     this.onUpdate();
   }
@@ -118,6 +118,7 @@ export default class Undo {
    */
   editorDidUpdate(newData) {
     const { state } = this.stack[this.position];
+    if (!newData.length) return false;
     if (newData.length !== state.length) return true;
 
     return JSON.stringify(state) !== JSON.stringify(newData);
