@@ -1,5 +1,8 @@
 # Changelog
 
+## 1.0.0 (22.11.2021)
+* Set the initial stack data to avoid deleting all the blocks in the last undo. 
+
 ## 0.3.0 (21.09.2021)
 * Custom undo/redo keyboard shortcuts allowed.
 * Updated packages with known security breaches.
