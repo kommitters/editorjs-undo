@@ -1,5 +1,8 @@
 # Changelog
 
+## 1.0.1 (07.12.2021)
+* Updated packages with known security breaches. 
+
 ## 1.0.0 (22.11.2021)
 * Set the initial stack data to avoid deleting all the blocks in the last undo. 
 
