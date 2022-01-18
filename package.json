@@ -1,0 +1,58 @@
+{
+  "name": "editorjs-toggle-block",
+  "version": "0.1.0",
+  "description": "Toogle block tool for Editor.js",
+  "main": "./dist/bundle.js",
+  "scripts": {
+    "build": "webpack --mode production",
+    "build:dev": "webpack --mode development --watch",
+    "test": "jest",
+    "lint": "eslint ."
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/kommitters/editorjs-toggle-block.git"
+  },
+  "keywords": [
+    "toggle",
+    "block",
+    "tool",
+    "editor.js",
+    "editorjs"
+  ],
+  "author": {
+    "name": "kommitters Open Source",
+    "email": "oss@kommit.co"
+  },
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/kommitters/editorjs-toggle-block/issues"
+  },
+  "homepage": "https://github.com/kommitters/editorjs-toggle-block#readme",
+  "devDependencies": {
+    "@babel/core": "^7.16.7",
+    "@babel/preset-env": "^7.16.8",
+    "@testing-library/jest-dom": "^5.16.1",
+    "babel-jest": "^27.4.6",
+    "babel-loader": "^8.2.3",
+    "css-loader": "^6.5.1",
+    "eslint": "^8.7.0",
+    "eslint-config-airbnb-base": "^15.0.0",
+    "eslint-plugin-import": "^2.25.4",
+    "eslint-plugin-jest": "^25.7.0",
+    "jest": "^27.4.7",
+    "style-loader": "^3.3.1",
+    "svg-inline-loader": "^0.8.2",
+    "webpack": "^5.66.0",
+    "webpack-cli": "^4.9.1"
+  },
+  "jest": {
+    "setupFilesAfterEnv": [
+      "<rootDir>/test/config/setupTests.js"
+    ],
+    "transform": {
+      "^.+\\.jsx?$": "babel-jest",
+      "^.+\\.(css|svg)$": "<rootDir>/test/config/assetsTransform.js"
+    }
+  }
+}
