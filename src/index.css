@@ -1,0 +1,14 @@
+.toggle-block .toggle-input {
+  vertical-align: middle;
+  display: inline-block;
+  padding: 1% 0 1% 0;
+  outline: none;
+  border: none;
+  min-width: 94%;
+}
+
+.toggle-block svg {
+  vertical-align: middle;
+  width: 34px;
+  height: 34px;
+}
