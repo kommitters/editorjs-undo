@@ -20,26 +20,23 @@ describe('ToggleBlock', () => {
 
   describe('validates toggle components', () => {
     let toggle;
-    let input;
 
     beforeEach(() => {
       toggle = toggleBock.render();
-      input = toggle.querySelector('div');
     });
 
     it('validates toggle class', () => {
-      expect(toggle).toHaveClass('toggle-block');
+      expect(toggle).toHaveClass('toggle-block__selector');
     });
 
     it('validates toggle input', () => {
-      expect(input).toHaveClass('toggle-input');
+      const input = toggle.querySelector('div');
+      expect(input).toHaveClass('toggle-block__input');
     });
 
-    it('validates toggle icon as first element within the toggle-block', () => {
-      const { firstChild, lastChild } = toggle;
-      const icon = firstChild !== lastChild && input === lastChild;
-
-      expect(icon).toBe(true);
+    it('validates toggle icon', () => {
+      const icon = toggle.querySelector('span');
+      expect(icon).toHaveClass('toggle-block__icon');
     });
   });
 });

@@ -1,4 +1,4 @@
-.toggle-block .toggle-input {
+.toggle-block__selector .toggle-block__input {
   vertical-align: middle;
   display: inline-block;
   padding: 1% 0 1% 0;
@@ -7,8 +7,13 @@
   min-width: 94%;
 }
 
-.toggle-block svg {
+.toggle-block__icon svg {
   vertical-align: middle;
   width: 34px;
   height: 34px;
+}
+
+.toggle-block__icon:hover {
+  color: #388ae5;
+  cursor: pointer;
 }
