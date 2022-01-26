@@ -1,14 +1,14 @@
-.toggle-block__selector .toggle-block__input {
+.toggle-block__selector > div{
   vertical-align: middle;
   display: inline-block;
   padding: 1% 0 1% 0;
   outline: none;
   border: none;
-  min-width: 94%;
+  width: 90%;
 }
 
-.toggle-block__icon svg {
-  vertical-align: middle;
+.toggle-block__icon > svg {
+  vertical-align: top;
   width: 34px;
   height: 34px;
 }
@@ -16,4 +16,8 @@
 .toggle-block__icon:hover {
   color: #388ae5;
   cursor: pointer;
+}
+
+.toggle-block__paragraph {
+  margin-left: 34px;
 }

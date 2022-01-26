@@ -14,7 +14,7 @@ describe('ToggleBlock', () => {
     });
 
     it('return false if data is not valid', () => {
-      expect(toggleBock.validate({ text: '' })).toBe(false);
+      expect(toggleBock.validate({ text: '', status: 'opened', items: [] })).toBe(false);
     });
   });
 
