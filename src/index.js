@@ -45,7 +45,7 @@ export default class ToggleBlock {
     this.wrapper.appendChild(input);
 
     this.data.items.forEach((item) => {
-      this._insertParagraph(item);
+      this._renderParagraph(item);
     });
 
     return this.wrapper;
@@ -53,9 +53,7 @@ export default class ToggleBlock {
 
   save(blockContent) {
     const caption = blockContent.querySelector('div');
-    const paragraphs = blockContent.querySelectorAll(
-      '.toggle-block__paragraph',
-    );
+    const paragraphs = blockContent.querySelectorAll('.toggle-block__paragraph');
     const items = [];
 
     paragraphs.forEach((item) => items.push(item.innerHTML));
@@ -100,21 +98,33 @@ export default class ToggleBlock {
 
       button.classList.add('cdx-settings-button');
       button.innerHTML = tune.icon;
-      wrapper.appendChild(button);
 
       button.addEventListener('click', () => {
         if (tune.name === 'insertParagraph') {
-          this._insertParagraph();
+          this.insertParagraph();
         } else {
-          this._removeParagraph();
+          this.removeParagraph();
         }
       });
+
+      wrapper.appendChild(button);
     });
 
     return wrapper;
   }
 
-  _insertParagraph(text = '') {
+  _renderParagraph(paragraph = '') {
+    const currenStatus = this.data.status;
+
+    this.insertParagraph(paragraph);
+
+    if (currenStatus !== this.data.status) {
+      this.wrapper.firstChild.innerHTML = this._resolveToggleAction();
+      this._hideAndShowParagraphs();
+    }
+  }
+
+  insertParagraph(text = '') {
     if (this.data.status === 'closed') {
       this.wrapper.firstChild.innerHTML = this._resolveToggleAction();
       this._hideAndShowParagraphs();
@@ -126,14 +136,10 @@ export default class ToggleBlock {
     paragraph.contentEditable = true;
     paragraph.innerHTML = text || '';
 
-    if (this.data.status === 'closed') {
-      paragraph.setAttribute('hidden', true);
-    }
-
     this.wrapper.appendChild(paragraph);
   }
 
-  _removeParagraph() {
+  removeParagraph() {
     const paragraph = this.wrapper.lastChild;
     if (paragraph.classList.value === 'toggle-block__paragraph') {
       paragraph.remove();
@@ -145,7 +151,7 @@ export default class ToggleBlock {
 
     if (this.data.status === 'closed') {
       icon = toggleIconSecundary;
-      this.data.status = 'opened';
+      this.data.status = 'open';
     } else {
       this.data.status = 'closed';
     }

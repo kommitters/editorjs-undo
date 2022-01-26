@@ -3,7 +3,7 @@
  */
 const data = {
   text: 'This line is a text example',
-  status: 'opened',
+  status: 'closed',
   items: ['My first line', '', 'The previous line was empty'],
 };
 
