@@ -27,6 +27,7 @@ export default class Undo {
       },
     };
 
+    const { blocks, caret } = editor;
     const { configuration } = editor;
     const { holder } = configuration;
     const defaultShortcuts = defaultOptions.config.shortcuts;
@@ -34,6 +35,8 @@ export default class Undo {
 
     this.holder = typeof holder === 'string' ? document.getElementById(holder) : holder;
     this.editor = editor;
+    this.blocks = blocks;
+    this.caret = caret;
     this.shouldSaveHistory = true;
     this.readOnly = configuration.readOnly;
     this.maxLength = maxLength || defaultOptions.maxLength;
@@ -135,7 +138,7 @@ export default class Undo {
 
     this.stack = this.stack.slice(0, this.position + 1);
 
-    const index = this.editor.blocks.getCurrentBlockIndex();
+    const index = this.blocks.getCurrentBlockIndex();
     this.stack.push({ index, state });
     this.position += 1;
     this.onUpdate();
@@ -145,13 +148,13 @@ export default class Undo {
    * insert a block deleted previously
    * @param {Array} state is the current state according to this.position.
    * @param {Array} compState is the state to compare and know the deleted block.
-   * @param {Array} index is the block index in state.
+   * @param {Number} index is the block index in state.
    */
   insertDeletedBlock(state, compState, index) {
     for (let i = 0; i < state.length; i += 1) {
       if (!compState[i] || state[i].id !== compState[i].id) {
-        this.editor.blocks.insert(state[i].type, state[i].data, {}, i, true);
-        this.editor.caret.setToBlock(index, 'end');
+        this.blocks.insert(state[i].type, state[i].data, {}, i, true);
+        this.caret.setToBlock(index, 'end');
         break;
       }
     }
@@ -161,7 +164,7 @@ export default class Undo {
    * return true if a block was dropped previously
    * @param {Array} state is the current state according to this.position.
    * @param {Array} compState is the state to compare and know the dropped block.
-   * @returns true if the block was dropped
+   * @returns {Boolean} true if the block was dropped
    */
   blockWasDropped(state, compState) {
     if (state.length === compState.length) {
@@ -169,23 +172,25 @@ export default class Undo {
     }
     return false;
   }
+
   /**
    * return true if the block has to be deleted becuase it was skipped previously.
-   * @param {*} index is the block index in state.
-   * @param {*} compIndex is the index to compare and know if the block was inserted previously.
-   * @returns true if a block was inserted previously and it has to be deleted.
+   * @param {Number} index is the block index in state.
+   * @param {Number} compIndex is the index to compare and know if the block was inserted previously
+   * @param {Array} state is the current state according to this.position.
+   * @param {Array} compState is the stato to compare if there was a deleted block.
+   * @returns {Boolean} true if a block was inserted previously.
    */
-
-  blockWasSkipped(index, compIndex, state, nextState) {
-    return index < compIndex || state.length !== nextState.length;
+  blockWasSkipped(index, compIndex, state, compState) {
+    return index < compIndex || state.length !== compState.length;
   }
+
   /**
    * returns true if a block was deleted previously.
    * @param {Array} state is the current state according to this.position.
-   * @param {*} compState is the state to compare and know if a block was deleted.
-   * @returns true if a block was deleted previously.
+   * @param {Array} compState is the state to compare and know if a block was deleted.
+   * @returns {Boolean} true if a block was deleted previously.
    */
-
   blockWasDeleted(state, compState) {
     return state.length > compState.length;
   }
@@ -213,21 +218,21 @@ export default class Undo {
       }
 
       if (this.blockWasSkipped(index, nextIndex, state, nextState) && this.position !== 0) {
-        this.editor.blocks.delete();
-        this.editor.caret.setToBlock(index, 'end');
+        this.blocks.delete();
+        this.caret.setToBlock(index, 'end');
         return;
       }
 
       if (this.blockWasDropped(state, nextState) && this.position !== 0) {
-        this.editor.blocks
+        this.blocks
           .render({ blocks: state })
-          .then(() => this.editor.caret.setToBlock(index, 'end'));
+          .then(() => this.caret.setToBlock(index, 'end'));
         return;
       }
 
-      const { id } = this.editor.blocks.getBlockByIndex(index);
-      this.editor.blocks.update(id, state[index].data);
-      this.editor.caret.setToBlock(index, 'end');
+      const { id } = this.blocks.getBlockByIndex(index);
+      this.blocks.update(id, state[index].data);
+      this.caret.setToBlock(index, 'end');
     }
   }
 
@@ -242,29 +247,29 @@ export default class Undo {
       const prevState = this.stack[(this.position - 1)].state;
 
       if (this.blockWasDeleted(prevState, state)) {
-        this.editor.blocks.delete();
-        this.editor.caret.setToBlock(index, 'end');
+        this.blocks.delete();
+        this.caret.setToBlock(index, 'end');
         return;
       }
 
       if (this.blockWasSkipped(prevIndex, index, state, prevState)) {
-        this.editor.blocks.insert(state[index].type,
+        this.blocks.insert(state[index].type,
           state[index].data, {}, index, true);
-        this.editor.caret.setToBlock(index, 'end');
+        this.caret.setToBlock(index, 'end');
         return;
       }
 
       if (this.blockWasDropped(state, prevState) && this.position !== 1) {
-        this.editor.blocks
+        this.blocks
           .render({ blocks: state })
-          .then(() => this.editor.caret.setToBlock(index, 'end'));
+          .then(() => this.caret.setToBlock(index, 'end'));
         return;
       }
 
       this.onUpdate();
-      const { id } = this.editor.blocks.getBlockByIndex(index) || state[index];
-      this.editor.blocks.update(id, state[index].data);
-      this.editor.caret.setToBlock(index, 'end');
+      const { id } = this.blocks.getBlockByIndex(index) || state[index];
+      this.blocks.update(id, state[index].data);
+      this.caret.setToBlock(index, 'end');
     }
   }
 
