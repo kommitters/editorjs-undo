@@ -1,5 +1,10 @@
 # Changelog
 
+## 2.0.0-rc.0 (28.12.2022)
+* In the undo/redo actions the plugin now updates the involved block.
+* Update eslint-plugin-import to support eslint.
+* Solve linter errors.
+
 ## 1.0.1 (07.12.2021)
 * Updated packages with known security breaches. 
 
