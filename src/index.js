@@ -15,7 +15,12 @@ export default class Undo {
   /**
    * @param options — Plugin custom options.
    */
-  constructor({ editor, config = {}, onUpdate, maxLength }) {
+  constructor({
+    editor,
+    config = {},
+    onUpdate,
+    maxLength,
+  }) {
     const defaultOptions = {
       maxLength: 30,
       onUpdate() {},
@@ -27,6 +32,7 @@ export default class Undo {
       },
     };
 
+    const { blocks, caret } = editor;
     const { configuration } = editor;
     const { holder } = configuration;
     const defaultShortcuts = defaultOptions.config.shortcuts;
@@ -34,6 +40,8 @@ export default class Undo {
 
     this.holder = typeof holder === 'string' ? document.getElementById(holder) : holder;
     this.editor = editor;
+    this.blocks = blocks;
+    this.caret = caret;
     this.shouldSaveHistory = true;
     this.readOnly = configuration.readOnly;
     this.maxLength = maxLength || defaultOptions.maxLength;
@@ -135,39 +143,138 @@ export default class Undo {
 
     this.stack = this.stack.slice(0, this.position + 1);
 
-    const index = this.editor.blocks.getCurrentBlockIndex();
+    const index = this.blocks.getCurrentBlockIndex();
     this.stack.push({ index, state });
     this.position += 1;
     this.onUpdate();
   }
 
   /**
-   * Decreases the current position and renders the data in the editor.
+   * insert a block deleted previously
+   * @param {Array} state is the current state according to this.position.
+   * @param {Array} compState is the state to compare and know the deleted block.
+   * @param {Number} index is the block index in state.
    */
-  undo() {
-    if (this.canUndo()) {
-      this.shouldSaveHistory = false;
-      const { index, state } = this.stack[(this.position -= 1)];
-      this.onUpdate();
-
-      this.editor.blocks
-        .render({ blocks: state })
-        .then(() => this.editor.caret.setToBlock(index, 'end'));
+  insertDeletedBlock(state, compState, index) {
+    for (let i = 0; i < state.length; i += 1) {
+      if (!compState[i] || state[i].id !== compState[i].id) {
+        this.blocks.insert(state[i].type, state[i].data, {}, i, true);
+        this.caret.setToBlock(index, 'end');
+        break;
+      }
     }
   }
 
   /**
-   * Increases the current position and renders the data in the editor.
+   * return true if a block was dropped previously
+   * @param {Array} state is the current state according to this.position.
+   * @param {Array} compState is the state to compare and know the dropped block.
+   * @returns {Boolean} true if the block was dropped
+   */
+  blockWasDropped(state, compState) {
+    if (state.length === compState.length) {
+      return state.some((block, i) => block.id !== compState[i].id);
+    }
+    return false;
+  }
+
+  /**
+   * return true if the block has to be deleted becuase it was skipped previously.
+   * @param {Number} index is the block index in state.
+   * @param {Number} compIndex is the index to compare and know if the block was inserted previously
+   * @param {Array} state is the current state according to this.position.
+   * @param {Array} compState is the stato to compare if there was a deleted block.
+   * @returns {Boolean} true if a block was inserted previously.
+   */
+  blockWasSkipped(index, compIndex, state, compState) {
+    return index < compIndex || state.length !== compState.length;
+  }
+
+  /**
+   * returns true if a block was deleted previously.
+   * @param {Array} state is the current state according to this.position.
+   * @param {Array} compState is the state to compare and know if a block was deleted.
+   * @returns {Boolean} true if a block was deleted previously.
+   */
+  blockWasDeleted(state, compState) {
+    return state.length > compState.length;
+  }
+
+  /**
+   * Decreases the current position and update the respective block in the editor.
+   */
+  undo() {
+    if (this.canUndo()) {
+      this.shouldSaveHistory = false;
+      let { index } = this.stack[(this.position -= 1)];
+      const { state } = this.stack[(this.position)];
+      const nextIndex = this.stack[(this.position + 1)].index;
+      const nextState = this.stack[(this.position + 1)].state;
+      this.onUpdate();
+
+      if (!state[index]) {
+        index -= 1;
+        this.stack[this.position].index = index;
+      }
+
+      if (this.blockWasDeleted(state, nextState)) {
+        this.insertDeletedBlock(state, nextState, index);
+        return;
+      }
+
+      if (this.blockWasSkipped(index, nextIndex, state, nextState) && this.position !== 0) {
+        this.blocks.delete();
+        this.caret.setToBlock(index, 'end');
+        return;
+      }
+
+      if (this.blockWasDropped(state, nextState) && this.position !== 0) {
+        this.blocks
+          .render({ blocks: state })
+          .then(() => this.caret.setToBlock(index, 'end'));
+        return;
+      }
+
+      const { id } = this.blocks.getBlockByIndex(index);
+      this.blocks.update(id, state[index].data);
+      this.caret.setToBlock(index, 'end');
+    }
+  }
+
+  /**
+   * Increases the current position and update the respective block in the editor.
    */
   redo() {
     if (this.canRedo()) {
       this.shouldSaveHistory = false;
       const { index, state } = this.stack[(this.position += 1)];
-      this.onUpdate();
+      const prevIndex = this.stack[(this.position - 1)].index;
+      const prevState = this.stack[(this.position - 1)].state;
 
-      this.editor.blocks
-        .render({ blocks: state })
-        .then(() => this.editor.caret.setToBlock(index, 'end'));
+      if (this.blockWasDeleted(prevState, state)) {
+        this.blocks.delete();
+        this.caret.setToBlock(index, 'end');
+        return;
+      }
+
+      if (this.blockWasSkipped(prevIndex, index, state, prevState)) {
+        this.blocks.insert(state[index].type,
+          state[index].data, {}, index, true);
+        this.caret.setToBlock(index, 'end');
+        return;
+      }
+
+      if (this.blockWasDropped(state, prevState) && this.position !== 1) {
+        this.blocks
+          .render({ blocks: state })
+          .then(() => this.caret.setToBlock(index, 'end'));
+        return;
+      }
+
+      this.onUpdate();
+      const { id } = this.blocks.getBlockByIndex(index) || state[index];
+      this.blocks.update(id, state[index].data);
+      this.caret.setToBlock(index, 'end');
     }
   }
 
