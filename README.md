@@ -7,13 +7,33 @@ Undo/Redo feature for [Editor.js](https://editorjs.io).
 ![](assets/demo.gif)
 
 ## Installation
-
 ### Install via NPM
+
+### 2.x.x (beta)
+
+This new version 2.0.0-rc.0 introduces breaking changes. Remember that this is a beta version.
+
+Please, report bugs or behavior issues :).
+
+#### What's new?
+* Overall plugin performance is improved, especially with large documents. 
+* Undo/Redo lifecycle is managed through block updates instead of a full document render.
+* Solves issues in documents with several images, for example the blink with undo/redo.
 
 Get the package
 
 ```shell
-$ npm i --save-dev editorjs-undo
+$ npm i --save-dev editorjs-undo@2.0.0-rc.0
+```
+
+### 1.x.x (stable version)
+
+To install the latest v1 stable version
+
+Get the package
+
+```shell
+$ npm i --save-dev editorjs-undo@1.0.1
 ```
 
 Include module in your application
