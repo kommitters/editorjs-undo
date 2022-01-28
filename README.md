@@ -16,7 +16,7 @@ This new version 2.0.0-rc.0 introduces breaking changes. Remember that this is a
 Please, report bugs or behavior issues :).
 
 #### What's new?
-* Overall plugin performance is improved, specially in large documents. 
+* Overall plugin performance is improved, especially with large documents. 
 * Undo/Redo lifecycle is managed through block updates instead of a full document render.
 * Solves issues in documents with several images, for example the blink with undo/redo.
 
