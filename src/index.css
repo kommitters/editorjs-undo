@@ -1,4 +1,4 @@
-.toggle-block__selector > div{
+.toggle-block__selector > div {
   vertical-align: middle;
   display: inline-block;
   padding: 1% 0 1% 0;
@@ -20,4 +20,8 @@
 
 .toggle-block__paragraph {
   margin-left: 34px;
+}
+
+.toggle-block__selector br {
+  display: none;
 }

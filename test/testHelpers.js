@@ -3,8 +3,8 @@ function getHiddenAttribute(children) {
     let counter = 0;
     for (let i = 2; i < children.length; i += 1) {
       if (
-        children[i].attributes[1].name === 'hidden'
-        && children[i].attributes[1].value === 'true'
+        children[i].attributes[2].name === 'hidden'
+        && children[i].attributes[2].value === 'true'
       ) {
         counter += 1;
       }

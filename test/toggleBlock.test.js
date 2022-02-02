@@ -2,6 +2,8 @@ import createToggleBlock from './fixtures/toggle';
 import data from './fixtures/toolData';
 import getHiddenAttribute from './testHelpers';
 
+global.crypto = require('crypto');
+
 describe('ToggleBlock', () => {
   let toggleBlock;
 
@@ -141,6 +143,90 @@ describe('ToggleBlock', () => {
       expect(toggleBlock.data.status).toEqual('open');
       expect(penultimateParagraph).not.toEqual(lastParagraph);
       expect(penultimateParagraph).toEqual(toggleBlock.data.items[paragraphs - 1]);
+    });
+  });
+
+  describe('validates paragraph deletion from itself', () => {
+    let toggle;
+
+    beforeEach(() => {
+      toggleBlock.render();
+      toggle = toggleBlock.wrapper;
+    });
+
+    it('when the current paragraph is the first', () => {
+      const currentParagraph = toggle.children[2];
+      toggle.children[2].remove();
+
+      expect(currentParagraph).not.toEqual(toggle.children[2]);
+    });
+
+    it('when the current paragraph is the last', () => {
+      const currentParagraph = toggle.lastChild;
+      toggle.lastChild.remove();
+
+      expect(currentParagraph).not.toEqual(toggle.lastChild);
+    });
+  });
+
+  describe('validates paragraph insertion from another', () => {
+    let toggle;
+
+    beforeEach(() => {
+      toggleBlock.render();
+      toggle = toggleBlock.wrapper;
+    });
+
+    it('when the current paragraph is the first', () => {
+      const currentParagraph = toggle.children[2];
+      const next = currentParagraph.nextSibling;
+      const paragraph = toggleBlock.createParagraph('Inserted paragraph');
+
+      toggleBlock.wrapper.insertBefore(paragraph, next);
+
+      expect(next).not.toEqual(toggle.children[3]);
+      expect(currentParagraph.nextSibling.innerHTML).toEqual('Inserted paragraph');
+    });
+
+    it('when the current paragraph is the last', () => {
+      const lastParagraph = toggle.lastChild;
+      const last = lastParagraph.nextSibling;
+      toggleBlock.insertParagraph('Last inserted paragraph');
+
+      expect(lastParagraph).not.toEqual(toggle.lastChildren);
+      expect(last).toBe(null);
+      expect(toggle.lastChild.innerHTML).toEqual('Last inserted paragraph');
+    });
+  });
+
+  describe('validates paragraph insertion from the toggle root', () => {
+    let toggle;
+
+    beforeEach(() => {
+      toggleBlock.render();
+      toggle = toggleBlock.wrapper;
+    });
+
+    it('when the toggle has other paragraphs', () => {
+      const firstChild = toggle.children[2];
+      const paragraph = toggleBlock.createParagraph('New paragraph');
+
+      toggle.insertBefore(paragraph, firstChild);
+
+      expect(firstChild).not.toEqual(toggle.children[2]);
+      expect(toggle.children[2].innerHTML).toEqual('New paragraph');
+    });
+
+    it('when the toggle is empty', () => {
+      toggleBlock.data.items = [];
+      toggleBlock.render();
+
+      const newToggle = toggleBlock.wrapper;
+
+      toggleBlock.insertParagraph('Last inserted paragraph');
+
+      expect(newToggle.children[2]).toEqual(newToggle.lastChild);
+      expect(newToggle.lastChild.innerHTML).toEqual('Last inserted paragraph');
     });
   });
 });
