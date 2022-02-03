@@ -1,8 +1,6 @@
 import './index.css';
 import toggleIconPrimary from '../assets/toggleIcon.svg';
 import toggleIconSecundary from '../assets/toggleIconSecundary.svg';
-import insertParagraphIcon from '../assets/insertParagraphIcon.svg';
-import removeParagraphIcon from '../assets/removeParagraphIcon.svg';
 
 /**
  * ToggleBlock for the Editor.js
@@ -75,52 +73,56 @@ export default class ToggleBlock {
   }
 
   /**
-   * First checks if the event code is 'Backspace' or 'Enter'.
+   * First checks if the event code is 'Backspace'. If it's, checks if
+   * the paragraph text is totally deleted and 'Backspace' is pressed
+   * again, the paragraph too is deleted and the focus is sent to the
+   * previous element at the end of its content.
    *
-   * In the first case, if the paragraph text is totally deleted and
-   * 'Backspace' is pressed again, the paragraph too is deleted and
-   * the focus is sent to the previous element at the end of its content.
-   *
-   * In the second case, a paragraph is created and it's inserted
-   * after the paragraph that triggers the event.
+   * The second conditional asks if the element size is '0' or '8'
+   * because when a paragraph was inserted under the current, the
+   * element also contains '<br><br>' which it isn't visible, but
+   * is present to calculate the length
    *
    * @param {string} paragraphId - paragraph identifier
    * @param {KeyboardEvent} e - key down event
    */
-  createAndRemoveParagraphFromIt(paragraphId, e) {
-    const currentParagraph = document.getElementById(paragraphId);
-    const text = currentParagraph.innerHTML;
+  removeParagraphFromIt(paragraphId, e) {
+    if (e.code === 'Backspace') {
+      const currentParagraph = document.getElementById(paragraphId);
 
-    switch (e.code) {
-      case 'Backspace': {
-        if (text.length === 0) {
-          const previous = currentParagraph.previousSibling;
+      if (currentParagraph.innerHTML.length === 0 || currentParagraph.innerHTML.length === 8) {
+        const previous = currentParagraph.previousSibling;
 
-          currentParagraph.remove();
-          previous.innerHTML += '.';
+        currentParagraph.remove();
+        previous.innerHTML += ' ';
 
-          const selection = window.getSelection();
-          const range = document.createRange();
+        const selection = window.getSelection();
+        const range = document.createRange();
 
-          selection.removeAllRanges();
-          range.selectNodeContents(previous);
-          range.collapse(false);
-          selection.addRange(range);
-          previous.focus();
-        }
-        break;
+        selection.removeAllRanges();
+        range.selectNodeContents(previous);
+        range.collapse(false);
+        selection.addRange(range);
+        previous.focus();
       }
+    }
+  }
 
-      case 'Enter': {
-        const paragraph = this.createParagraph();
+  /**
+   * First checks if the event code is 'Enter'. If It's, a paragraph
+   * is created and it's inserted after the paragraph that triggers
+   * the event.
+   *
+   * @param {string} paragraphId - paragraph identifier
+   * @param {KeyboardEvent} e - key down event
+   */
+  createParagraphFromIt(paragraphId, e) {
+    if (e.code === 'Enter') {
+      const currentParagraph = document.getElementById(paragraphId);
+      const paragraph = this.createParagraph();
 
-        currentParagraph.after(paragraph);
-        paragraph.focus();
-        break;
-      }
-
-      default:
-        break;
+      currentParagraph.after(paragraph);
+      paragraph.focus();
     }
   }
 
@@ -204,43 +206,6 @@ export default class ToggleBlock {
   }
 
   /**
-   * Makes buttons with tunes
-   * @returns {HTMLDivElement}
-   */
-  renderSettings() {
-    const settings = [
-      {
-        name: 'insertParagraph',
-        icon: insertParagraphIcon,
-      },
-      {
-        name: 'removeParagraph',
-        icon: removeParagraphIcon,
-      },
-    ];
-    const wrapper = document.createElement('div');
-
-    settings.forEach((tune) => {
-      const button = document.createElement('div');
-
-      button.classList.add('cdx-settings-button');
-      button.innerHTML = tune.icon;
-
-      button.addEventListener('click', () => {
-        if (tune.name === 'insertParagraph') {
-          this.insertParagraph();
-        } else {
-          this.removeParagraph();
-        }
-      });
-
-      wrapper.appendChild(button);
-    });
-
-    return wrapper;
-  }
-
-  /**
    * First saves the current toggle status. After, calls the method to insert
    * a paragraph, as this leaves the toggle open, asks if the toggle status
    * before calling the method is different from the current status, if it's,
@@ -288,21 +253,12 @@ export default class ToggleBlock {
 
     newParagraph.classList.add('toggle-block__paragraph');
     newParagraph.setAttribute('id', crypto.randomUUID());
-    newParagraph.addEventListener('keydown', this.createAndRemoveParagraphFromIt.bind(this, newParagraph.id));
+    newParagraph.addEventListener('keyup', this.removeParagraphFromIt.bind(this, newParagraph.id));
+    newParagraph.addEventListener('keydown', this.createParagraphFromIt.bind(this, newParagraph.id));
     newParagraph.contentEditable = true;
     newParagraph.innerHTML = content || '';
 
     return newParagraph;
-  }
-
-  /**
-   * Removes the last toggle paragraph
-   */
-  removeParagraph() {
-    const paragraph = this.wrapper.lastChild;
-    if (paragraph.classList.value === 'toggle-block__paragraph') {
-      paragraph.remove();
-    }
   }
 
   /**

@@ -51,31 +51,6 @@ describe('ToggleBlock', () => {
     });
   });
 
-  describe('validates paragraph insertion', () => {
-    let toggle;
-
-    it('when a toggle status is closed', () => {
-      toggle = toggleBlock.render();
-      const entryStatus = toggleBlock.data.status;
-      toggleBlock.insertParagraph('the latest paragraph');
-
-      expect(entryStatus).toBe('closed');
-      expect(toggleBlock.data.status).toEqual('open');
-      expect(toggle.lastChild).toHaveClass('toggle-block__paragraph');
-      expect(toggle.lastChild.innerHTML).toEqual('the latest paragraph');
-    });
-
-    it('when a toggle status is open', () => {
-      toggleBlock.data.status = 'open';
-      toggle = toggleBlock.render();
-      toggleBlock.insertParagraph('the latest paragraph of the open toggle');
-
-      expect(toggleBlock.data.status).toEqual('open');
-      expect(toggle.lastChild).toHaveClass('toggle-block__paragraph');
-      expect(toggle.lastChild.innerHTML).toEqual('the latest paragraph of the open toggle');
-    });
-  });
-
   describe('validates the render method', () => {
     let toggle;
     let children;
@@ -102,47 +77,6 @@ describe('ToggleBlock', () => {
 
       expect(hiddenAttributes).toEqual(0);
       expect(toggleBlock.data.status).toEqual('open');
-    });
-  });
-
-  describe('validates paragraph deletion', () => {
-    let penultimateParagraph;
-    let paragraphs;
-
-    beforeEach(() => {
-      paragraphs = toggleBlock.data.items.length;
-      penultimateParagraph = toggleBlock.data.items[paragraphs - 2];
-    });
-
-    it('when a toggle status is closed', () => {
-      toggleBlock.render();
-
-      const entryStatus = toggleBlock.data.status;
-      const lastParagraph = toggleBlock.data.items[paragraphs - 1];
-
-      toggleBlock.removeParagraph();
-
-      paragraphs -= 1;
-
-      expect(entryStatus).toEqual('closed');
-      expect(toggleBlock.data.status).toEqual('closed');
-      expect(penultimateParagraph).not.toEqual(lastParagraph);
-      expect(penultimateParagraph).toEqual(toggleBlock.data.items[paragraphs - 1]);
-    });
-
-    it('when a toggle status is open', () => {
-      toggleBlock.data.status = 'open';
-      toggleBlock.render();
-
-      const lastParagraph = toggleBlock.data.items[paragraphs - 1];
-
-      toggleBlock.removeParagraph();
-
-      paragraphs -= 1;
-
-      expect(toggleBlock.data.status).toEqual('open');
-      expect(penultimateParagraph).not.toEqual(lastParagraph);
-      expect(penultimateParagraph).toEqual(toggleBlock.data.items[paragraphs - 1]);
     });
   });
 
