@@ -10,9 +10,15 @@ import {
 } from './fixtures/data';
 import { editor, readOnlyEditor, tools } from './fixtures/editor';
 
+jest.mock('vanilla-caret-js');
+
 describe('Undo', () => {
   beforeEach(() => {
-    document.body.innerHTML = '<div id="editorjs"></div>';
+    document.body.innerHTML = `<div id="editorjs">
+                                <div class="ce-block__content">
+                                  <div class="ce-paragraph cdx-block"></div>
+                                </div>
+                              </div>`;
     // EditorJS uses as a holder an HTMLElement instead of a query selector.
     // This has to be assigned each time that DOM is reset.
     editor.configuration.holder = document.querySelector('#editorjs');

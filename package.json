@@ -45,5 +45,8 @@
       "^.+\\.jsx?$": "babel-jest",
       "^.+\\.(css|svg)$": "<rootDir>/test/config/assetsTransform.js"
     }
+  },
+  "dependencies": {
+    "vanilla-caret-js": "^1.0.1"
   }
 }
