@@ -106,9 +106,19 @@ export default class Undo {
   }
 
   /**
+   * returns true if readOnly was toggled to true
+   * @returns {Node} Indirectly shows if readOnly was set to true or false
+   */
+  setReadOnly() {
+    const toolbox = document.querySelector('.ce-toolbox');
+    this.readOnly = !toolbox;
+  }
+
+  /**
    * Registers the data returned by API's save method into the history stack.
    */
   registerChange() {
+    this.setReadOnly();
     if (!this.readOnly) {
       if (this.editor && this.editor.save && this.shouldSaveHistory) {
         this.editor.save().then((savedData) => {
