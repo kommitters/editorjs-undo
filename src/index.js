@@ -1,3 +1,4 @@
+import VanillaCaret from 'vanilla-caret-js';
 import Observer from './observer';
 
 /**
@@ -105,9 +106,19 @@ export default class Undo {
   }
 
   /**
+   * returns true if readOnly was toggled to true
+   * @returns {Node} Indirectly shows if readOnly was set to true or false
+   */
+  setReadOnly() {
+    const toolbox = document.querySelector('.ce-toolbox');
+    this.readOnly = !toolbox;
+  }
+
+  /**
    * Registers the data returned by API's save method into the history stack.
    */
   registerChange() {
+    this.setReadOnly();
     if (!this.readOnly) {
       if (this.editor && this.editor.save && this.shouldSaveHistory) {
         this.editor.save().then((savedData) => {
@@ -144,9 +155,23 @@ export default class Undo {
     this.stack = this.stack.slice(0, this.position + 1);
 
     const index = this.blocks.getCurrentBlockIndex();
-    this.stack.push({ index, state });
+    const caretIndex = state[index].type === 'paragraph' || state[index].type === 'header'
+      ? this.getCaretIndex(index) : null;
+    this.stack.push({ index, state, caretIndex });
     this.position += 1;
     this.onUpdate();
+  }
+
+  /**
+   * get the caret position.
+   * @param {Number} index is the block index
+   * @returns The caret position
+   */
+  getCaretIndex(index) {
+    const blocks = document.getElementsByClassName('ce-block__content');
+    const caretBlock = new VanillaCaret(blocks[index].firstChild);
+
+    return caretBlock.getPos();
   }
 
   /**
@@ -207,7 +232,7 @@ export default class Undo {
     if (this.canUndo()) {
       this.shouldSaveHistory = false;
       let { index } = this.stack[(this.position -= 1)];
-      const { state } = this.stack[(this.position)];
+      const { state, caretIndex } = this.stack[(this.position)];
       const nextIndex = this.stack[(this.position + 1)].index;
       const nextState = this.stack[(this.position + 1)].state;
       this.onUpdate();
@@ -237,6 +262,23 @@ export default class Undo {
 
       const { id } = this.blocks.getBlockByIndex(index);
       this.blocks.update(id, state[index].data);
+      this.setCaretIndex(index, caretIndex);
+    }
+  }
+
+  /**
+   * Set the caret position.
+   * @param {Number} index is the block index
+   * @param {Number} caretIndex is the caret position
+   * @param {Array} state is the current state according to this.position.
+   */
+  setCaretIndex(index, caretIndex) {
+    if (caretIndex) {
+      const blocks = document.getElementsByClassName('ce-block__content');
+      const caretBlock = new VanillaCaret(blocks[index].firstChild);
+
+      caretBlock.setPos(caretIndex);
+    } else {
       this.caret.setToBlock(index, 'end');
     }
   }
@@ -247,7 +289,7 @@ export default class Undo {
   redo() {
     if (this.canRedo()) {
       this.shouldSaveHistory = false;
-      const { index, state } = this.stack[(this.position += 1)];
+      const { index, state, caretIndex } = this.stack[(this.position += 1)];
       const prevIndex = this.stack[(this.position - 1)].index;
       const prevState = this.stack[(this.position - 1)].state;
 
@@ -274,7 +316,7 @@ export default class Undo {
       this.onUpdate();
       const { id } = this.blocks.getBlockByIndex(index) || state[index];
       this.blocks.update(id, state[index].data);
-      this.caret.setToBlock(index, 'end');
+      this.setCaretIndex(index, caretIndex);
     }
   }
 

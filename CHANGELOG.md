@@ -1,5 +1,9 @@
 # Changelog
 
+## 2.0.0-rc.1 (24.02.2022)
+* Set the caret feature to the undo and redo actions.
+* Add support to readOnly toggle.
+
 ## 2.0.0-rc.0 (28.12.2022)
 * In the undo/redo actions the plugin now updates the involved block.
 * Update eslint-plugin-import to support eslint.
