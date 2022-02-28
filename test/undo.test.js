@@ -15,8 +15,12 @@ jest.mock('vanilla-caret-js');
 describe('Undo', () => {
   beforeEach(() => {
     document.body.innerHTML = `<div id="editorjs">
-                                <div class="ce-block__content">
-                                  <div class="ce-paragraph cdx-block"></div>
+                                <div class="codex-editor">
+                                  <div class="codex-editor__redactor">
+                                    <div class="ce-block__content">
+                                      <div class="ce-paragraph cdx-block"></div>
+                                    </div>
+                                  </div>  
                                 </div>
                               </div>`;
     // EditorJS uses as a holder an HTMLElement instead of a query selector.
