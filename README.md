@@ -11,7 +11,7 @@ Undo/Redo feature for [Editor.js](https://editorjs.io).
 
 ### 2.x.x (beta)
 
-This new version 2.0.0-rc.0 introduces breaking changes. Remember that this is a beta version.
+This new version 2.0.0-rc.2 introduces breaking changes. Remember that this is a beta version.
 
 Please, report bugs or behavior issues :).
 
@@ -19,11 +19,14 @@ Please, report bugs or behavior issues :).
 * Overall plugin performance is improved, especially with large documents. 
 * Undo/Redo lifecycle is managed through block updates instead of a full document render.
 * Solves issues in documents with several images, for example the blink with undo/redo.
+* Sets the caret in the respective position when the user is typing inside an existing text.
+* Adds support to ReadOnly toggle.
+* Optimizes the observer, saving with the EditorJS API only when the content changes.
 
 Get the package
 
 ```shell
-$ npm i --save-dev editorjs-undo@2.0.0-rc.0
+$ npm i --save-dev editorjs-undo@2.0.0-rc.2
 ```
 
 ### 1.x.x (stable version)
