@@ -39,6 +39,20 @@ describe('Undo', () => {
     });
   });
 
+  describe('Custom debounce timer provided', () => {
+    let undo;
+
+    beforeEach(() => {
+      const { config } = tools.undo;
+      undo = new Undo({ editor, config });
+    });
+
+    it('is configured with a custom debounce timer', () => {
+      const { debounceTimer } = tools.undo.config;
+      expect(undo.config.debounceTimer).toEqual(debounceTimer);
+    });
+  });
+
   describe('Operations without changes', () => {
     let undo;
 
@@ -209,7 +223,6 @@ describe('Undo', () => {
     });
   });
 
-
   describe('Undo/redo events fired with custom shortcuts', () => {
     let undo;
 
@@ -284,7 +297,6 @@ describe('Undo', () => {
       expect(state).toEqual(firstChange.blocks);
     });
   });
-
 
   describe('the holder key accept strings', () => {
     let undo;
