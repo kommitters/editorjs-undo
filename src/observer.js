@@ -34,7 +34,7 @@ export default class Observer {
       characterDataOldValue: true,
     };
 
-    const target = this.holder;
+    const target = this.holder.querySelector('.codex-editor__redactor');
 
     this.observer = new MutationObserver((mutationList) => {
       this.mutationHandler(mutationList);

@@ -1,5 +1,8 @@
 # Changelog
 
+## 2.0.0-rc.2 (28.02.2022)
+* Optimizes the observer, saving with the EditorJS API only when the content changes.
+
 ## 2.0.0-rc.1 (24.02.2022)
 * Set the caret feature to the undo and redo actions.
 * Add support to readOnly toggle.
