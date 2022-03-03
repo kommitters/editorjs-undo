@@ -26,6 +26,7 @@ export default class Undo {
       maxLength: 30,
       onUpdate() {},
       config: {
+        debounceTimer: 200,
         shortcuts: {
           undo: 'CMD+Z',
           redo: 'CMD+Y',
@@ -38,6 +39,8 @@ export default class Undo {
     const { holder } = configuration;
     const defaultShortcuts = defaultOptions.config.shortcuts;
     const { shortcuts = defaultShortcuts } = config;
+    const defaultDebounceTimer = defaultOptions.config.debounceTimer;
+    const { debounceTimer = defaultDebounceTimer } = config;
 
     this.holder = typeof holder === 'string' ? document.getElementById(holder) : holder;
     this.editor = editor;
@@ -47,11 +50,12 @@ export default class Undo {
     this.readOnly = configuration.readOnly;
     this.maxLength = maxLength || defaultOptions.maxLength;
     this.onUpdate = onUpdate || defaultOptions.onUpdate;
-    this.config = { shortcuts };
+    this.config = { debounceTimer, shortcuts };
 
     const observer = new Observer(
       () => this.registerChange(),
       this.holder,
+      this.config.debounceTimer,
     );
     observer.setMutationObserver();
 
