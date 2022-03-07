@@ -18,7 +18,8 @@
   cursor: pointer;
 }
 
-.toggle-block__paragraph {
+.toggle-block__item {
+  padding-left: 1%;
   margin-left: 34px;
 }
 
