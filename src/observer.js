@@ -11,11 +11,12 @@ export default class Observer {
    * Creates a new instance of the Observer object.
    * @param {Function} registerChange - Function that register a change in the history stack.
    * @param {String} holder - Editor.js holder id.
+   * @param {Number} debounceTimer Delay time for the debouncer.
    */
-  constructor(registerChange, holder) {
+  constructor(registerChange, holder, debounceTimer) {
     this.holder = holder;
     this.observer = null;
-    this.debounceTimer = 200;
+    this.debounceTimer = debounceTimer;
     this.mutationDebouncer = this.debounce(() => {
       registerChange();
     }, this.debounceTimer);
