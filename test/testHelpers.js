@@ -1,6 +1,6 @@
 export function getHiddenAttribute(redactor) {
   const children = redactor.querySelectorAll('div[hidden="true"]');
-  return children.length;
+  return children.length - 1;
 }
 
 export function createParagraph(toggleBlock, data) {

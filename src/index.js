@@ -44,7 +44,7 @@ export default class ToggleBlock {
   constructor({ data, api }) {
     this.data = {
       text: data.text || '',
-      status: data.status || 'closed',
+      status: data.status || 'open',
       items: data.items || [],
     };
     this.api = api;
@@ -56,73 +56,61 @@ export default class ToggleBlock {
    *
    * After checks the toggle status, if this is 'closed' then open it.
    *
-   * After inserts a new block after the toggle index and the new block
+   * After inserts a new block after the toggle index and the a method
+   * is called to add the required properties to the new block.
    * gets the focus.
    *
-   * @param {KeyboardEvent} e - key down event
+   * @param {KeyboardEvent} e - key up event
    */
   createParagraphFromToggleRoot(e) {
     if (e.code === 'Enter') {
       const originalIndex = this.api.blocks.getCurrentBlockIndex();
 
       if (this.data.status === 'closed') {
-        const children = document.querySelectorAll(`div[foreignKey="${this.wrapper.id}"]`);
         const icon = this.wrapper.firstChild;
-
         icon.innerHTML = this._resolveToggleAction();
-        this._hideAndShowBlocks(originalIndex - 1, children.length);
+        this._hideAndShowBlocks(originalIndex - 1);
       }
 
-      const foreignKey = this.wrapper.id;
-      const index = originalIndex + 1;
-      const id = crypto.randomUUID();
-
       this.api.blocks.insert();
-
-      const newBlock = this.api.blocks.getBlockByIndex(index);
-      const { holder } = newBlock;
-      const content = holder.firstChild;
-      const item = content.firstChild;
-
-      holder.addEventListener('keydown', this.createParagraphFromIt.bind(this));
-      holder.setAttribute('foreignKey', foreignKey);
-      holder.setAttribute('id', id);
-
-      item.classList.add('toggle-block__item');
-      item.focus();
+      this.setAttributesToNewBlock();
     }
   }
 
   /**
-   * First it gets the index of the inserted block.
-   *
-   * After get the full block to manipulate it.
-   *
-   * After sends the properties required to identify it as a toggle item,
-   * and finally sends the focus again to the new block.
+   * Calls the method to add the required properties to the new block.
    *
    * @param {KeyboardEvent} e - key down event
    */
   createParagraphFromIt(e) {
-    if (e.code === 'Enter') {
-      const index = this.api.blocks.getCurrentBlockIndex();
-      const newBlock = this.api.blocks.getBlockByIndex(index);
-      const id = crypto.randomUUID();
-      const { holder } = newBlock;
-      const content = holder.firstChild;
-      const item = content.firstChild;
+    if (e.code === 'Enter') this.setAttributesToNewBlock();
+  }
 
-      holder.addEventListener('keydown', this.createParagraphFromIt.bind(this));
-      holder.setAttribute('foreignKey', this.wrapper.id);
-      holder.setAttribute('id', id);
+  /**
+   * Gets the index of the new block, then assigns the required properties,
+   * and finally sends the focus.
+   */
+  setAttributesToNewBlock() {
+    const foreignKey = this.wrapper.id;
+    const index = this.api.blocks.getCurrentBlockIndex();
+    const id = crypto.randomUUID();
 
-      item.classList.add('toggle-block__item');
-      item.focus();
-    }
+    const newBlock = this.api.blocks.getBlockByIndex(index);
+    const { holder } = newBlock;
+    const content = holder.firstChild;
+    const item = content.firstChild;
+
+    holder.addEventListener('keydown', this.createParagraphFromIt.bind(this));
+    holder.setAttribute('foreignKey', foreignKey);
+    holder.setAttribute('id', id);
+
+    item.classList.add('toggle-block__item');
+    item.focus();
   }
 
   /**
    * Creates a toggle block view without paragraphs
+   * and sets the default content.
    */
   _createToggle() {
     this.wrapper = document.createElement('div');
@@ -130,19 +118,94 @@ export default class ToggleBlock {
     this.wrapper.id = crypto.randomUUID();
 
     const icon = document.createElement('span');
+    const input = document.createElement('div');
+    const defaultContent = document.createElement('div');
 
     icon.classList.add('toggle-block__icon');
-    icon.innerHTML = this.data.status === 'closed' ? toggleIconClosed : toggleIconOpen;
-
-    const input = document.createElement('div');
+    icon.innerHTML = (this.data.status === 'closed') ? toggleIconClosed : toggleIconOpen;
 
     input.classList.add('toggle-block__input');
     input.contentEditable = true;
-    input.addEventListener('keyup', this.createParagraphFromToggleRoot.bind(this));
     input.innerHTML = this.data.text || '';
+
+    // Events to create other blocks and destroy the toggle
+    input.addEventListener('keyup', this.createParagraphFromToggleRoot.bind(this));
+    input.addEventListener('keydown', this.removeToggle.bind(this));
+
+    // Establishes the placeholder for the toggle root when it's empty
+    input.addEventListener('keyup', this.setPlaceHolder.bind(this));
+    input.setAttribute('placeholder', 'Toggle');
+
+    // Calculates the number of toggle items
+    input.addEventListener('focus', this.setDefaultContent.bind(this));
+    input.addEventListener('focusout', this.setDefaultContent.bind(this));
+
+    defaultContent.classList.add('toggle-block__content-default');
+    defaultContent.setAttribute('hidden', true);
+    defaultContent.innerHTML = 'Empty toggle. Click or drop blocks inside.';
+    defaultContent.addEventListener('click', this.clickInDefaultContent.bind(this));
 
     this.wrapper.appendChild(icon);
     this.wrapper.appendChild(input);
+    this.wrapper.appendChild(defaultContent);
+  }
+
+  /**
+   * Adds the actions to do when the default content is clicked.
+   */
+  clickInDefaultContent() {
+    this.api.blocks.insert();
+    this.setAttributesToNewBlock();
+    this.setDefaultContent();
+  }
+
+  /**
+   * Sets the default content. If the toggle has no other blocks inside it,
+   * so sets the value 'false' for the hidden tag in the default content,
+   * otherwise sets the value 'true'.
+   */
+  setDefaultContent() {
+    const children = document.querySelectorAll(`div[foreignKey="${this.wrapper.id}"]`);
+    const { firstChild, lastChild } = this.wrapper;
+    const value = (children.length > 0);
+
+    lastChild.hidden = value;
+    firstChild.style.color = (children.length === 0) ? 'gray' : 'black';
+  }
+
+  /**
+   * If the toggle root is empty and the key event received is 'backspace'
+   * the toggle root is removed.
+   *
+   * @param {KeyboardEvent} e - key down event
+   */
+  removeToggle(e) {
+    if (e.code === 'Backspace') {
+      const { children } = this.wrapper;
+      const { length } = children[1].textContent;
+
+      if (length === 0) {
+        const index = this.api.blocks.getCurrentBlockIndex();
+        this.api.blocks.delete(index);
+        this.api.blocks.insert();
+      }
+    }
+  }
+
+  /**
+   * If the toggle root is empty and the key event received is 'backspace'
+   * or 'enter', its content is cleared so that the visible placeholder
+   * is set through the css.
+   *
+   * @param {KeyboardEvent} e - key up event
+   */
+  setPlaceHolder(e) {
+    if (e.code === 'Backspace' || e.code === 'Enter') {
+      const { children } = this.wrapper;
+      const { length } = children[1].textContent;
+
+      if (length === 0) children[1].textContent = '';
+    }
   }
 
   /**
@@ -164,41 +227,25 @@ export default class ToggleBlock {
    * like a block inside the toggle.
    */
   renderItems() {
-    const originalIndex = this.api.blocks.getCurrentBlockIndex();
     const icon = this.wrapper.firstChild;
-    const foreignKey = this.wrapper.id;
     const editorBlocks = this.api.blocks.getBlocksCount();
-    let index = editorBlocks > 1 ? originalIndex + 1 : originalIndex;
+
+    let originalIndex = this.api.blocks.getCurrentBlockIndex();
+    let index = (editorBlocks > 1) ? originalIndex + 1 : originalIndex;
 
     icon.addEventListener('click', () => {
-      const children = document.querySelectorAll(`div[foreignKey="${this.wrapper.id}"]`);
-
       icon.innerHTML = this._resolveToggleAction();
-      this._hideAndShowBlocksClicking(children.length);
+      this._hideAndShowBlocks();
     });
 
     this.data.items.forEach((block) => {
       const { type, data } = block;
-
       this.api.blocks.insert(type, data, {}, index += 1, true);
-
-      const newBlock = this.api.blocks.getBlockByIndex(index);
-      const { holder } = newBlock;
-      const content = holder.firstChild;
-      const item = content.firstChild;
-
-      holder.addEventListener('keydown', this.createParagraphFromIt.bind(this));
-      holder.setAttribute('foreignKey', foreignKey);
-      holder.setAttribute('id', crypto.randomUUID());
-
-      item.classList.add('toggle-block__item');
+      this.setAttributesToNewBlock();
     });
 
-    if (editorBlocks > 1) {
-      this._hideAndShowBlocks(originalIndex, this.data.items.length);
-    } else {
-      this._hideAndShowBlocks(originalIndex - 1, this.data.items.length);
-    }
+    originalIndex -= (editorBlocks > 1) ? 0 : 1;
+    this._hideAndShowBlocks(originalIndex);
   }
 
   /**
@@ -223,49 +270,27 @@ export default class ToggleBlock {
   }
 
   /**
-   * Hides and shows the toggle items.
-   * It's called when is required to render saved data or creating new blocks
-   * inside the toggle.
+   * Hides and shows the toggle paragraphs or the default content.
+   * If the toggle status is closed, the added value to the hidden attribute
+   * in the container paragraph is 'true', otherwise is 'false'.
    *
    * @param {number} index - toggle index
-   * @param {array} items - toggle items
    */
-  _hideAndShowBlocks(index, items) {
-    const toggleIndex = index + 1;
-    this._iterateOnItems(items, toggleIndex);
-  }
+  _hideAndShowBlocks(index = null) {
+    const children = document.querySelectorAll(`div[foreignKey="${this.wrapper.id}"]`);
+    const items = children.length;
+    const value = (this.data.status === 'closed');
 
-  /**
-   * Hides and shows the toggle items.
-   * It's called when is required to render the toggle items
-   * clicking the toggle icon
-   *
-   * @param {array} items - toggle items
-   */
-  _hideAndShowBlocksClicking(items) {
-    const toggleIndex = this.api.blocks.getCurrentBlockIndex();
-    this._iterateOnItems(items, toggleIndex);
-  }
+    let toggleIndex = index === null ? this.api.blocks.getCurrentBlockIndex() : index + 1;
 
-  /**
-   * Hides and shows the toggle paragraphs.
-   * If the toggle status is closed, the hidden attribute is added
-   * to the container paragraph. Otherwise, the hidden attribute is
-   * removed.
-   *
-   * @param {array} items - toggle items
-   * @param {number} toggleIndex - toggle index
-   */
-  _iterateOnItems(items, toggleIndex) {
-    let index = toggleIndex;
-    if (this.data.status === 'closed') {
+    if (items > 0) {
       for (let i = 0; i < items; i += 1) {
-        this.api.blocks.getBlockByIndex(index += 1).holder.setAttribute('hidden', true);
+        const { holder } = this.api.blocks.getBlockByIndex(toggleIndex += 1);
+        holder.hidden = value;
       }
     } else {
-      for (let i = 0; i < items; i += 1) {
-        this.api.blocks.getBlockByIndex(index += 1).holder.removeAttribute('hidden');
-      }
+      const { lastChild } = this.wrapper;
+      lastChild.hidden = value;
     }
   }
 
@@ -275,7 +300,8 @@ export default class ToggleBlock {
    * @returns {ToggleBlockData} - saved data
    */
   save(blockContent) {
-    const caption = blockContent.textContent;
+    const { children } = blockContent;
+    const caption = children[1].textContent;
     const blocks = document.querySelectorAll(`div[foreignKey="${this.wrapper.id}"]`);
     const items = [];
 
@@ -295,8 +321,10 @@ export default class ToggleBlock {
    * @returns {boolean} false if saved data isn't correct, otherwise true
    */
   validate(savedData) {
-    for (let i = 0; i < savedData.items.length; i += 1) {
-      if (savedData.items[i].type === undefined || savedData.items[i].data === undefined) {
+    const { items } = savedData;
+
+    for (let i = 0; i < items.length; i += 1) {
+      if (items[i].type === undefined || items[i].data === undefined) {
         return false;
       }
     }

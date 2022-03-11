@@ -18,11 +18,28 @@
   cursor: pointer;
 }
 
-.toggle-block__item {
-  padding-left: 1%;
+.toggle-block__item,
+.toggle-block__content-default {
   margin-left: 34px;
+}
+
+.toggle-block__content-default {
+  color: gray;
+  border-radius: 5px;
+}
+
+.toggle-block__content-default:hover{
+  cursor: pointer;
+  background: rgba(55, 53, 47, 0.08);
 }
 
 .toggle-block__selector br {
   display: none;
+}
+
+.toggle-block__input:empty:before {
+  content: attr(placeholder);
+  position: absolute;
+  color: gray;
+  background-color: transparent;
 }
