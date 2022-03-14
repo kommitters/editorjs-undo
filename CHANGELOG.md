@@ -1,5 +1,8 @@
 # Changelog
 
+## 2.0.0-rc.3 (14.03.2022)
+* Add a custom debounceTimer in the config object to choose the save time.
+
 ## 2.0.0-rc.2 (28.02.2022)
 * Optimizes the observer, saving with the EditorJS API only when the content changes.
 
