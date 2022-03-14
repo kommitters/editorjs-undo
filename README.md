@@ -11,7 +11,7 @@ Undo/Redo feature for [Editor.js](https://editorjs.io).
 
 ### 2.x.x (beta)
 
-This new version 2.0.0-rc.2 introduces breaking changes. Remember that this is a beta version.
+This new version 2.0.0-rc.3 introduces breaking changes. Remember that this is a beta version.
 
 Please, report bugs or behavior issues :).
 
@@ -123,6 +123,25 @@ const editor = new EditorJS({
 ```
 
 You can set each shortcut with two or three keys, the available special keys are: CMD, ALT, SHIFT. CMD will be set up automatically as <kbd>Ctrl</kbd> or <kbd>⌘</kbd> depending on your OS.
+
+### Provide a custom debounce time for the Observer
+
+Internally, editorjs-undo uses an Observer instance that watches for changes in the text being entered. By default, it waits for a pause of 200ms in text entry before saving a change. If you want to have editorjs-undo save changes more or less often, pass a config object with a **debounceTimer** key in the undo instance and provide a different value in milliseconds.
+
+```javascript
+const config = {
+  debounceTimer: 100
+};
+const editor = new EditorJS({
+  onReady: () => {
+    const undo = new Undo({ editor, config });
+  },
+});
+```
+
+Lowering the debounceTimer value below 200ms will make editorjs-undo save changes more often. Raising the debounceTimer value above 200ms will make editorjs-undo save changes less often.
+
+Setting the debounceTimer value to 0 makes editorjs-undo save every character entered as an individual change, which makes undo and redo operations only remove/replace one character at a time.
 
 ### Available Options
 
