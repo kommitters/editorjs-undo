@@ -8,7 +8,12 @@
 }
 
 .toggle-block__icon > svg {
-  vertical-align: top;
+  vertical-align: middle;
+  width: 25px;
+  height: 25px;
+}
+
+.bi-play-fill {
   width: 34px;
   height: 34px;
 }
@@ -20,7 +25,7 @@
 
 .toggle-block__item,
 .toggle-block__content-default {
-  margin-left: 34px;
+  margin-left: 25px;
 }
 
 .toggle-block__content-default {
@@ -28,7 +33,7 @@
   border-radius: 5px;
 }
 
-.toggle-block__content-default:hover{
+.toggle-block__content-default:hover {
   cursor: pointer;
   background: rgba(55, 53, 47, 0.08);
 }

@@ -1,6 +1,5 @@
 import './index.css';
-import toggleIconClosed from '../assets/toggleIconClosed.svg';
-import toggleIconOpen from '../assets/toggleIconOpen.svg';
+import toggleIcon from '../assets/toggleIcon.svg';
 
 /**
  * ToggleBlock for the Editor.js
@@ -22,7 +21,7 @@ export default class ToggleBlock {
   static get toolbox() {
     return {
       title: 'Toggle',
-      icon: toggleIconClosed,
+      icon: toggleIcon,
     };
   }
 
@@ -67,13 +66,14 @@ export default class ToggleBlock {
       const originalIndex = this.api.blocks.getCurrentBlockIndex();
 
       if (this.data.status === 'closed') {
-        const icon = this.wrapper.firstChild;
-        icon.innerHTML = this._resolveToggleAction();
+        this._resolveToggleAction();
         this._hideAndShowBlocks(originalIndex - 1);
       }
 
-      this.api.blocks.insert();
-      this.setAttributesToNewBlock();
+      setTimeout(() => {
+        this.api.blocks.insert();
+        this.setAttributesToNewBlock();
+      }, 100);
     }
   }
 
@@ -122,7 +122,7 @@ export default class ToggleBlock {
     const defaultContent = document.createElement('div');
 
     icon.classList.add('toggle-block__icon');
-    icon.innerHTML = (this.data.status === 'closed') ? toggleIconClosed : toggleIconOpen;
+    icon.innerHTML = toggleIcon;
 
     input.classList.add('toggle-block__input');
     input.contentEditable = true;
@@ -167,7 +167,8 @@ export default class ToggleBlock {
   setDefaultContent() {
     const children = document.querySelectorAll(`div[foreignKey="${this.wrapper.id}"]`);
     const { firstChild, lastChild } = this.wrapper;
-    const value = (children.length > 0);
+    const { status } = this.data;
+    const value = (children.length > 0 || status === 'closed');
 
     lastChild.hidden = value;
     firstChild.style.color = (children.length === 0) ? 'gray' : 'black';
@@ -219,7 +220,23 @@ export default class ToggleBlock {
     this._createToggle();
     setTimeout(this.renderItems.bind(this));
 
+    // Adds initial transition for the icon
+    setTimeout(this.setInitialTransition.bind(this));
+
     return this.wrapper;
+  }
+
+  /**
+   * Adds the initial status for the icon, and establishes
+   * the delay for the transition displayed when the icon
+   * is clicked.
+   */
+  setInitialTransition() {
+    const { status } = this.data;
+    const icon = this.wrapper.firstChild;
+    const svg = icon.firstChild;
+    svg.style.transition = '0.5s';
+    svg.style.transform = `rotate(${status === 'closed' ? 0 : 90}deg)`;
   }
 
   /**
@@ -234,8 +251,10 @@ export default class ToggleBlock {
     let index = (editorBlocks > 1) ? originalIndex + 1 : originalIndex;
 
     icon.addEventListener('click', () => {
-      icon.innerHTML = this._resolveToggleAction();
-      this._hideAndShowBlocks();
+      this._resolveToggleAction();
+      setTimeout(() => {
+        this._hideAndShowBlocks();
+      }, 100);
     });
 
     this.data.items.forEach((block) => {
@@ -249,21 +268,23 @@ export default class ToggleBlock {
   }
 
   /**
-   * Converts the toggle status to its opposite, including its icon.
-   * If the toggle status is open, then now will be closed and its icon
-   * will be the right arrow (toggleIconClosed). Otherwise, will be open
-   * and its icon will be the down arrow (toggleIconOpen).
+   * Converts the toggle status to its opposite.
+   * If the toggle status is open, then now will be closed and
+   * the icon will reset to rotation. Otherwise, will be open
+   * and the icon will be rotated 90 degrees to the left.
    *
    * @returns {string} icon - toggle icon
    */
   _resolveToggleAction() {
-    let icon = toggleIconClosed;
+    const icon = this.wrapper.firstChild;
+    const svg = icon.firstChild;
 
     if (this.data.status === 'closed') {
-      icon = toggleIconOpen;
       this.data.status = 'open';
+      svg.style.transform = 'rotate(90deg)';
     } else {
       this.data.status = 'closed';
+      svg.style.transform = 'rotate(0deg)';
     }
 
     return icon;
