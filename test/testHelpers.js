@@ -6,7 +6,7 @@ export function getHiddenAttribute(redactor) {
 export function createParagraph(toggleBlock, data) {
   const newBlock = document.createElement('div');
   newBlock.classList.add('ce-block');
-  newBlock.setAttribute('foreignKey', toggleBlock.id);
+  newBlock.setAttribute('foreignKey', toggleBlock.wrapper.id);
   newBlock.setAttribute('id', crypto.randomUUID());
 
   if (toggleBlock.data.status === 'closed') {
@@ -39,4 +39,16 @@ export function generateFullToggle(toggleBlock) {
   });
 
   return answer;
+}
+
+export function destroyFullToggle(redactor, toggleIndex, blocks) {
+  // Destroys the toggle root
+  const toggleRoot = redactor.children[toggleIndex];
+  toggleRoot.remove();
+
+  // Destroys each block inside the toggle
+  for (let i = toggleIndex; i < toggleIndex + blocks; i += 1) {
+    const currentBlock = redactor.children[toggleIndex];
+    currentBlock.remove();
+  }
 }

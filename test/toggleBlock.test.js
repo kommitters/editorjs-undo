@@ -1,6 +1,8 @@
 import createToggleBlock from './fixtures/toggle';
 import data from './fixtures/toolData';
-import { getHiddenAttribute, generateFullToggle, createParagraph } from './testHelpers';
+import {
+  getHiddenAttribute, generateFullToggle, createParagraph, destroyFullToggle,
+} from './testHelpers';
 
 global.crypto = require('crypto');
 
@@ -73,7 +75,7 @@ describe('ToggleBlock', () => {
     it('when a toggle status is closed', () => {
       toggle = generateFullToggle(toggleBlock);
       toggle.forEach((block) => redactor.appendChild(block));
-      const children = redactor.querySelectorAll(`div[foreignKey="${toggleBlock.id}"]`).length;
+      const children = redactor.querySelectorAll(`div[foreignKey="${toggleBlock.wrapper.id}"]`).length;
       hiddenAttributes = getHiddenAttribute(redactor, toggleBlock);
 
       expect(toggleBlock.data.status).toEqual('closed');
@@ -184,6 +186,37 @@ describe('ToggleBlock', () => {
 
       expect(redactor.children[1]).toEqual(redactor.lastChild);
       expect(redactor.lastChild.textContent).toEqual('Last inserted paragraph');
+    });
+  });
+
+  describe('validates complete toggle removal', () => {
+    let redactor;
+    let toggle;
+
+    beforeEach(() => {
+      redactor = document.querySelector('div.codex-editor__redactor');
+      toggle = generateFullToggle(toggleBlock);
+      toggle.forEach((block) => redactor.appendChild(block));
+    });
+
+    it('when the toggle has the first position in the document', () => {
+      const children = toggle.length - 1;
+
+      destroyFullToggle(redactor, 0, children);
+
+      expect(redactor.children.length).toBe(0);
+    });
+
+    it('when the toggle is not the first element in the document', () => {
+      // Insert new toggle in the document
+      const newToggle = generateFullToggle(toggleBlock);
+      newToggle.forEach((block) => redactor.appendChild(block));
+
+      const children = newToggle.length - 1;
+
+      destroyFullToggle(redactor, 4, children);
+
+      expect(redactor.children.length).toBe(4);
     });
   });
 });
