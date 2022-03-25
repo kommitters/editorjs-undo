@@ -104,6 +104,8 @@ export default class ToggleBlock {
     holder.setAttribute('foreignKey', foreignKey);
     holder.setAttribute('id', id);
 
+    holder.addEventListener('keydown', this.extractBlock.bind(this, item));
+
     item.classList.add('toggle-block__item');
     item.focus();
   }
@@ -192,6 +194,38 @@ export default class ToggleBlock {
         this.api.blocks.delete(index);
         this.removeFullToggle(index, blocks);
       }
+    }
+  }
+
+  /**
+   * this method extract a single block with shift + tab combination
+   *
+   * @param {Object} item
+   * @param {KeyboardEvent} e
+   */
+  extractBlock(item, e) {
+    if (e.code === 'Tab' && e.shiftKey) {
+      const indexBlock = this.api.blocks.getCurrentBlockIndex();
+      const toggle = this.wrapper.children[1];
+      const children = document.querySelectorAll(`div[foreignKey="${this.wrapper.id}"]`);
+      const { length } = children;
+
+      let currentBlock = {};
+      let index;
+
+      while (currentBlock[1] !== toggle) {
+        this.api.caret.setToPreviousBlock('end', 0);
+        index = this.api.blocks.getCurrentBlockIndex();
+
+        const block = this.api.blocks.getBlockByIndex(index);
+        const { holder } = block;
+        const blockCover = holder.firstChild;
+        const blockContent = blockCover.firstChild;
+        currentBlock = blockContent.children;
+      }
+
+      this.api.blocks.delete(indexBlock);
+      this.api.blocks.insert('paragraph', { text: item.textContent }, {}, index + length, true);
     }
   }
 

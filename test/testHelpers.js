@@ -52,3 +52,31 @@ export function destroyFullToggle(redactor, toggleIndex, blocks) {
     currentBlock.remove();
   }
 }
+
+export function createDefaultBlock(data) {
+  const newBlock = document.createElement('div');
+  newBlock.classList.add('ce-block');
+
+  const content = document.createElement('div');
+  content.classList.add('ce-block__content');
+
+  const paragraph = document.createElement('div');
+  paragraph.classList.add('ce-paragraph', 'cdx-block');
+  paragraph.contentEditable = true;
+  paragraph.textContent = data.text;
+
+  content.appendChild(paragraph);
+  newBlock.appendChild(content);
+
+  return newBlock;
+}
+
+export function extractionBlock(toggleBlock, redactor, toggleIndex) {
+  const currentBlock = redactor.children[toggleIndex];
+  const { items } = toggleBlock.data;
+  const { data } = items[toggleIndex - 1];
+  const extractedBlock = createDefaultBlock(data);
+
+  currentBlock.remove();
+  redactor.appendChild(extractedBlock);
+}
