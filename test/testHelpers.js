@@ -3,7 +3,7 @@ export function getHiddenAttribute(redactor) {
   return children.length - 1;
 }
 
-export function createParagraph(toggleBlock, data) {
+export function createNestedBlock(toggleBlock, data) {
   const newBlock = document.createElement('div');
   newBlock.classList.add('ce-block');
   newBlock.setAttribute('foreignKey', toggleBlock.wrapper.id);
@@ -19,7 +19,7 @@ export function createParagraph(toggleBlock, data) {
   const paragraph = document.createElement('div');
   paragraph.classList.add('ce-paragraph', 'cdx-block', 'toggle-block__item');
   paragraph.contentEditable = true;
-  paragraph.textContent = data;
+  paragraph.textContent = data.text;
 
   content.appendChild(paragraph);
   newBlock.appendChild(content);
@@ -34,7 +34,7 @@ export function generateFullToggle(toggleBlock) {
   answer.push(toggleBlock.render());
 
   toggleBlock.data.items.forEach((item) => {
-    newBlock = createParagraph(toggleBlock, item.data);
+    newBlock = createNestedBlock(toggleBlock, item.data);
     answer.push(newBlock);
   });
 

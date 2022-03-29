@@ -1,7 +1,8 @@
+import ToggleBlock from '../src';
 import createToggleBlock from './fixtures/toggle';
 import data from './fixtures/toolData';
 import {
-  getHiddenAttribute, generateFullToggle, createParagraph, destroyFullToggle, extractionBlock,
+  getHiddenAttribute, generateFullToggle, createNestedBlock, destroyFullToggle, extractionBlock,
 } from './testHelpers';
 
 global.crypto = require('crypto');
@@ -133,7 +134,7 @@ describe('ToggleBlock', () => {
     it('when the current paragraph is the first', () => {
       const currentParagraph = redactor.children[1];
       const next = currentParagraph.nextSibling;
-      const paragraph = createParagraph(toggleBlock, 'Inserted paragraph');
+      const paragraph = createNestedBlock(toggleBlock, { text: 'Inserted paragraph' });
 
       redactor.insertBefore(paragraph, next);
 
@@ -144,7 +145,7 @@ describe('ToggleBlock', () => {
     it('when the current paragraph is the last', () => {
       const lastParagraph = redactor.lastChild;
       const last = lastParagraph.nextSibling;
-      const paragraph = createParagraph(toggleBlock, 'Last inserted paragraph');
+      const paragraph = createNestedBlock(toggleBlock, { text: 'Last inserted paragraph' });
 
       redactor.appendChild(paragraph);
 
@@ -167,7 +168,7 @@ describe('ToggleBlock', () => {
       toggle.forEach((block) => redactor.appendChild(block));
 
       const firstChild = redactor.children[1];
-      const paragraph = createParagraph(toggleBlock, 'New paragraph');
+      const paragraph = createNestedBlock(toggleBlock, { text: 'New paragraph' });
 
       redactor.insertBefore(paragraph, firstChild);
 
@@ -180,7 +181,7 @@ describe('ToggleBlock', () => {
       toggle = generateFullToggle(toggleBlock);
       toggle.forEach((block) => redactor.appendChild(block));
 
-      const paragraph = createParagraph(toggleBlock, 'Last inserted paragraph');
+      const paragraph = createNestedBlock(toggleBlock, { text: 'Last inserted paragraph' });
 
       redactor.appendChild(paragraph);
 
@@ -236,6 +237,30 @@ describe('ToggleBlock', () => {
 
       expect(redactor.children.length).toBe(4);
       expect(children.length).toBe(3);
+    });
+  });
+
+  describe('validates read-only mode', () => {
+    let toggleBlockReadyOnly;
+
+    it('when is enable', () => {
+      toggleBlockReadyOnly = new ToggleBlock({ data, api: {}, readOnly: true });
+      toggleBlockReadyOnly.render();
+
+      const { children } = toggleBlockReadyOnly.wrapper;
+      const contentEditable = children[1].getAttribute('contentEditable');
+
+      expect(contentEditable).toBe('false');
+    });
+
+    it('when is disabled', () => {
+      toggleBlock = new ToggleBlock({ data, api: {}, readOnly: false });
+      toggleBlock.render();
+
+      const { children } = toggleBlock.wrapper;
+      const contentEditable = children[1].getAttribute('contentEditable');
+
+      expect(contentEditable).toBe('true');
     });
   });
 });
