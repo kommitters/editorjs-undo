@@ -43,6 +43,27 @@ export default class ToggleBlock {
   }
 
   /**
+   * Adds listener in the editor to create a toggle
+   * through the '>' char and the 'Space' key
+   */
+  nestBlock() {
+    const redactor = document.activeElement;
+    redactor.addEventListener('keyup', (e) => {
+      if (e.code === 'Space') {
+        const blockContainer = document.activeElement;
+        const content = blockContainer.textContent;
+        const { length } = content;
+
+        if ((content[0] === '>') && (length - 1 === 1)) {
+          const invocatorBlock = this.api.blocks.getCurrentBlockIndex();
+          this.api.blocks.insert('toggle', {}, this.api, invocatorBlock, true);
+          this.api.blocks.delete(invocatorBlock + 1);
+        }
+      }
+    });
+  }
+
+  /**
    * Render tool`s main Element and fill it with saved data
    *
    * @param {{data: object, api: object}}
@@ -59,6 +80,7 @@ export default class ToggleBlock {
     this.api = api;
     this.wrapper = undefined;
     this.readOnly = readOnly || false;
+    this.nestBlock();
   }
 
   /**

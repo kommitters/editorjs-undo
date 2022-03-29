@@ -1,8 +1,10 @@
 import ToggleBlock from '../src';
 import createToggleBlock from './fixtures/toggle';
+import editor from './fixtures/editor';
 import data from './fixtures/toolData';
 import {
-  getHiddenAttribute, generateFullToggle, createNestedBlock, destroyFullToggle, extractionBlock,
+  getHiddenAttribute, generateFullToggle, createNestedBlock, destroyFullToggle,
+  extractionBlock, createDefaultBlock, createToggle, getEditorElements,
 } from './testHelpers';
 
 global.crypto = require('crypto');
@@ -261,6 +263,48 @@ describe('ToggleBlock', () => {
       const contentEditable = children[1].getAttribute('contentEditable');
 
       expect(contentEditable).toBe('true');
+    });
+  });
+
+  describe('validates shortcut to create a toggle', () => {
+    let keyboardEvent;
+
+    beforeEach(() => {
+      keyboardEvent = new KeyboardEvent('keyup', {
+        key: 'Space',
+      });
+    });
+
+    it('when the block has the required data', () => {
+      const block = createDefaultBlock({ text: '>' });
+      editor.blocks.insert(block);
+
+      block.addEventListener('keyup', (e) => {
+        createToggle(e, editor, toggleBlock);
+      });
+
+      block.dispatchEvent(keyboardEvent);
+
+      const [redactor, classes] = getEditorElements();
+
+      expect(classes[0]).toBe('toggle-block__selector');
+      expect(redactor.children.length).toBe(1);
+    });
+
+    it('when the block has not the required data', () => {
+      const block = createDefaultBlock({ text: '' });
+      editor.blocks.insert(block);
+
+      block.addEventListener('keyup', (e) => {
+        createToggle(e, editor, toggleBlock);
+      });
+
+      block.dispatchEvent(keyboardEvent);
+
+      const [redactor, classes] = getEditorElements();
+
+      expect(classes[0]).not.toBe('toggle-block__selector');
+      expect(redactor.children.length).toBe(1);
     });
   });
 });

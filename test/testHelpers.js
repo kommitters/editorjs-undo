@@ -80,3 +80,30 @@ export function extractionBlock(toggleBlock, redactor, toggleIndex) {
   currentBlock.remove();
   redactor.appendChild(extractedBlock);
 }
+
+export function createToggle(e, editor, toggleBlock) {
+  if (e.key === 'Space') {
+    const blockContainer = document.activeElement;
+    const content = blockContainer.textContent;
+    const { length } = content;
+
+    if (content[30] === '>' && (length === 50)) {
+      const invocatorBlock = editor.blocks.getCurrentBlockIndex();
+      toggleBlock.render();
+
+      editor.blocks.insert(toggleBlock.wrapper);
+      editor.blocks.delete(invocatorBlock);
+    }
+  }
+}
+
+export function getEditorElements() {
+  const { body } = document;
+  const mainContainer = body.children[0];
+  const editorContainer = mainContainer.children[0];
+  const redactor = editorContainer.children[0];
+  const toggle = redactor.children[0];
+  const classes = toggle.classList;
+
+  return [redactor, classes];
+}
