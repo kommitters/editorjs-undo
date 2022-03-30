@@ -4,7 +4,7 @@ import editor from './fixtures/editor';
 import data from './fixtures/toolData';
 import {
   getHiddenAttribute, generateFullToggle, createNestedBlock, destroyFullToggle,
-  extractionBlock, createDefaultBlock, createToggle, getEditorElements,
+  extractionBlock, createDefaultBlock, createToggle, getEditorElements, nestBlock,
 } from './testHelpers';
 
 global.crypto = require('crypto');
@@ -305,6 +305,58 @@ describe('ToggleBlock', () => {
 
       expect(classes[0]).not.toBe('toggle-block__selector');
       expect(redactor.children.length).toBe(1);
+    });
+  });
+
+  describe('validates shortcut to nest a block inside a toggle', () => {
+    let keyboardEvent;
+
+    beforeEach(() => {
+      keyboardEvent = new KeyboardEvent('keyup', {
+        key: 'Tab',
+      });
+    });
+
+    it('when the block is next to a toggle block', () => {
+      const block = createDefaultBlock({ text: 'Block to be nested' });
+      editor.blocks.insert(toggleBlock.render());
+      editor.blocks.insert(block);
+
+      block.addEventListener('keyup', (e) => {
+        nestBlock(e, toggleBlock);
+      });
+
+      block.dispatchEvent(keyboardEvent);
+
+      const cover = block.firstChild;
+      const content = cover.firstChild;
+      const classes = Array.from(content.classList);
+      const foreignId = block.getAttribute('foreignKey');
+      const { id } = toggleBlock.wrapper;
+
+      expect(classes.includes('toggle-block__item')).toBe(true);
+      expect(foreignId).toEqual(id);
+    });
+
+    it('when toggle block is not before the block', () => {
+      const firstBlock = createDefaultBlock({ text: 'Block to be nested' });
+      const block = createDefaultBlock({ text: 'Block to be nested' });
+      editor.blocks.insert(firstBlock);
+      editor.blocks.insert(block);
+
+      block.addEventListener('keyup', (e) => {
+        nestBlock(e, toggleBlock);
+      });
+
+      block.dispatchEvent(keyboardEvent);
+
+      const cover = block.firstChild;
+      const content = cover.firstChild;
+      const classes = Array.from(content.classList);
+      const foreignId = block.getAttribute('foreignKey');
+
+      expect(classes.includes('toggle-block__item')).toBe(false);
+      expect(foreignId).toBeNull();
     });
   });
 });

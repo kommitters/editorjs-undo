@@ -107,3 +107,30 @@ export function getEditorElements() {
 
   return [redactor, classes];
 }
+
+function isPartOfAToggle(block) {
+  const classes = Array.from(block.classList);
+  const answer = classes.includes('toggle-block__item') || (classes.includes('toggle-block__input') || classes.includes('toggle-block__selector'));
+
+  return answer;
+}
+
+export function nestBlock(e) {
+  if (e.key === 'Tab') {
+    const { body } = document;
+    const mainContainer = body.children[0];
+    const editorContainer = mainContainer.children[0];
+    const redactor = editorContainer.children[0];
+    const [toggle, block] = redactor.children;
+
+    if (isPartOfAToggle(toggle)) {
+      const cover = block.firstChild;
+      const content = cover.firstChild;
+
+      block.setAttribute('foreignKey', toggle.id);
+      block.setAttribute('id', crypto.randomUUID());
+
+      content.classList.add('toggle-block__item');
+    }
+  }
+}
