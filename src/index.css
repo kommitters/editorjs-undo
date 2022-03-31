@@ -48,3 +48,7 @@
   color: gray;
   background-color: transparent;
 }
+
+div.hidden{
+  display: none;
+}
