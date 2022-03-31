@@ -529,6 +529,10 @@ export default class ToggleBlock {
           const blockCaller = this.api.blocks.getCurrentBlockIndex();
           this.api.blocks.insert('toggle', {}, this.api, blockCaller, true);
           this.api.blocks.delete(blockCaller + 1);
+
+          setTimeout(() => {
+            this.api.caret.setToBlock(blockCaller);
+          });
         }
       }
     });
