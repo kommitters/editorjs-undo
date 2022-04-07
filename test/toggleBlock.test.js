@@ -22,25 +22,9 @@ describe('ToggleBlock', () => {
     </div>
     `;
 
-    toggleBlock = createToggleBlock(data);
-  });
-
-  describe('validates data', () => {
-    it('when the data is valid with items', () => {
-      expect(toggleBlock.validate(data)).toBe(true);
-    });
-
-    it('when the toggle has no valid items', () => {
-      expect(toggleBlock.validate({ text: '', status: 'open', items: [{}] })).toBe(false);
-    });
-
-    it('when the data is valid with a empty item', () => {
-      expect(toggleBlock.validate({ text: '', status: 'open', items: [{ type: 'paragraph', data: {} }] })).toBe(true);
-    });
-
-    it('when the data is valid without toggle items', () => {
-      expect(toggleBlock.validate({ text: 'Text in the line', status: 'open', items: [] })).toBe(true);
-    });
+    toggleBlock = createToggleBlock(data[0]);
+    toggleBlock.data.status = 'closed';
+    toggleBlock.data.items = 3;
   });
 
   describe('validates toggle components', () => {
@@ -76,19 +60,20 @@ describe('ToggleBlock', () => {
     });
 
     it('when a toggle status is closed', () => {
-      toggle = generateFullToggle(toggleBlock);
+      toggle = generateFullToggle(toggleBlock, data);
       toggle.forEach((block) => redactor.appendChild(block));
+
       const children = redactor.querySelectorAll(`div[foreignKey="${toggleBlock.wrapper.id}"]`).length;
+
       hiddenAttributes = getHiddenAttribute(redactor, toggleBlock);
 
-      expect(toggleBlock.data.status).toEqual('closed');
-      expect(toggleBlock.data.items.length).toEqual(children);
+      expect(toggleBlock.data.items).toEqual(children);
       expect(hiddenAttributes).toEqual(children);
     });
 
     it('when a toggle status is open', () => {
       toggleBlock.data.status = 'open';
-      toggle = generateFullToggle(toggleBlock);
+      toggle = generateFullToggle(toggleBlock, data);
       toggle.forEach((block) => redactor.appendChild(block));
       hiddenAttributes = getHiddenAttribute(redactor, toggleBlock);
 
@@ -104,7 +89,7 @@ describe('ToggleBlock', () => {
 
     beforeEach(() => {
       redactor = document.querySelector('div.codex-editor__redactor');
-      toggle = generateFullToggle(toggleBlock);
+      toggle = generateFullToggle(toggleBlock, data);
       toggle.forEach((block) => redactor.appendChild(block));
     });
 
@@ -129,7 +114,7 @@ describe('ToggleBlock', () => {
 
     beforeEach(() => {
       redactor = document.querySelector('div.codex-editor__redactor');
-      toggle = generateFullToggle(toggleBlock);
+      toggle = generateFullToggle(toggleBlock, data);
       toggle.forEach((block) => redactor.appendChild(block));
     });
 
@@ -166,7 +151,7 @@ describe('ToggleBlock', () => {
     });
 
     it('when the toggle has other paragraphs', () => {
-      toggle = generateFullToggle(toggleBlock);
+      toggle = generateFullToggle(toggleBlock, data);
       toggle.forEach((block) => redactor.appendChild(block));
 
       const firstChild = redactor.children[1];
@@ -179,9 +164,8 @@ describe('ToggleBlock', () => {
     });
 
     it('when the toggle is empty', () => {
-      toggleBlock.data.items = [];
-      toggle = generateFullToggle(toggleBlock);
-      toggle.forEach((block) => redactor.appendChild(block));
+      toggleBlock.data.items = 0;
+      redactor.appendChild(toggleBlock.render());
 
       const paragraph = createNestedBlock(toggleBlock, { text: 'Last inserted paragraph' });
 
@@ -198,7 +182,7 @@ describe('ToggleBlock', () => {
 
     beforeEach(() => {
       redactor = document.querySelector('div.codex-editor__redactor');
-      toggle = generateFullToggle(toggleBlock);
+      toggle = generateFullToggle(toggleBlock, data);
       toggle.forEach((block) => redactor.appendChild(block));
     });
 
@@ -212,7 +196,7 @@ describe('ToggleBlock', () => {
 
     it('when the toggle is not the first element in the document', () => {
       // Insert new toggle in the document
-      const newToggle = generateFullToggle(toggleBlock);
+      const newToggle = generateFullToggle(toggleBlock, data);
       newToggle.forEach((block) => redactor.appendChild(block));
 
       const children = newToggle.length - 1;
@@ -229,7 +213,7 @@ describe('ToggleBlock', () => {
 
     beforeEach(() => {
       redactor = document.querySelector('div.codex-editor__redactor');
-      toggle = generateFullToggle(toggleBlock);
+      toggle = generateFullToggle(toggleBlock, data);
       toggle.forEach((block) => redactor.appendChild(block));
     });
 

@@ -49,6 +49,6 @@
   background-color: transparent;
 }
 
-div.hidden{
+div.toggle-block__hidden{
   display: none;
 }

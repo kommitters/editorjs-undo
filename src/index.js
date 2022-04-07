@@ -54,7 +54,7 @@ export default class ToggleBlock {
     this.data = {
       text: data.text || '',
       status: data.status || 'open',
-      items: data.items || [],
+      items: parseInt(data.items, 10) || 0,
     };
     this.api = api;
     this.wrapper = undefined;
@@ -80,11 +80,12 @@ export default class ToggleBlock {
 
       if (this.data.status === 'closed') {
         this.resolveToggleAction();
-        this.hideAndShowBlocks(originalIndex - 1);
+        this.hideAndShowBlocks(originalIndex);
       }
 
       setTimeout(() => {
         this.api.blocks.insert();
+        this.updateItems(1);
         this.setAttributesToNewBlock();
       }, 100);
     }
@@ -96,7 +97,10 @@ export default class ToggleBlock {
    * @param {KeyboardEvent} e - key down event
    */
   createParagraphFromIt(e) {
-    if (e.code === 'Enter') this.setAttributesToNewBlock();
+    if (e.code === 'Enter') {
+      this.updateItems(1);
+      this.setAttributesToNewBlock();
+    }
   }
 
   /**
@@ -105,7 +109,7 @@ export default class ToggleBlock {
    */
   setAttributesToNewBlock(entryIndex = null) {
     const foreignKey = this.wrapper.id;
-    const index = this.readOnly ? entryIndex : this.api.blocks.getCurrentBlockIndex();
+    const index = entryIndex === null ? this.api.blocks.getCurrentBlockIndex() : entryIndex;
     const id = crypto.randomUUID();
 
     const newBlock = this.api.blocks.getBlockByIndex(index);
@@ -121,6 +125,7 @@ export default class ToggleBlock {
     if (!this.readOnly) {
       holder.addEventListener('keydown', this.extractBlock.bind(this, item));
       holder.addEventListener('keydown', this.createParagraphFromIt.bind(this));
+      holder.addEventListener('keydown', this.removeBlock.bind(this, id));
       item.focus();
     }
   }
@@ -133,6 +138,7 @@ export default class ToggleBlock {
     this.wrapper = document.createElement('div');
     this.wrapper.classList.add('toggle-block__selector');
     this.wrapper.id = crypto.randomUUID();
+    this.wrapper.setAttribute('items', this.data.items);
 
     const icon = document.createElement('span');
     const input = document.createElement('div');
@@ -165,7 +171,7 @@ export default class ToggleBlock {
       input.addEventListener('focus', this.setNestedBlockAttributes.bind(this));
     }
 
-    defaultContent.classList.add('toggle-block__content-default', 'hidden');
+    defaultContent.classList.add('toggle-block__content-default', 'toggle-block__hidden');
     defaultContent.innerHTML = 'Empty toggle. Click or drop blocks inside.';
 
     this.wrapper.appendChild(icon);
@@ -178,24 +184,24 @@ export default class ToggleBlock {
    */
   clickInDefaultContent() {
     this.api.blocks.insert();
+    this.updateItems(1);
     this.setAttributesToNewBlock();
     this.setDefaultContent();
   }
 
   /**
    * Sets the default content. If the toggle has no other blocks inside it,
-   * so sets the value 'false' for the hidden tag in the default content,
-   * otherwise sets the value 'true'.
+   * so sets the 'block__hidden tag' in the default content,
+   * otherwise it removes it.
    */
   setDefaultContent() {
-    const children = document.querySelectorAll(`div[foreignKey="${this.wrapper.id}"]`);
     const { firstChild, lastChild } = this.wrapper;
     const { status } = this.data;
-    const value = (children.length > 0 || status === 'closed');
+    const items = parseInt(this.wrapper.getAttribute('items'), 10);
+    const value = (items > 0 || status === 'closed');
 
-    lastChild.classList.toggle('hidden', value);
-
-    firstChild.style.color = (children.length === 0) ? 'gray' : 'black';
+    lastChild.classList.toggle('toggle-block__hidden', value);
+    firstChild.style.color = (items === 0) ? 'gray' : 'black';
   }
 
   /**
@@ -211,16 +217,16 @@ export default class ToggleBlock {
 
       if (length === 0) {
         const index = this.api.blocks.getCurrentBlockIndex();
-        const blocks = document.querySelectorAll(`div[foreignKey="${this.wrapper.id}"]`);
 
         this.api.blocks.delete(index);
-        this.removeFullToggle(index, blocks);
+        this.removeFullToggle(index);
       }
     }
   }
 
   /**
-   * this method extract a single block with shift + tab combination
+   * Extracts a nested block from a toggle
+   * with 'shift + tab' combination
    *
    * @param {Object} item
    * @param {KeyboardEvent} e
@@ -229,8 +235,7 @@ export default class ToggleBlock {
     if (e.code === 'Tab' && e.shiftKey) {
       const indexBlock = this.api.blocks.getCurrentBlockIndex();
       const toggle = this.wrapper.children[1];
-      const children = document.querySelectorAll(`div[foreignKey="${this.wrapper.id}"]`);
-      const { length } = children;
+      const items = parseInt(this.wrapper.getAttribute('items'), 10);
 
       let currentBlock = {};
       let index;
@@ -247,7 +252,8 @@ export default class ToggleBlock {
       }
 
       this.api.blocks.delete(indexBlock);
-      this.api.blocks.insert('paragraph', { text: item.textContent }, {}, index + length, true);
+      this.api.blocks.insert('paragraph', { text: item.textContent }, {}, index + items, true);
+      this.updateItems(-1);
     }
   }
 
@@ -278,7 +284,7 @@ export default class ToggleBlock {
     this.createToggle();
 
     // Renders the nested blocks after the toggle root is rendered
-    setTimeout(this.renderItems.bind(this));
+    setTimeout(() => this.renderItems());
 
     // Adds initial transition for the icon
     setTimeout(this.setInitialTransition.bind(this));
@@ -304,7 +310,9 @@ export default class ToggleBlock {
    * like a block inside the toggle.
    */
   renderItems() {
+    const blocksInEditor = this.api.blocks.getBlocksCount();
     const icon = this.wrapper.firstChild;
+    const items = parseInt(this.wrapper.getAttribute('items'), 10);
     let toggleRoot;
 
     if (this.readOnly) {
@@ -337,27 +345,35 @@ export default class ToggleBlock {
         this.api.caret.setToNextBlock('end', 0);
       }
     }
-    let index = toggleRoot;
-    index += this.readOnly ? 1 : 0;
+
+    if (toggleRoot + items < blocksInEditor) {
+      for (let i = toggleRoot + 1, j = 0; i <= toggleRoot + items; i += 1) {
+        const block = this.api.blocks.getBlockByIndex(i);
+        const { holder } = block;
+        const cover = holder.firstChild;
+        const content = cover.firstChild;
+
+        if (!this.isPartOfAToggle(content)) {
+          this.setAttributesToNewBlock(i);
+          j += 1;
+        } else {
+          this.wrapper.setAttribute('items', j);
+          break;
+        }
+      }
+    } else {
+      this.wrapper.setAttribute('items', 0);
+    }
 
     icon.addEventListener('click', () => {
       this.resolveToggleAction();
       setTimeout(() => {
-        const toggleIndex = this.readOnly ? (toggleRoot - 1) : null;
+        const toggleIndex = this.readOnly ? toggleRoot : null;
         this.hideAndShowBlocks(toggleIndex);
       }, 100);
     });
 
-    this.data.items.forEach((block) => {
-      const { type, data } = block;
-
-      index += !this.readOnly ? 1 : 0;
-      this.api.blocks.insert(type, data, {}, index, true);
-      this.setAttributesToNewBlock(index);
-      index += this.readOnly ? 1 : 0;
-    });
-
-    this.hideAndShowBlocks(toggleRoot - 1);
+    this.hideAndShowBlocks(toggleRoot);
   }
 
   /**
@@ -379,8 +395,6 @@ export default class ToggleBlock {
       this.data.status = 'closed';
       svg.style.transform = 'rotate(0deg)';
     }
-
-    return icon;
   }
 
   /**
@@ -391,11 +405,10 @@ export default class ToggleBlock {
    * @param {number} index - toggle index
    */
   hideAndShowBlocks(index = null) {
-    const children = document.querySelectorAll(`div[foreignKey="${this.wrapper.id}"]`);
-    const items = children.length;
+    const items = parseInt(this.wrapper.getAttribute('items'), 10);
     const value = (this.data.status === 'closed');
 
-    let toggleIndex = index === null ? this.api.blocks.getCurrentBlockIndex() : index + 1;
+    let toggleIndex = index === null ? this.api.blocks.getCurrentBlockIndex() : index;
 
     if (items > 0) {
       for (let i = 0; i < items; i += 1) {
@@ -405,7 +418,7 @@ export default class ToggleBlock {
     } else {
       const { lastChild } = this.wrapper;
 
-      lastChild.classList.toggle('hidden', value);
+      lastChild.classList.toggle('toggle-block__hidden', value);
     }
   }
 
@@ -416,63 +429,14 @@ export default class ToggleBlock {
    */
   save(blockContent) {
     const { children } = blockContent;
-    const caption = children[1].textContent;
-    const blocks = document.querySelectorAll(`div[foreignKey="${this.wrapper.id}"]`);
-    const items = [];
+    const caption = children[1].innerHTML;
 
-    blocks.forEach((block) => {
-      items.push({ type: 'paragraph', data: { text: block.textContent } });
-
-      // Attributes and classes to restore the block later.
-      const wrap = block.firstChild;
-      const mainContainer = wrap.firstChild;
-
-      mainContainer.setAttribute('oldValue', block.textContent);
-      mainContainer.textContent = '';
-    });
-
-    setTimeout(() => { this.restoreBlocks(); });
+    const items = parseInt(blockContent.getAttribute('items'), 10);
 
     return Object.assign(this.data, {
       text: caption,
-      items: [...items],
+      items,
     });
-  }
-
-  /**
-   * Gets the nested blocks and restores their original content
-   * after the save method is executed.
-   */
-  restoreBlocks() {
-    const blocks = document.querySelectorAll(`div[foreignKey="${this.wrapper.id}"]`);
-    const { length } = blocks;
-
-    for (let i = 0; i < length; i += 1) {
-      const block = blocks[i];
-      const wrap = block.firstChild;
-      const mainContainer = wrap.firstChild;
-      const content = mainContainer.getAttribute('oldValue');
-
-      mainContainer.textContent = content;
-      mainContainer.removeAttribute('oldValue');
-    }
-  }
-
-  /**
-   * Validates Toggle block data
-   * @param {object} savedData - Data received after saving
-   * @returns {boolean} false if saved data isn't correct, otherwise true
-   */
-  validate(savedData) {
-    const { items } = savedData;
-
-    for (let i = 0; i < items.length; i += 1) {
-      if (items[i].type === undefined || items[i].data === undefined) {
-        return false;
-      }
-    }
-
-    return true;
   }
 
   /**
@@ -484,7 +448,6 @@ export default class ToggleBlock {
     const optionsContainer = settingsBar[0];
     const options = optionsContainer.lastChild;
     const toggleIndex = this.api.blocks.getCurrentBlockIndex();
-    const children = document.querySelectorAll(`div[foreignKey="${this.wrapper.id}"]`);
 
     setTimeout(() => {
       const deleteButton = options.getElementsByClassName('ce-settings__button--delete')[0];
@@ -495,21 +458,22 @@ export default class ToggleBlock {
         if (classes.indexOf('clicked-to-destroy-toggle') === -1) {
           deleteButton.classList.add('clicked-to-destroy-toggle');
         } else {
-          this.removeFullToggle(toggleIndex, children);
+          this.removeFullToggle(toggleIndex);
         }
       });
     });
   }
 
   /**
+   * Removes a toggle root and its nested blocks.
    *
    * @param {number} toggleIndex - toggle index
    * @param {object} children - blocks inside the toggle
    */
-  removeFullToggle(toggleIndex, children) {
-    const blocks = children.length;
+  removeFullToggle(toggleIndex) {
+    const items = parseInt(this.wrapper.getAttribute('items'), 10);
 
-    for (let i = toggleIndex; i < toggleIndex + blocks; i += 1) {
+    for (let i = toggleIndex; i < toggleIndex + items; i += 1) {
       this.api.blocks.delete(toggleIndex);
     }
   }
@@ -519,24 +483,26 @@ export default class ToggleBlock {
    * through the '>' char and the 'Space' key
    */
   createToggleWithShortcut() {
-    const redactor = document.activeElement;
-    redactor.addEventListener('keyup', (e) => {
-      if (e.code === 'Space') {
-        const blockContainer = document.activeElement;
-        const content = blockContainer.textContent;
-        const { length } = content;
+    if (!this.readOnly) {
+      const redactor = document.activeElement;
+      redactor.addEventListener('keyup', (e) => {
+        if (e.code === 'Space') {
+          const blockContainer = document.activeElement;
+          const content = blockContainer.textContent;
+          const { length } = content;
 
-        if ((content[0] === '>') && (length - 1 === 1)) {
-          const blockCaller = this.api.blocks.getCurrentBlockIndex();
-          this.api.blocks.insert('toggle', {}, this.api, blockCaller, true);
-          this.api.blocks.delete(blockCaller + 1);
+          if ((content[0] === '>') && (length - 1 === 1) && !this.isPartOfAToggle(blockContainer)) {
+            const blockCaller = this.api.blocks.getCurrentBlockIndex();
+            this.api.blocks.insert('toggle', {}, this.api, blockCaller, true);
+            this.api.blocks.delete(blockCaller + 1);
 
-          setTimeout(() => {
-            this.api.caret.setToBlock(blockCaller);
-          });
+            setTimeout(() => {
+              this.api.caret.setToBlock(blockCaller);
+            });
+          }
         }
-      }
-    });
+      });
+    }
   }
 
   /**
@@ -544,37 +510,39 @@ export default class ToggleBlock {
    * inside a toggle through the 'Tab' key
    */
   nestBlock() {
-    const redactor = document.activeElement;
-    redactor.addEventListener('keyup', (e) => {
-      const blockContainer = document.activeElement;
-      const currentBlock = this.api.blocks.getCurrentBlockIndex();
+    if (!this.readOnly) {
+      const redactor = document.activeElement;
+      redactor.addEventListener('keyup', (e) => {
+        const blockContainer = document.activeElement;
+        const currentBlock = this.api.blocks.getCurrentBlockIndex();
 
-      if (currentBlock > 0 && !this.isPartOfAToggle(blockContainer) && e.code === 'Tab') {
-        const blockCover = blockContainer.parentElement;
-        const block = blockCover.parentElement;
+        if (currentBlock > 0 && !this.isPartOfAToggle(blockContainer) && e.code === 'Tab') {
+          const blockCover = blockContainer.parentElement;
+          const block = blockCover.parentElement;
 
-        const previousBlock = block.previousElementSibling;
-        const previousCover = previousBlock.firstChild;
-        const previousContainer = previousCover.firstChild;
+          const previousBlock = block.previousElementSibling;
+          const previousCover = previousBlock.firstChild;
+          const previousContainer = previousCover.firstChild;
 
-        if (this.isPartOfAToggle(previousContainer)) {
-          const foreignId = previousBlock.getAttribute('foreignKey');
-          const toggleId = previousContainer.getAttribute('id');
+          if (this.isPartOfAToggle(previousContainer)) {
+            const foreignId = previousBlock.getAttribute('foreignKey');
+            const toggleId = previousContainer.getAttribute('id');
 
-          let foreignKey;
-          if (foreignId) {
-            foreignKey = foreignId;
-          } else if (toggleId) {
-            foreignKey = toggleId;
+            let foreignKey;
+            if (foreignId) {
+              foreignKey = foreignId;
+            } else if (toggleId) {
+              foreignKey = toggleId;
+            }
+
+            block.setAttribute('will-be-a-nested-block', true);
+
+            const toggleRoot = document.getElementById(foreignKey);
+            toggleRoot.children[1].focus();
           }
-
-          block.setAttribute('will-be-a-nested-block', true);
-
-          const toggleRoot = document.getElementById(foreignKey);
-          toggleRoot.children[1].focus();
         }
-      }
-    });
+      });
+    }
   }
 
   /**
@@ -591,6 +559,7 @@ export default class ToggleBlock {
       holder.removeAttribute('will-be-a-nested-block');
       this.setAttributesToNewBlock(blockIndex);
       this.api.toolbar.close();
+      this.updateItems(1);
     }
   }
 
@@ -608,5 +577,33 @@ export default class ToggleBlock {
     const answer = classes.includes('toggle-block__item') || (classes.includes('toggle-block__input') || classes.includes('toggle-block__selector'));
 
     return answer;
+  }
+
+  /**
+   * When a nested block is removes, the 'items' attribute
+   * is updated, subtracting from it an unit.
+   * @param {string} paragraphId - paragraph identifier
+   * @param {KeyboardEvent} e - key down event
+   */
+  removeBlock(paragraphId, e) {
+    if (e.code === 'Backspace') {
+      const block = document.getElementById(paragraphId);
+
+      if (block === null) {
+        this.updateItems(-1);
+      }
+    }
+  }
+
+  /**
+   * Increase the indicated value to 'items'
+   * attribute, i.e., items += val
+   *
+   * @param {number} val - integer number
+   */
+  updateItems(val) {
+    let items = parseInt(this.wrapper.getAttribute('items'), 10);
+    items += val;
+    this.wrapper.setAttribute('items', items);
   }
 }

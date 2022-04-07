@@ -35,11 +35,11 @@ const editor = EditorJS({
 
 ### Output data
 
-| Field  | Type     | Description                              |
-| ------ | -------- | ---------------------------------------- |
-| text   | `string` | Main text                                |
-| status | `string` | Toggle status                            |
-| items  | `array`  | Contains the blocks nested in the toggle |
+| Field  | Type     | Description                                         |
+| ------ | -------- | --------------------------------------------------- |
+| text   | `string` | Main text                                           |
+| status | `string` | Toggle status                                       |
+| items  | `number` | Indicates the number of nested blocks in the toggle |
 
 ### Sample data
 
@@ -49,19 +49,31 @@ const editor = EditorJS({
     data: {
         text: 'Toggle A',
         status: 'open',
-        items: [
-            { type: 'paragraph', data: { text: 'A1' } },
-            { type: 'paragraph', data: { text: 'A2' } },
-            { type: 'paragraph', data: { text: 'A3' } },
-        ],
+        items: 3,
     }
 },
+
+{
+     type: 'paragraph',
+     data: { text: 'A1' }
+},
+
+{
+    type: 'paragraph',
+    data: { text: 'A2' }
+},
+
+{
+    type: 'paragraph',
+    data: { text: 'A3' }
+},
+
 {
     type: 'toggle',
     data: {
         text: '',
         status: 'open',
-        items: [],
+        items: 0,
     }
 },
 {
@@ -69,7 +81,7 @@ const editor = EditorJS({
     data: {
         text: 'It is empty',
         status: 'closed',
-        items: [],
+        items: 0,
     }
 }
 ```
