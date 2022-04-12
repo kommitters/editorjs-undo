@@ -216,7 +216,17 @@ export default class Undo {
    * @returns {Boolean} true if a block was inserted previously.
    */
   blockWasSkipped(index, compIndex, state, compState) {
-    return index < compIndex || state.length !== compState.length;
+    return index < compIndex && state.length !== compState.length;
+  }
+
+  /**
+   * return true if the content in a block without the focus was modified.
+   * @param {Number} index is the block index in state.
+   * @param {Number} compIndex is the index to compare and know if the block was inserted previously
+   * @returns true if the content in a block without the focus was modified.
+   */
+  contentChangedInNoFocusBlock(index, compIndex) {
+    return index !== compIndex;
   }
 
   /**
@@ -261,6 +271,14 @@ export default class Undo {
         this.blocks
           .render({ blocks: state })
           .then(() => this.caret.setToBlock(index, 'end'));
+        return;
+      }
+
+      if (this.contentChangedInNoFocusBlock(index, nextIndex)) {
+        const { id } = this.blocks.getBlockByIndex(nextIndex);
+
+        this.blocks.update(id, state[nextIndex].data);
+        this.setCaretIndex(index, caretIndex);
         return;
       }
 
