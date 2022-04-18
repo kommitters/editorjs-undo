@@ -383,9 +383,10 @@ export default class Undo {
       SHIFT: 'shiftKey',
     };
     const parsedKeys = keys.slice(0, -1).map((key) => specialKeys[key]);
-    const letterKey = parsedKeys.includes('shiftKey')
-      ? keys[keys.length - 1].toUpperCase()
-      : keys[keys.length - 1].toLowerCase();
+
+    const letterKey = parsedKeys.includes('shiftKey') && keys.length === 2
+      ? (keys[keys.length - 1].toUpperCase())
+      : (keys[keys.length - 1].toLowerCase());
 
     parsedKeys.push(letterKey);
     return parsedKeys;
@@ -405,23 +406,29 @@ export default class Undo {
     const keysUndoParsed = this.parseKeys(keysUndo);
     const keysRedoParsed = this.parseKeys(keysRedo);
 
-    const pressedKeys = (e, keys) => {
-      if (keys.length === 2 && e[keys[0]] && e.key === keys[1]) return true;
-      if (keys.length === 3 && e[keys[0]] && e[keys[1]] && e.key === keys[2]) {
+    const twoKeysPressed = (e, keys) => (keys.length === 2 && e[keys[0]] && e.key === keys[1]);
+    const threeKeysPressed = (e, keys) => (keys.length === 3
+      && e[keys[0]] && e[keys[1]] && e.key === keys[2]);
+
+    const pressedKeys = (e, keys, compKeys) => {
+      if (twoKeysPressed(e, keys) && !threeKeysPressed(e, compKeys)) {
+        return true;
+      }
+      if (threeKeysPressed(e, keys)) {
         return true;
       }
       return false;
     };
 
     const handleUndo = (e) => {
-      if (pressedKeys(e, keysUndoParsed)) {
+      if (pressedKeys(e, keysUndoParsed, keysRedoParsed)) {
         e.preventDefault();
         this.undo();
       }
     };
 
     const handleRedo = (e) => {
-      if (pressedKeys(e, keysRedoParsed)) {
+      if (pressedKeys(e, keysRedoParsed, keysUndoParsed)) {
         e.preventDefault();
         this.redo();
       }
