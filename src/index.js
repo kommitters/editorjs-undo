@@ -159,9 +159,13 @@ export default class Undo {
     this.stack = this.stack.slice(0, this.position + 1);
 
     const index = this.blocks.getCurrentBlockIndex();
-    const caretIndex = state[index].type === 'paragraph' || state[index].type === 'header'
+    const blockCount = this.blocks.getBlocksCount();
+    let indexInState = index;
+
+    if (!state[index]) indexInState -= (blockCount - state.length);
+    const caretIndex = state[indexInState].type === 'paragraph' || state[index].type === 'header'
       ? this.getCaretIndex(index) : null;
-    this.stack.push({ index, state, caretIndex });
+    this.stack.push({ index: indexInState, state, caretIndex });
     this.position += 1;
     this.onUpdate();
   }
@@ -200,8 +204,8 @@ export default class Undo {
    * @param {Array} compState is the state to compare and know the dropped block.
    * @returns {Boolean} true if the block was dropped
    */
-  blockWasDropped(state, compState) {
-    if (state.length === compState.length) {
+  blockWasDropped(state, compState, index, compIndex) {
+    if (state.length === compState.length && index !== compIndex) {
       return state.some((block, i) => block.id !== compState[i].id);
     }
     return false;
@@ -250,6 +254,7 @@ export default class Undo {
       const nextIndex = this.stack[(this.position + 1)].index;
       const nextState = this.stack[(this.position + 1)].state;
       this.onUpdate();
+      const blockCount = this.blocks.getBlocksCount();
 
       if (!state[index]) {
         index -= 1;
@@ -261,13 +266,20 @@ export default class Undo {
         return;
       }
 
-      if (this.blockWasSkipped(index, nextIndex, state, nextState) && this.position !== 0) {
+      if (this.blockWasSkipped(index, nextIndex, state, nextState)) {
         this.blocks.delete();
         this.caret.setToBlock(index, 'end');
         return;
       }
 
-      if (this.blockWasDropped(state, nextState) && this.position !== 0) {
+      if (blockCount > state.length) {
+        this.blocks
+          .render({ blocks: state })
+          .then(() => this.setCaretIndex(index, caretIndex));
+        return;
+      }
+
+      if (this.blockWasDropped(state, nextState, index, nextIndex) && this.position !== 0) {
         this.blocks
           .render({ blocks: state })
           .then(() => this.caret.setToBlock(index, 'end'));
@@ -295,7 +307,7 @@ export default class Undo {
    * @param {Array} state is the current state according to this.position.
    */
   setCaretIndex(index, caretIndex) {
-    if (caretIndex) {
+    if (caretIndex && caretIndex !== -1) {
       const blocks = document.getElementsByClassName('ce-block__content');
       const caretBlock = new VanillaCaret(blocks[index].firstChild);
 
