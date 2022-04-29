@@ -1,5 +1,11 @@
 # Changelog
 
+## 2.0.0 (29.04.2022)
+* Updated packages with known security breaches. 
+* Add a new corner case to consider the case when the content has changed in the not current block.
+* solve a bug in shortcuts related to the common Mac commands.
+* Add a new corner case to handle empty blocks in the editor. 
+
 ## 2.0.0-rc.3 (14.03.2022)
 * Add a custom debounceTimer in the config object to choose the save time.
 
