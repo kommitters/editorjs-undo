@@ -159,9 +159,13 @@ export default class Undo {
     this.stack = this.stack.slice(0, this.position + 1);
 
     const index = this.blocks.getCurrentBlockIndex();
-    const caretIndex = state[index].type === 'paragraph' || state[index].type === 'header'
+    const blockCount = this.blocks.getBlocksCount();
+    let indexInState = index;
+
+    if (!state[index]) indexInState -= (blockCount - state.length);
+    const caretIndex = state[indexInState].type === 'paragraph' || state[index].type === 'header'
       ? this.getCaretIndex(index) : null;
-    this.stack.push({ index, state, caretIndex });
+    this.stack.push({ index: indexInState, state, caretIndex });
     this.position += 1;
     this.onUpdate();
   }
@@ -200,8 +204,8 @@ export default class Undo {
    * @param {Array} compState is the state to compare and know the dropped block.
    * @returns {Boolean} true if the block was dropped
    */
-  blockWasDropped(state, compState) {
-    if (state.length === compState.length) {
+  blockWasDropped(state, compState, index, compIndex) {
+    if (state.length === compState.length && index !== compIndex) {
       return state.some((block, i) => block.id !== compState[i].id);
     }
     return false;
@@ -216,7 +220,17 @@ export default class Undo {
    * @returns {Boolean} true if a block was inserted previously.
    */
   blockWasSkipped(index, compIndex, state, compState) {
-    return index < compIndex || state.length !== compState.length;
+    return index < compIndex && state.length !== compState.length;
+  }
+
+  /**
+   * return true if the content in a block without the focus was modified.
+   * @param {Number} index is the block index in state.
+   * @param {Number} compIndex is the index to compare and know if the block was inserted previously
+   * @returns true if the content in a block without the focus was modified.
+   */
+  contentChangedInNoFocusBlock(index, compIndex) {
+    return index !== compIndex;
   }
 
   /**
@@ -240,6 +254,7 @@ export default class Undo {
       const nextIndex = this.stack[(this.position + 1)].index;
       const nextState = this.stack[(this.position + 1)].state;
       this.onUpdate();
+      const blockCount = this.blocks.getBlocksCount();
 
       if (!state[index]) {
         index -= 1;
@@ -251,16 +266,31 @@ export default class Undo {
         return;
       }
 
-      if (this.blockWasSkipped(index, nextIndex, state, nextState) && this.position !== 0) {
+      if (this.blockWasSkipped(index, nextIndex, state, nextState)) {
         this.blocks.delete();
         this.caret.setToBlock(index, 'end');
         return;
       }
 
-      if (this.blockWasDropped(state, nextState) && this.position !== 0) {
+      if (blockCount > state.length) {
+        this.blocks
+          .render({ blocks: state })
+          .then(() => this.setCaretIndex(index, caretIndex));
+        return;
+      }
+
+      if (this.blockWasDropped(state, nextState, index, nextIndex) && this.position !== 0) {
         this.blocks
           .render({ blocks: state })
           .then(() => this.caret.setToBlock(index, 'end'));
+        return;
+      }
+
+      if (this.contentChangedInNoFocusBlock(index, nextIndex)) {
+        const { id } = this.blocks.getBlockByIndex(nextIndex);
+
+        this.blocks.update(id, state[nextIndex].data);
+        this.setCaretIndex(index, caretIndex);
         return;
       }
 
@@ -277,7 +307,7 @@ export default class Undo {
    * @param {Array} state is the current state according to this.position.
    */
   setCaretIndex(index, caretIndex) {
-    if (caretIndex) {
+    if (caretIndex && caretIndex !== -1) {
       const blocks = document.getElementsByClassName('ce-block__content');
       const caretBlock = new VanillaCaret(blocks[index].firstChild);
 
@@ -365,9 +395,10 @@ export default class Undo {
       SHIFT: 'shiftKey',
     };
     const parsedKeys = keys.slice(0, -1).map((key) => specialKeys[key]);
-    const letterKey = parsedKeys.includes('shiftKey')
-      ? keys[keys.length - 1].toUpperCase()
-      : keys[keys.length - 1].toLowerCase();
+
+    const letterKey = parsedKeys.includes('shiftKey') && keys.length === 2
+      ? (keys[keys.length - 1].toUpperCase())
+      : (keys[keys.length - 1].toLowerCase());
 
     parsedKeys.push(letterKey);
     return parsedKeys;
@@ -387,23 +418,29 @@ export default class Undo {
     const keysUndoParsed = this.parseKeys(keysUndo);
     const keysRedoParsed = this.parseKeys(keysRedo);
 
-    const pressedKeys = (e, keys) => {
-      if (keys.length === 2 && e[keys[0]] && e.key === keys[1]) return true;
-      if (keys.length === 3 && e[keys[0]] && e[keys[1]] && e.key === keys[2]) {
+    const twoKeysPressed = (e, keys) => (keys.length === 2 && e[keys[0]] && e.key === keys[1]);
+    const threeKeysPressed = (e, keys) => (keys.length === 3
+      && e[keys[0]] && e[keys[1]] && e.key === keys[2]);
+
+    const pressedKeys = (e, keys, compKeys) => {
+      if (twoKeysPressed(e, keys) && !threeKeysPressed(e, compKeys)) {
+        return true;
+      }
+      if (threeKeysPressed(e, keys)) {
         return true;
       }
       return false;
     };
 
     const handleUndo = (e) => {
-      if (pressedKeys(e, keysUndoParsed)) {
+      if (pressedKeys(e, keysUndoParsed, keysRedoParsed)) {
         e.preventDefault();
         this.undo();
       }
     };
 
     const handleRedo = (e) => {
-      if (pressedKeys(e, keysRedoParsed)) {
+      if (pressedKeys(e, keysRedoParsed, keysUndoParsed)) {
         e.preventDefault();
         this.redo();
       }

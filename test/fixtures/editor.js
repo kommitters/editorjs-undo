@@ -9,6 +9,7 @@ const editor = {
     render: () => new Promise((resolve) => resolve(true)),
     getCurrentBlockIndex: () => 0,
     getBlockByIndex: () => ({ id: '123id', type: 'paragraph', data: {} }),
+    getBlocksCount: () => 1,
     update: () => {},
     delete: () => {},
     insert: () => {},
