@@ -2,8 +2,6 @@
 
 Toggle block tool for [Editor.js](https://editorjs.io/)
 
-![](assets/demo.gif)
-
 ![](assets/demo_with_other_blocks.gif)
 
 ## Installation
