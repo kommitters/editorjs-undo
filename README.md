@@ -4,6 +4,8 @@ Toggle block tool for [Editor.js](https://editorjs.io/)
 
 ![](assets/demo.gif)
 
+![](assets/demo_with_other_blocks.gif)
+
 ## Installation
 
 ### Install via NPM
@@ -93,8 +95,6 @@ const editor = EditorJS({
 ![](assets/second_sample.png)
 
 ![](assets/third_sample.png)
-
-**Note:** Currently, the tool only supports `paragraphs` as nested blocks.
 
 ### Shortcuts
 

@@ -54,13 +54,14 @@ export default class ToggleBlock {
     this.data = {
       text: data.text || '',
       status: data.status || 'open',
-      items: parseInt(data.items, 10) || 0,
+      items: data.items || 0,
     };
+    this.itemsId = [];
     this.api = api;
     this.wrapper = undefined;
     this.readOnly = readOnly || false;
-    this.createToggleWithShortcut();
-    this.nestBlock();
+    this.addListeners();
+    this.addSupportForUndoAndRedoActions();
   }
 
   /**
@@ -76,31 +77,35 @@ export default class ToggleBlock {
    */
   createParagraphFromToggleRoot(e) {
     if (e.code === 'Enter') {
+      const currentPosition = document.getSelection().focusOffset;
       const originalIndex = this.api.blocks.getCurrentBlockIndex();
+      const block = this.api.blocks.getBlockByIndex(originalIndex);
+      const { holder } = block;
+      const blockCover = holder.firstChild;
+      const blockContent = blockCover.firstChild;
+      const content = blockContent.children[1].innerHTML;
+
+      const breakLine = content.indexOf('<br>');
+      const end = breakLine === -1 ? content.length : breakLine;
 
       if (this.data.status === 'closed') {
         this.resolveToggleAction();
         this.hideAndShowBlocks(originalIndex);
       }
 
-      setTimeout(() => {
-        this.api.blocks.insert();
-        this.updateItems(1);
-        this.setAttributesToNewBlock();
-      }, 100);
+      const newText = content.slice(end + 4, currentPosition.focusOffset);
+      blockContent.children[1].innerHTML = content.slice(currentPosition.focusOffset, end);
+
+      this.api.blocks.insert('paragraph', { text: newText }, {}, originalIndex + 1, 1);
+      this.setAttributesToNewBlock();
     }
   }
 
   /**
    * Calls the method to add the required properties to the new block.
-   *
-   * @param {KeyboardEvent} e - key down event
    */
-  createParagraphFromIt(e) {
-    if (e.code === 'Enter') {
-      this.updateItems(1);
-      this.setAttributesToNewBlock();
-    }
+  createParagraphFromIt() {
+    this.setAttributesToNewBlock();
   }
 
   /**
@@ -113,6 +118,11 @@ export default class ToggleBlock {
     const id = crypto.randomUUID();
 
     const newBlock = this.api.blocks.getBlockByIndex(index);
+
+    if (!this.itemsId.includes(newBlock.id)) {
+      this.itemsId.splice(index - 1, 0, newBlock.id);
+    }
+
     const { holder } = newBlock;
     const content = holder.firstChild;
     const item = content.firstChild;
@@ -120,14 +130,82 @@ export default class ToggleBlock {
     holder.setAttribute('foreignKey', foreignKey);
     holder.setAttribute('id', id);
 
-    item.classList.add('toggle-block__item');
+    holder.classList.add('toggle-block__item');
 
     if (!this.readOnly) {
-      holder.addEventListener('keydown', this.extractBlock.bind(this, item));
-      holder.addEventListener('keydown', this.createParagraphFromIt.bind(this));
-      holder.addEventListener('keydown', this.removeBlock.bind(this, id));
+      holder.onkeydown = this.setEventsToNestedBlock.bind(this);
       item.focus();
     }
+  }
+
+  /**
+   * Sets the events to be listened through the holder
+   * in a nested block.
+   *
+   * @param {KeyboardEvent} e - key down event
+   */
+  setEventsToNestedBlock(e) {
+    if (e.code === 'Enter') {
+      this.createParagraphFromIt();
+    } else {
+      const indexBlock = this.api.blocks.getCurrentBlockIndex();
+      const nestedBlock = this.api.blocks.getBlockByIndex(indexBlock);
+      const { holder } = nestedBlock;
+
+      if (e.code === 'Tab' && e.shiftKey) {
+        this.extractBlock(indexBlock);
+      }
+      if (e.code === 'Backspace') {
+        const cursorPosition = document.getSelection().focusOffset;
+        this.removeBlock(holder, nestedBlock.id, cursorPosition);
+      }
+    }
+  }
+
+  /**
+   * When a nested block is removed, the 'items' attribute
+   * is updated, subtracting from it an unit.
+   * @param {string} id - block identifier
+   */
+  removeBlock(holder, id, cursorPosition) {
+    if (cursorPosition === 0) {
+      const currentBlock = holder.nextSibling;
+      const blockCover = currentBlock.firstChild;
+      const blockContent = blockCover.firstChild;
+      const oldContent = blockContent.innerHTML;
+
+      const toggleCover = holder.firstChild;
+      const toggleContent = toggleCover.firstChild;
+
+      toggleContent.children[1].innerHTML += oldContent;
+
+      const position = this.itemsId.indexOf(id);
+      this.itemsId.splice(position, 1);
+
+      const togglePosition = this.api.blocks.getCurrentBlockIndex();
+      this.api.blocks.delete(togglePosition + 1);
+    }
+  }
+
+  /**
+   * Removes all properties of a nested block.
+   *
+   * @param {number} destiny - block position
+   */
+  removeAttributesFromNewBlock(destiny) {
+    const newBlock = this.api.blocks.getBlockByIndex(destiny);
+    const { holder } = newBlock;
+
+    if (!this.itemsId.includes(newBlock.id)) {
+      const i = this.itemsId.indexOf(newBlock.id);
+      this.itemsId.splice(i, 1);
+    }
+
+    holder.removeAttribute('foreignKey');
+    holder.removeAttribute('id');
+    holder.onkeydown = {};
+    holder.onkeyup = {};
+    holder.classList.remove('toggle-block__item');
   }
 
   /**
@@ -138,7 +216,6 @@ export default class ToggleBlock {
     this.wrapper = document.createElement('div');
     this.wrapper.classList.add('toggle-block__selector');
     this.wrapper.id = crypto.randomUUID();
-    this.wrapper.setAttribute('items', this.data.items);
 
     const icon = document.createElement('span');
     const input = document.createElement('div');
@@ -156,6 +233,9 @@ export default class ToggleBlock {
       // Events to create other blocks and destroy the toggle
       input.addEventListener('keyup', this.createParagraphFromToggleRoot.bind(this));
       input.addEventListener('keydown', this.removeToggle.bind(this));
+
+      // Sets the focus at the end of the text when a nested block is deleted with the backspace key
+      input.addEventListener('focusin', () => this.setFocusToggleRootAtTheEnd());
 
       // Establishes the placeholder for the toggle root when it's empty
       input.addEventListener('keyup', this.setPlaceHolder.bind(this));
@@ -180,11 +260,26 @@ export default class ToggleBlock {
   }
 
   /**
+   * Sets the focus at the end of the toggle root when
+   * a nested block is deleted through the backspace key.
+   */
+  setFocusToggleRootAtTheEnd() {
+    const toggle = document.activeElement;
+    const selection = window.getSelection();
+    const range = document.createRange();
+
+    selection.removeAllRanges();
+    range.selectNodeContents(toggle);
+    range.collapse(false);
+    selection.addRange(range);
+    toggle.focus();
+  }
+
+  /**
    * Adds the actions to do when the default content is clicked.
    */
   clickInDefaultContent() {
     this.api.blocks.insert();
-    this.updateItems(1);
     this.setAttributesToNewBlock();
     this.setDefaultContent();
   }
@@ -195,31 +290,41 @@ export default class ToggleBlock {
    * otherwise it removes it.
    */
   setDefaultContent() {
+    const children = document.querySelectorAll(`div[foreignKey="${this.wrapper.id}"]`);
     const { firstChild, lastChild } = this.wrapper;
     const { status } = this.data;
-    const items = parseInt(this.wrapper.getAttribute('items'), 10);
-    const value = (items > 0 || status === 'closed');
+    const value = (children.length > 0 || status === 'closed');
 
     lastChild.classList.toggle('toggle-block__hidden', value);
-    firstChild.style.color = (items === 0) ? 'gray' : 'black';
+    firstChild.style.color = (children.length === 0) ? 'gray' : 'black';
   }
 
   /**
-   * If the toggle root is empty and the key event received is 'backspace'
-   * the toggle root is removed.
+   * Deletes the toggle structure and converts the main text and the nested blocks
+   * in regular blocks.
    *
    * @param {KeyboardEvent} e - key down event
    */
   removeToggle(e) {
     if (e.code === 'Backspace') {
       const { children } = this.wrapper;
-      const { length } = children[1].textContent;
+      const content = children[1].innerHTML;
 
-      if (length === 0) {
+      const cursorPosition = document.getSelection();
+
+      if (cursorPosition.focusOffset === 0) {
         const index = this.api.blocks.getCurrentBlockIndex();
+        const breakLine = content.indexOf('<br>');
+        const end = breakLine === -1 ? content.length : breakLine;
+        const blocks = document.querySelectorAll(`div[foreignKey="${this.wrapper.id}"]`);
+
+        for (let i = 1; i < blocks.length + 1; i += 1) {
+          this.removeAttributesFromNewBlock(index + i);
+        }
 
         this.api.blocks.delete(index);
-        this.removeFullToggle(index);
+        this.api.blocks.insert('paragraph', { text: content.slice(0, end) }, {}, index, 1);
+        this.api.caret.setToBlock(index);
       }
     }
   }
@@ -228,33 +333,36 @@ export default class ToggleBlock {
    * Extracts a nested block from a toggle
    * with 'shift + tab' combination
    *
-   * @param {Object} item
-   * @param {KeyboardEvent} e
+   * @param {HTMLDivElement} entryIndex - block index
    */
-  extractBlock(item, e) {
-    if (e.code === 'Tab' && e.shiftKey) {
-      const indexBlock = this.api.blocks.getCurrentBlockIndex();
-      const toggle = this.wrapper.children[1];
-      const items = parseInt(this.wrapper.getAttribute('items'), 10);
+  extractBlock(entryIndex) {
+    const toggle = this.wrapper.children[1];
 
-      let currentBlock = {};
-      let index;
+    let currentBlock = {};
+    let index;
 
-      while (currentBlock[1] !== toggle) {
-        this.api.caret.setToPreviousBlock('end', 0);
-        index = this.api.blocks.getCurrentBlockIndex();
+    while (currentBlock[1] !== toggle) {
+      this.api.caret.setToPreviousBlock('end', 0);
+      index = this.api.blocks.getCurrentBlockIndex();
 
-        const block = this.api.blocks.getBlockByIndex(index);
-        const { holder } = block;
-        const blockCover = holder.firstChild;
-        const blockContent = blockCover.firstChild;
-        currentBlock = blockContent.children;
-      }
-
-      this.api.blocks.delete(indexBlock);
-      this.api.blocks.insert('paragraph', { text: item.textContent }, {}, index + items, true);
-      this.updateItems(-1);
+      const block = this.api.blocks.getBlockByIndex(index);
+      const { holder } = block;
+      const blockCover = holder.firstChild;
+      const blockContent = blockCover.firstChild;
+      currentBlock = blockContent.children;
     }
+
+    const items = document.querySelectorAll(`div[foreignKey="${this.wrapper.id}"]`);
+    const destiny = index + items.length;
+
+    this.api.caret.setToBlock(entryIndex);
+
+    if (items.length > 1) {
+      this.api.blocks.move(destiny);
+    }
+
+    setTimeout(() => this.removeAttributesFromNewBlock(destiny), 200);
+    this.api.toolbar.close();
   }
 
   /**
@@ -287,7 +395,7 @@ export default class ToggleBlock {
     setTimeout(() => this.renderItems());
 
     // Adds initial transition for the icon
-    setTimeout(this.setInitialTransition.bind(this));
+    setTimeout(() => this.setInitialTransition());
 
     return this.wrapper;
   }
@@ -301,7 +409,7 @@ export default class ToggleBlock {
     const { status } = this.data;
     const icon = this.wrapper.firstChild;
     const svg = icon.firstChild;
-    svg.style.transition = '0.5s';
+    svg.style.transition = '0.1s';
     svg.style.transform = `rotate(${status === 'closed' ? 0 : 90}deg)`;
   }
 
@@ -312,7 +420,6 @@ export default class ToggleBlock {
   renderItems() {
     const blocksInEditor = this.api.blocks.getBlocksCount();
     const icon = this.wrapper.firstChild;
-    const items = parseInt(this.wrapper.getAttribute('items'), 10);
     let toggleRoot;
 
     if (this.readOnly) {
@@ -346,8 +453,8 @@ export default class ToggleBlock {
       }
     }
 
-    if (toggleRoot + items < blocksInEditor) {
-      for (let i = toggleRoot + 1, j = 0; i <= toggleRoot + items; i += 1) {
+    if (toggleRoot + this.data.items < blocksInEditor) {
+      for (let i = toggleRoot + 1, j = 0; i <= toggleRoot + this.data.items; i += 1) {
         const block = this.api.blocks.getBlockByIndex(i);
         const { holder } = block;
         const cover = holder.firstChild;
@@ -357,12 +464,12 @@ export default class ToggleBlock {
           this.setAttributesToNewBlock(i);
           j += 1;
         } else {
-          this.wrapper.setAttribute('items', j);
+          this.data.items = j;
           break;
         }
       }
     } else {
-      this.wrapper.setAttribute('items', 0);
+      this.data.items = 0;
     }
 
     icon.addEventListener('click', () => {
@@ -370,7 +477,7 @@ export default class ToggleBlock {
       setTimeout(() => {
         const toggleIndex = this.readOnly ? toggleRoot : null;
         this.hideAndShowBlocks(toggleIndex);
-      }, 100);
+      });
     });
 
     this.hideAndShowBlocks(toggleRoot);
@@ -405,19 +512,19 @@ export default class ToggleBlock {
    * @param {number} index - toggle index
    */
   hideAndShowBlocks(index = null) {
-    const items = parseInt(this.wrapper.getAttribute('items'), 10);
     const value = (this.data.status === 'closed');
+    const children = document.querySelectorAll(`div[foreignKey="${this.wrapper.id}"]`);
+    const { length } = children;
 
     let toggleIndex = index === null ? this.api.blocks.getCurrentBlockIndex() : index;
 
-    if (items > 0) {
-      for (let i = 0; i < items; i += 1) {
+    if (length > 0) {
+      for (let i = 0; i < length; i += 1) {
         const { holder } = this.api.blocks.getBlockByIndex(toggleIndex += 1);
         holder.hidden = value;
       }
     } else {
       const { lastChild } = this.wrapper;
-
       lastChild.classList.toggle('toggle-block__hidden', value);
     }
   }
@@ -430,12 +537,11 @@ export default class ToggleBlock {
   save(blockContent) {
     const { children } = blockContent;
     const caption = children[1].innerHTML;
-
-    const items = parseInt(blockContent.getAttribute('items'), 10);
+    const blocks = document.querySelectorAll(`div[foreignKey="${this.wrapper.id}"]`);
 
     return Object.assign(this.data, {
       text: caption,
-      items,
+      items: blocks.length,
     });
   }
 
@@ -468,80 +574,123 @@ export default class ToggleBlock {
    * Removes a toggle root and its nested blocks.
    *
    * @param {number} toggleIndex - toggle index
-   * @param {object} children - blocks inside the toggle
    */
   removeFullToggle(toggleIndex) {
-    const items = parseInt(this.wrapper.getAttribute('items'), 10);
+    const children = document.querySelectorAll(`div[foreignKey="${this.wrapper.id}"]`);
+    const { length } = children;
 
-    for (let i = toggleIndex; i < toggleIndex + items; i += 1) {
+    for (let i = toggleIndex; i < toggleIndex + length; i += 1) {
       this.api.blocks.delete(toggleIndex);
     }
   }
 
   /**
-   * Adds listener in the editor to create a toggle
-   * through the '>' char and the 'Space' key
+   * Adds the required listeners to call the toggle shortcuts
+   * on the editor.
    */
-  createToggleWithShortcut() {
-    if (!this.readOnly) {
-      const redactor = document.activeElement;
-      redactor.addEventListener('keyup', (e) => {
-        if (e.code === 'Space') {
-          const blockContainer = document.activeElement;
-          const content = blockContainer.textContent;
-          const { length } = content;
-
-          if ((content[0] === '>') && (length - 1 === 1) && !this.isPartOfAToggle(blockContainer)) {
-            const blockCaller = this.api.blocks.getCurrentBlockIndex();
-            this.api.blocks.insert('toggle', {}, this.api, blockCaller, true);
-            this.api.blocks.delete(blockCaller + 1);
-
-            setTimeout(() => {
-              this.api.caret.setToBlock(blockCaller);
-            });
-          }
-        }
-      });
-    }
-  }
-
-  /**
-   * Adds listener in the editor to nest a block
-   * inside a toggle through the 'Tab' key
-   */
-  nestBlock() {
+  addListeners() {
     if (!this.readOnly) {
       const redactor = document.activeElement;
       redactor.addEventListener('keyup', (e) => {
         const blockContainer = document.activeElement;
         const currentBlock = this.api.blocks.getCurrentBlockIndex();
 
-        if (currentBlock > 0 && !this.isPartOfAToggle(blockContainer) && e.code === 'Tab') {
-          const blockCover = blockContainer.parentElement;
-          const block = blockCover.parentElement;
+        const blockCover = blockContainer.parentElement;
+        const block = blockCover.parentElement;
 
-          const previousBlock = block.previousElementSibling;
-          const previousCover = previousBlock.firstChild;
-          const previousContainer = previousCover.firstChild;
-
-          if (this.isPartOfAToggle(previousContainer)) {
-            const foreignId = previousBlock.getAttribute('foreignKey');
-            const toggleId = previousContainer.getAttribute('id');
-
-            let foreignKey;
-            if (foreignId) {
-              foreignKey = foreignId;
-            } else if (toggleId) {
-              foreignKey = toggleId;
-            }
-
-            block.setAttribute('will-be-a-nested-block', true);
-
-            const toggleRoot = document.getElementById(foreignKey);
-            toggleRoot.children[1].focus();
-          }
+        if (e.code === 'Space') {
+          this.createToggleWithShortcut(blockContainer);
+        } else if (currentBlock > 0 && !(this.isPartOfAToggle(blockContainer) || this.isPartOfAToggle(block)) && e.code === 'Tab') {
+          this.nestBlock(blockContainer);
         }
       });
+    }
+  }
+
+  /**
+   * Adds mutation observer to restore the item attributes
+   * when the undo action is executed and they're lost.
+   */
+  addSupportForUndoAndRedoActions() {
+    if (!this.readOnly) {
+      const target = document.querySelector('div.codex-editor__redactor');
+
+      const observer = new MutationObserver((mutations) => {
+        mutations.forEach((mutation) => {
+          if (mutation.type === 'childList') {
+            setTimeout(this.restoreItemAttributes.bind(this, mutation));
+          }
+        });
+      });
+
+      const config = { attributes: true, childList: true, characterData: true };
+
+      observer.observe(target, config);
+    }
+  }
+
+  /**
+   * Restores the item attributes to nested blocks.
+   *
+   * @param {HTMLDivElement} mutation - Html element removed or inserted
+   */
+  restoreItemAttributes(mutation) {
+    if (this.wrapper !== undefined) {
+      const index = this.api.blocks.getCurrentBlockIndex();
+      const block = this.api.blocks.getBlockByIndex(index);
+      const { holder } = block;
+      const currentBlockValidation = !this.isPartOfAToggle(holder);
+      const mutatedBlock = mutation.removedNodes[0];
+
+      if (this.itemsId.includes(block.id) && currentBlockValidation) {
+        this.setAttributesToNewBlock(index);
+      } else if (mutatedBlock && this.isPartOfAToggle(mutatedBlock) && currentBlockValidation) {
+        const blockCover = holder.firstChild;
+        const blockContainer = blockCover.firstChild;
+
+        if (!this.isPartOfAToggle(blockContainer)) {
+          this.setAttributesToNewBlock(index);
+          this.itemsId[index] = block.id;
+        }
+      }
+    }
+  }
+
+  /**
+   * Creates a toggle through the '>' char and the 'Space' key
+   */
+  createToggleWithShortcut(blockContainer) {
+    const content = blockContainer.textContent;
+
+    if ((content[0] === '>') && !this.isPartOfAToggle(blockContainer)) {
+      const blockCaller = this.api.blocks.getCurrentBlockIndex();
+
+      this.api.blocks.insert('toggle', { text: content.slice(2) }, this.api, blockCaller, true);
+      this.api.blocks.delete(blockCaller + 1);
+      this.api.caret.setToBlock(blockCaller);
+    }
+  }
+
+  /**
+   * Nests a block inside a toggle through the 'Tab' key
+   */
+  nestBlock(blockContainer) {
+    const blockCover = blockContainer.parentElement;
+    const block = blockCover.parentElement;
+
+    const previousBlock = block.previousElementSibling;
+    const previousCover = previousBlock.firstChild;
+    const previousContainer = previousCover.firstChild;
+
+    if (this.isPartOfAToggle(previousContainer) || this.isPartOfAToggle(previousBlock)) {
+      const foreignId = previousBlock.getAttribute('foreignKey');
+      const toggleId = previousContainer.getAttribute('id');
+      const foreignKey = foreignId || toggleId;
+
+      block.setAttribute('will-be-a-nested-block', true);
+
+      const toggleRoot = document.getElementById(foreignKey);
+      toggleRoot.children[1].focus();
     }
   }
 
@@ -559,7 +708,6 @@ export default class ToggleBlock {
       holder.removeAttribute('will-be-a-nested-block');
       this.setAttributesToNewBlock(blockIndex);
       this.api.toolbar.close();
-      this.updateItems(1);
     }
   }
 
@@ -577,33 +725,5 @@ export default class ToggleBlock {
     const answer = classes.includes('toggle-block__item') || (classes.includes('toggle-block__input') || classes.includes('toggle-block__selector'));
 
     return answer;
-  }
-
-  /**
-   * When a nested block is removes, the 'items' attribute
-   * is updated, subtracting from it an unit.
-   * @param {string} paragraphId - paragraph identifier
-   * @param {KeyboardEvent} e - key down event
-   */
-  removeBlock(paragraphId, e) {
-    if (e.code === 'Backspace') {
-      const block = document.getElementById(paragraphId);
-
-      if (block === null) {
-        this.updateItems(-1);
-      }
-    }
-  }
-
-  /**
-   * Increase the indicated value to 'items'
-   * attribute, i.e., items += val
-   *
-   * @param {number} val - integer number
-   */
-  updateItems(val) {
-    let items = parseInt(this.wrapper.getAttribute('items'), 10);
-    items += val;
-    this.wrapper.setAttribute('items', items);
   }
 }

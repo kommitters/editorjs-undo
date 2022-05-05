@@ -78,7 +78,6 @@ export function extractionBlock(toggleBlock, redactor, toggleIndex) {
 
   currentBlock.remove();
   redactor.appendChild(extractedBlock);
-  toggleBlock.updateItems(-1);
 }
 
 export function createToggle(e, editor, toggleBlock) {
