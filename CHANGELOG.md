@@ -1,3 +1,8 @@
+## 0.1.1 (06.05.2022)
+
+* Improve library docs.
+* Fix security vulnerabilities.
+
 ## 0.1.0 (05.05.2022)
 
-* Initial release
+* Initial release.

@@ -2,7 +2,7 @@
 
 Toggle block tool for [Editor.js](https://editorjs.io/)
 
-![](assets/demo_with_other_blocks.gif)
+![](assets/demo.gif)
 
 ## Installation
 
@@ -33,70 +33,7 @@ const editor = EditorJS({
 });
 ```
 
-### Output data
-
-| Field  | Type     | Description                                         |
-| ------ | -------- | --------------------------------------------------- |
-| text   | `string` | Main text                                           |
-| status | `string` | Toggle status                                       |
-| items  | `number` | Indicates the number of nested blocks in the toggle |
-
-### Sample data
-
-```js
-{
-    type: 'toggle',
-    data: {
-        text: 'Toggle A',
-        status: 'open',
-        items: 3,
-    }
-},
-
-{
-     type: 'paragraph',
-     data: { text: 'A1' }
-},
-
-{
-    type: 'paragraph',
-    data: { text: 'A2' }
-},
-
-{
-    type: 'paragraph',
-    data: { text: 'A3' }
-},
-
-{
-    type: 'toggle',
-    data: {
-        text: '',
-        status: 'open',
-        items: 0,
-    }
-},
-{
-    type: 'toggle',
-    data: {
-        text: 'It is empty',
-        status: 'closed',
-        items: 0,
-    }
-}
-```
-
-### Sample visualization
-
-![](assets/first_sample.png)
-
-![](assets/second_sample.png)
-
-![](assets/third_sample.png)
-
 ### Shortcuts
-
-On the editor you can:
 
 1. Type the `>` character followed by `Space` to create a new toggle.
 2. Type `Shift` + `Tab` to extract a nested block.
