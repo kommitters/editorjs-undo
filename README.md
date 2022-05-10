@@ -11,7 +11,7 @@ Undo/Redo feature for [Editor.js](https://editorjs.io).
 
 ### 2.x.x (beta)
 
-This new version 2.0.0-rc.3 introduces breaking changes. Remember that this is a beta version.
+This new version introduces breaking changes. Remember that it is still in beta version.
 
 Please, report bugs or behavior issues :).
 
@@ -26,7 +26,7 @@ Please, report bugs or behavior issues :).
 Get the package
 
 ```shell
-$ npm i --save-dev editorjs-undo@2.0.0-rc.2
+$ npm i --save-dev editorjs-undo
 ```
 
 ### 1.x.x (stable version)

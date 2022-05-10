@@ -1,5 +1,8 @@
 # Changelog
 
+## 2.0.1 (10.05.2022)
+* Bug fix in the save function, use indexInState instead of index.
+
 ## 2.0.0 (29.04.2022)
 * Updated packages with known security breaches. 
 * Add a new corner case to consider the case when the content has changed in the not current block.
