@@ -163,7 +163,7 @@ export default class Undo {
     let indexInState = index;
 
     if (!state[index]) indexInState -= (blockCount - state.length);
-    const caretIndex = state[indexInState].type === 'paragraph' || state[index].type === 'header'
+    const caretIndex = state[indexInState].type === 'paragraph' || state[indexInState].type === 'header'
       ? this.getCaretIndex(index) : null;
     this.stack.push({ index: indexInState, state, caretIndex });
     this.position += 1;
