@@ -554,6 +554,11 @@ export default class ToggleBlock {
     const optionsContainer = settingsBar[0];
     const options = optionsContainer.lastChild;
     const toggleIndex = this.api.blocks.getCurrentBlockIndex();
+    const listChildren = document.querySelectorAll(`div[foreignKey="${this.wrapper.id}"]`);
+
+    for (let i = 0; i < listChildren.length; i += 1) {
+      listChildren[i].classList.add('ce-block--selected');
+    }
 
     setTimeout(() => {
       const deleteButton = options.getElementsByClassName('ce-settings__button--delete')[0];
