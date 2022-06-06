@@ -204,8 +204,8 @@ export default class Undo {
    * @param {Array} compState is the state to compare and know the dropped block.
    * @returns {Boolean} true if the block was dropped
    */
-  blockWasDropped(state, compState, index, compIndex) {
-    if (state.length === compState.length && index !== compIndex) {
+  blockWasDropped(state, compState) {
+    if (state.length === compState.length) {
       return state.some((block, i) => block.id !== compState[i].id);
     }
     return false;
@@ -250,9 +250,9 @@ export default class Undo {
     if (this.canUndo()) {
       this.shouldSaveHistory = false;
       let { index } = this.stack[(this.position -= 1)];
-      const { state, caretIndex } = this.stack[(this.position)];
-      const nextIndex = this.stack[(this.position + 1)].index;
-      const nextState = this.stack[(this.position + 1)].state;
+      const { state, caretIndex } = this.stack[this.position];
+      const { index: nextIndex, state: nextState } =
+        this.stack[this.position + 1];
       this.onUpdate();
       const blockCount = this.blocks.getBlocksCount();
 
@@ -279,7 +279,7 @@ export default class Undo {
         return;
       }
 
-      if (this.blockWasDropped(state, nextState, index, nextIndex) && this.position !== 0) {
+      if (this.blockWasDropped(state, nextState) && this.position !== 0) {
         this.blocks
           .render({ blocks: state })
           .then(() => this.caret.setToBlock(index, 'end'));
@@ -324,8 +324,8 @@ export default class Undo {
     if (this.canRedo()) {
       this.shouldSaveHistory = false;
       const { index, state, caretIndex } = this.stack[(this.position += 1)];
-      const prevIndex = this.stack[(this.position - 1)].index;
-      const prevState = this.stack[(this.position - 1)].state;
+      const { index: prevIndex, state: prevState } =
+        this.stack[this.position - 1];
 
       if (this.blockWasDeleted(prevState, state)) {
         this.blocks.delete();
@@ -343,7 +343,7 @@ export default class Undo {
       if (this.blockWasDropped(state, prevState) && this.position !== 1) {
         this.blocks
           .render({ blocks: state })
-          .then(() => this.caret.setToBlock(index, 'end'));
+          .then(() => this.caret.setToBlock(index, "end"));
         return;
       }
 
