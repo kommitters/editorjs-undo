@@ -54,6 +54,7 @@ export default class ToggleBlock {
     this.data = {
       text: data.text || '',
       status: data.status || 'open',
+      fk: data.fk || `fk-${crypto.randomUUID()}`,
       items: data.items || 0,
     };
     this.itemsId = [];
@@ -62,6 +63,7 @@ export default class ToggleBlock {
     this.readOnly = readOnly || false;
     this.addListeners();
     this.addSupportForUndoAndRedoActions();
+    this.addSupportForDragAndDropActions();
   }
 
   /**
@@ -90,7 +92,7 @@ export default class ToggleBlock {
 
       if (this.data.status === 'closed') {
         this.resolveToggleAction();
-        this.hideAndShowBlocks(originalIndex);
+        this.hideAndShowBlocks();
       }
 
       const newText = content.slice(end + 4, currentPosition.focusOffset);
@@ -112,8 +114,7 @@ export default class ToggleBlock {
    * Gets the index of the new block, then assigns the required properties,
    * and finally sends the focus.
    */
-  setAttributesToNewBlock(entryIndex = null) {
-    const foreignKey = this.wrapper.id;
+  setAttributesToNewBlock(entryIndex = null, foreignKey = this.wrapper.id) {
     const index = entryIndex === null ? this.api.blocks.getCurrentBlockIndex() : entryIndex;
     const id = crypto.randomUUID();
 
@@ -215,7 +216,7 @@ export default class ToggleBlock {
   createToggle() {
     this.wrapper = document.createElement('div');
     this.wrapper.classList.add('toggle-block__selector');
-    this.wrapper.id = crypto.randomUUID();
+    this.wrapper.id = this.data.fk;
 
     const icon = document.createElement('span');
     const input = document.createElement('div');
@@ -475,12 +476,11 @@ export default class ToggleBlock {
     icon.addEventListener('click', () => {
       this.resolveToggleAction();
       setTimeout(() => {
-        const toggleIndex = this.readOnly ? toggleRoot : null;
-        this.hideAndShowBlocks(toggleIndex);
+        this.hideAndShowBlocks();
       });
     });
 
-    this.hideAndShowBlocks(toggleRoot);
+    this.hideAndShowBlocks();
   }
 
   /**
@@ -502,6 +502,9 @@ export default class ToggleBlock {
       this.data.status = 'closed';
       svg.style.transform = 'rotate(0deg)';
     }
+
+    const toggleBlock = this.api.blocks.getBlockByIndex(this.api.blocks.getCurrentBlockIndex());
+    toggleBlock.holder.setAttribute('status', this.data.status);
   }
 
   /**
@@ -511,19 +514,23 @@ export default class ToggleBlock {
    *
    * @param {number} index - toggle index
    */
-  hideAndShowBlocks(index = null) {
-    const value = (this.data.status === 'closed');
-    const children = document.querySelectorAll(`div[foreignKey="${this.wrapper.id}"]`);
+  hideAndShowBlocks(foreignKey = this.wrapper.id, value = this.data.status) {
+    const children = document.querySelectorAll(`div[foreignKey="${foreignKey}"]`);
     const { length } = children;
 
-    let toggleIndex = index === null ? this.api.blocks.getCurrentBlockIndex() : index;
-
     if (length > 0) {
-      for (let i = 0; i < length; i += 1) {
-        const { holder } = this.api.blocks.getBlockByIndex(toggleIndex += 1);
-        holder.hidden = value;
-      }
-    } else {
+      children.forEach((child) => {
+        child.hidden = value === 'closed';
+
+        // Check if this child is a toggle and hide his children too
+        const toggles = child.querySelectorAll('.toggle-block__selector');
+        const isToggle = toggles.length > 0;
+        if (isToggle) {
+          const childValue = value === 'closed' ? value : child.getAttribute('status');
+          this.hideAndShowBlocks(toggles[0].getAttribute('id'), childValue);
+        }
+      });
+    } else if (foreignKey === this.wrapper.id) {
       const { lastChild } = this.wrapper;
       lastChild.classList.toggle('toggle-block__hidden', value);
     }
@@ -632,6 +639,102 @@ export default class ToggleBlock {
 
       observer.observe(target, config);
     }
+  }
+
+  getIndex = (target) => Array.from(target.parentNode.children).indexOf(target);
+
+  /**
+   * Adds drop listener to move the childs item
+   * when the drag and drop action is executed.
+   */
+  addSupportForDragAndDropActions() {
+    if (!this.readOnly) {
+      if (this.wrapper === undefined) {
+        setTimeout(() => this.addSupportForDragAndDropActions(), 250);
+        return;
+      }
+
+      // Set status in attribute to a proper hide and show
+      const toggleBlock = document.querySelector(`#${this.wrapper.id}`).parentNode.parentNode;
+      toggleBlock.setAttribute('status', this.data.status);
+
+      const settingsButton = document.querySelector('.ce-toolbar__settings-btn');
+      settingsButton.setAttribute('draggable', 'true');
+      settingsButton.addEventListener('dragstart', () => {
+        this.startBlock = this.api.blocks.getCurrentBlockIndex();
+        this.nameDragged = this.api.blocks.getBlockByIndex(this.startBlock).name;
+        this.holderDragged = this.api.blocks.getBlockByIndex(this.startBlock).holder;
+      });
+
+      document.addEventListener('drop', (event) => {
+        // Get the position when item was dropped
+        const { target } = event;
+        if (document.contains(target)) {
+          const dropTarget = target.classList.contains('ce-block') ? target : target.closest('.ce-block');
+          if (dropTarget && dropTarget !== this.holderDragged) {
+            let endBlock = this.getIndex(dropTarget);
+
+            // Control the toggle's children will be positioned down of the parent
+            endBlock = this.startBlock < endBlock ? endBlock + 1 : endBlock;
+
+            // Check if the item dropped is another toggle
+            const isTargetAToggle = dropTarget.querySelectorAll('.toggle-block__selector').length > 0
+              || dropTarget.getAttribute('foreignKey') !== null;
+
+            // If is a toggle we have to add the attributes to make it a part of the toggle
+            if (isTargetAToggle) {
+              const foreignKey = dropTarget.getAttribute('foreignKey') !== null
+                ? dropTarget.getAttribute('foreignKey')
+                : dropTarget.querySelector('.toggle-block__selector').getAttribute('id');
+
+              const newToggleIndex = this.getIndex(this.holderDragged);
+              this.setAttributesToNewBlock(newToggleIndex, foreignKey);
+            }
+
+            setTimeout(() => {
+              // Verify if the item droped is the toggle
+              if (this.nameDragged === 'toggle') {
+                // Verify if the toggle dropped is the same of this eventListener
+                const isCurrentToggleDropped = this.holderDragged.querySelector(`#${this.wrapper.id}`) !== null;
+                if (isCurrentToggleDropped) {
+                  this.moveChildren(endBlock);
+                }
+              }
+
+              // If we are dropping out of a toggle we have to remove the attributes
+              if (!isTargetAToggle) {
+                const newToggleIndex = this.getIndex(this.holderDragged);
+                this.removeAttributesFromNewBlock(newToggleIndex);
+              }
+            });
+          }
+        }
+      });
+    }
+  }
+
+  moveChildren(endBlock, fk = this.wrapper.id) {
+    // Get the children of the dropped toggle
+    let children = document.querySelectorAll(`div[foreignKey="${fk}"]`);
+
+    // Move all the children to the parent position
+    children = this.startBlock >= endBlock ? [...children].reverse() : children;
+    children.forEach((child) => {
+      const childIndex = this.getIndex(child);
+      this.api.blocks.move(endBlock, childIndex);
+
+      // If this child is a toggle we have to move his children too
+      const toggles = child.querySelectorAll('.toggle-block__selector');
+      const isToggle = toggles.length > 0;
+      if (isToggle) {
+        const toggleIndex = this.getIndex(child);
+        const fix = this.startBlock < endBlock ? 0 : 1;
+        toggles.forEach((toggle) => this.moveChildren(toggleIndex + fix, toggle.getAttribute('id')));
+
+        const dif = Math.abs(endBlock - toggleIndex);
+        endBlock = this.startBlock < endBlock ? endBlock + dif : endBlock - dif;
+      }
+    });
   }
 
   /**

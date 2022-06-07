@@ -21,5 +21,6 @@ module.exports = {
   rules: {
     'class-methods-use-this': ['off'],
     'no-underscore-dangle': ['error', { allowAfterThis: true }],
+    'no-param-reassign': 0,
   },
 };
