@@ -1,3 +1,7 @@
+## 0.2.0 (07.06.2022)
+
+* Add support to drag and drop
+
 ## 0.1.2 (12.05.2022)
 
 * Adjust the behavior of the toolbar icon
