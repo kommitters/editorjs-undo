@@ -1,5 +1,5 @@
-import VanillaCaret from 'vanilla-caret-js';
-import Observer from './observer';
+import VanillaCaret from "vanilla-caret-js";
+import Observer from "./observer";
 
 /**
  * Undo/Redo feature for Editor.js.
@@ -16,20 +16,15 @@ export default class Undo {
   /**
    * @param options — Plugin custom options.
    */
-  constructor({
-    editor,
-    config = {},
-    onUpdate,
-    maxLength,
-  }) {
+  constructor({ editor, config = {}, onUpdate, maxLength }) {
     const defaultOptions = {
       maxLength: 30,
       onUpdate() {},
       config: {
         debounceTimer: 200,
         shortcuts: {
-          undo: 'CMD+Z',
-          redo: 'CMD+Y',
+          undo: "CMD+Z",
+          redo: "CMD+Y",
         },
       },
     };
@@ -42,7 +37,8 @@ export default class Undo {
     const defaultDebounceTimer = defaultOptions.config.debounceTimer;
     const { debounceTimer = defaultDebounceTimer } = config;
 
-    this.holder = typeof holder === 'string' ? document.getElementById(holder) : holder;
+    this.holder =
+      typeof holder === "string" ? document.getElementById(holder) : holder;
     this.editor = editor;
     this.blocks = blocks;
     this.caret = caret;
@@ -55,7 +51,7 @@ export default class Undo {
     const observer = new Observer(
       () => this.registerChange(),
       this.holder,
-      this.config.debounceTimer,
+      this.config.debounceTimer
     );
     observer.setMutationObserver();
 
@@ -91,7 +87,8 @@ export default class Undo {
    * @param {Object} initialItem  Initial data provided by the user.
    */
   initialize(initialItem) {
-    const initialData = 'blocks' in initialItem ? initialItem.blocks : initialItem;
+    const initialData =
+      "blocks" in initialItem ? initialItem.blocks : initialItem;
     const initialIndex = initialData.length - 1;
     const firstElement = { index: initialIndex, state: initialData };
     this.stack[0] = firstElement;
@@ -104,7 +101,7 @@ export default class Undo {
   clear() {
     this.stack = this.initialItem
       ? [this.initialItem]
-      : [{ index: 0, state: [{ type: 'paragraph', data: { text: '' } }] }];
+      : [{ index: 0, state: [{ type: "paragraph", data: { text: "" } }] }];
     this.position = 0;
     this.onUpdate();
   }
@@ -114,7 +111,7 @@ export default class Undo {
    * @returns {Node} Indirectly shows if readOnly was set to true or false
    */
   setReadOnly() {
-    const toolbox = document.querySelector('.ce-toolbox');
+    const toolbox = document.querySelector(".ce-toolbox");
     this.readOnly = !toolbox;
   }
 
@@ -126,7 +123,8 @@ export default class Undo {
     if (!this.readOnly) {
       if (this.editor && this.editor.save && this.shouldSaveHistory) {
         this.editor.save().then((savedData) => {
-          if (this.editorDidUpdate(savedData.blocks)) this.save(savedData.blocks);
+          if (this.editorDidUpdate(savedData.blocks))
+            this.save(savedData.blocks);
         });
       }
       this.shouldSaveHistory = true;
@@ -162,9 +160,12 @@ export default class Undo {
     const blockCount = this.blocks.getBlocksCount();
     let indexInState = index;
 
-    if (!state[index]) indexInState -= (blockCount - state.length);
-    const caretIndex = state[indexInState].type === 'paragraph' || state[indexInState].type === 'header'
-      ? this.getCaretIndex(index) : null;
+    if (!state[index]) indexInState -= blockCount - state.length;
+    const caretIndex =
+      state[indexInState].type === "paragraph" ||
+      state[indexInState].type === "header"
+        ? this.getCaretIndex(index)
+        : null;
     this.stack.push({ index: indexInState, state, caretIndex });
     this.position += 1;
     this.onUpdate();
@@ -176,7 +177,7 @@ export default class Undo {
    * @returns The caret position
    */
   getCaretIndex(index) {
-    const blocks = document.getElementsByClassName('ce-block__content');
+    const blocks = document.getElementsByClassName("ce-block__content");
     const caretBlock = new VanillaCaret(blocks[index].firstChild);
 
     return caretBlock.getPos();
@@ -192,7 +193,7 @@ export default class Undo {
     for (let i = 0; i < state.length; i += 1) {
       if (!compState[i] || state[i].id !== compState[i].id) {
         this.blocks.insert(state[i].type, state[i].data, {}, i, true);
-        this.caret.setToBlock(index, 'end');
+        this.caret.setToBlock(index, "end");
         break;
       }
     }
@@ -204,8 +205,8 @@ export default class Undo {
    * @param {Array} compState is the state to compare and know the dropped block.
    * @returns {Boolean} true if the block was dropped
    */
-  blockWasDropped(state, compState, index, compIndex) {
-    if (state.length === compState.length && index !== compIndex) {
+  blockWasDropped(state, compState) {
+    if (state.length === compState.length) {
       return state.some((block, i) => block.id !== compState[i].id);
     }
     return false;
@@ -250,9 +251,9 @@ export default class Undo {
     if (this.canUndo()) {
       this.shouldSaveHistory = false;
       let { index } = this.stack[(this.position -= 1)];
-      const { state, caretIndex } = this.stack[(this.position)];
-      const nextIndex = this.stack[(this.position + 1)].index;
-      const nextState = this.stack[(this.position + 1)].state;
+      const { state, caretIndex } = this.stack[this.position];
+      const { index: nextIndex, state: nextState } =
+        this.stack[this.position + 1];
       this.onUpdate();
       const blockCount = this.blocks.getBlocksCount();
 
@@ -268,7 +269,7 @@ export default class Undo {
 
       if (this.blockWasSkipped(index, nextIndex, state, nextState)) {
         this.blocks.delete();
-        this.caret.setToBlock(index, 'end');
+        this.caret.setToBlock(index, "end");
         return;
       }
 
@@ -279,10 +280,10 @@ export default class Undo {
         return;
       }
 
-      if (this.blockWasDropped(state, nextState, index, nextIndex) && this.position !== 0) {
+      if (this.blockWasDropped(state, nextState) && this.position !== 0) {
         this.blocks
           .render({ blocks: state })
-          .then(() => this.caret.setToBlock(index, 'end'));
+          .then(() => this.caret.setToBlock(index, "end"));
         return;
       }
 
@@ -308,12 +309,12 @@ export default class Undo {
    */
   setCaretIndex(index, caretIndex) {
     if (caretIndex && caretIndex !== -1) {
-      const blocks = document.getElementsByClassName('ce-block__content');
+      const blocks = document.getElementsByClassName("ce-block__content");
       const caretBlock = new VanillaCaret(blocks[index].firstChild);
 
       caretBlock.setPos(caretIndex);
     } else {
-      this.caret.setToBlock(index, 'end');
+      this.caret.setToBlock(index, "end");
     }
   }
 
@@ -324,26 +325,31 @@ export default class Undo {
     if (this.canRedo()) {
       this.shouldSaveHistory = false;
       const { index, state, caretIndex } = this.stack[(this.position += 1)];
-      const prevIndex = this.stack[(this.position - 1)].index;
-      const prevState = this.stack[(this.position - 1)].state;
+      const { index: prevIndex, state: prevState } =
+        this.stack[this.position - 1];
 
       if (this.blockWasDeleted(prevState, state)) {
         this.blocks.delete();
-        this.caret.setToBlock(index, 'end');
+        this.caret.setToBlock(index, "end");
         return;
       }
 
       if (this.blockWasSkipped(prevIndex, index, state, prevState)) {
-        this.blocks.insert(state[index].type,
-          state[index].data, {}, index, true);
-        this.caret.setToBlock(index, 'end');
+        this.blocks.insert(
+          state[index].type,
+          state[index].data,
+          {},
+          index,
+          true
+        );
+        this.caret.setToBlock(index, "end");
         return;
       }
 
       if (this.blockWasDropped(state, prevState) && this.position !== 1) {
         this.blocks
           .render({ blocks: state })
-          .then(() => this.caret.setToBlock(index, 'end'));
+          .then(() => this.caret.setToBlock(index, "end"));
         return;
       }
 
@@ -390,15 +396,16 @@ export default class Undo {
 
   parseKeys(keys) {
     const specialKeys = {
-      CMD: /(Mac)/i.test(navigator.platform) ? 'metaKey' : 'ctrlKey',
-      ALT: 'altKey',
-      SHIFT: 'shiftKey',
+      CMD: /(Mac)/i.test(navigator.platform) ? "metaKey" : "ctrlKey",
+      ALT: "altKey",
+      SHIFT: "shiftKey",
     };
     const parsedKeys = keys.slice(0, -1).map((key) => specialKeys[key]);
 
-    const letterKey = parsedKeys.includes('shiftKey') && keys.length === 2
-      ? (keys[keys.length - 1].toUpperCase())
-      : (keys[keys.length - 1].toLowerCase());
+    const letterKey =
+      parsedKeys.includes("shiftKey") && keys.length === 2
+        ? keys[keys.length - 1].toUpperCase()
+        : keys[keys.length - 1].toLowerCase();
 
     parsedKeys.push(letterKey);
     return parsedKeys;
@@ -412,15 +419,16 @@ export default class Undo {
     const { holder } = this;
     const { shortcuts } = this.config;
     const { undo, redo } = shortcuts;
-    const keysUndo = undo.replace(/ /g, '').split('+');
-    const keysRedo = redo.replace(/ /g, '').split('+');
+    const keysUndo = undo.replace(/ /g, "").split("+");
+    const keysRedo = redo.replace(/ /g, "").split("+");
 
     const keysUndoParsed = this.parseKeys(keysUndo);
     const keysRedoParsed = this.parseKeys(keysRedo);
 
-    const twoKeysPressed = (e, keys) => (keys.length === 2 && e[keys[0]] && e.key === keys[1]);
-    const threeKeysPressed = (e, keys) => (keys.length === 3
-      && e[keys[0]] && e[keys[1]] && e.key === keys[2]);
+    const twoKeysPressed = (e, keys) =>
+      keys.length === 2 && e[keys[0]] && e.key === keys[1];
+    const threeKeysPressed = (e, keys) =>
+      keys.length === 3 && e[keys[0]] && e[keys[1]] && e.key === keys[2];
 
     const pressedKeys = (e, keys, compKeys) => {
       if (twoKeysPressed(e, keys) && !threeKeysPressed(e, compKeys)) {
@@ -447,12 +455,12 @@ export default class Undo {
     };
 
     const handleDestroy = () => {
-      holder.removeEventListener('keydown', handleUndo);
-      holder.removeEventListener('keydown', handleRedo);
+      holder.removeEventListener("keydown", handleUndo);
+      holder.removeEventListener("keydown", handleRedo);
     };
 
-    holder.addEventListener('keydown', handleUndo);
-    holder.addEventListener('keydown', handleRedo);
-    holder.addEventListener('destroy', handleDestroy);
+    holder.addEventListener("keydown", handleUndo);
+    holder.addEventListener("keydown", handleRedo);
+    holder.addEventListener("destroy", handleDestroy);
   }
 }
