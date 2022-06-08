@@ -1,8 +1,12 @@
 # Changelog
 
+## 2.0.3 (08.06.2022)
+
+- Fix bug in the undo fuction in the block was dropped validation which prevents blocks that were defined with an id to being drop consistently
+
 ## 2.0.2 (07.06.2022)
 
--Fix bug in the block was dropped fuction, remove unnecesary index comparision
+- Fix bug in the block was dropped fuction, remove unnecesary index comparision
 
 ## 2.0.1 (10.05.2022)
 
