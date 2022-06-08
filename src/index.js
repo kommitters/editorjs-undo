@@ -280,7 +280,7 @@ export default class Undo {
         return;
       }
 
-      if (this.blockWasDropped(state, nextState) && this.position !== 0) {
+      if (this.blockWasDropped(state, nextState)) {
         this.blocks
           .render({ blocks: state })
           .then(() => this.caret.setToBlock(index, "end"));
