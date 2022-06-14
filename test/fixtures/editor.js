@@ -8,6 +8,12 @@ const editor = {
       const redactor = editorContainer.children[0];
       return redactor;
     },
+    getBlockByIndex: () => ({ id: '123id', type: 'paragraph', data: {} }),
+    getBlocksCount: () => 4,
+    move: (finalPosition, currentPosition) => () => {
+      const redactor = editor.blocks.getRedactor();
+      redactor.children[currentPosition].before(redactor.children[finalPosition]);
+    },
     delete: (index) => {
       const redactor = editor.blocks.getRedactor();
       const currentBlock = redactor.children[index];
@@ -17,6 +23,9 @@ const editor = {
       const redactor = editor.blocks.getRedactor();
       redactor.appendChild(block);
     },
+  },
+  toolbar: {
+    close: () => true,
   },
 };
 

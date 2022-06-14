@@ -230,7 +230,7 @@ describe('ToggleBlock', () => {
     let toggleBlockReadyOnly;
 
     it('when is enable', () => {
-      toggleBlockReadyOnly = new ToggleBlock({ data, api: {}, readOnly: true });
+      toggleBlockReadyOnly = new ToggleBlock({ data, api: editor, readOnly: true });
       toggleBlockReadyOnly.render();
 
       const { children } = toggleBlockReadyOnly.wrapper;
@@ -240,7 +240,7 @@ describe('ToggleBlock', () => {
     });
 
     it('when is disabled', () => {
-      toggleBlock = new ToggleBlock({ data, api: {}, readOnly: false });
+      toggleBlock = new ToggleBlock({ data, api: editor, readOnly: false });
       toggleBlock.render();
 
       const { children } = toggleBlock.wrapper;
@@ -341,6 +341,45 @@ describe('ToggleBlock', () => {
 
       expect(classes.includes('toggle-block__item')).toBe(false);
       expect(foreignId).toBeNull();
+    });
+  });
+
+  describe('validates the getDecendentsNumber method', () => {
+    let toggle;
+    let redactor;
+
+    beforeEach(() => {
+      redactor = document.querySelector('div.codex-editor__redactor');
+      toggle = generateFullToggle(toggleBlock, data);
+      toggle.forEach((block) => redactor.appendChild(block));
+    });
+
+    it('returns the number of children', () => {
+      toggleBlock.render();
+      const { id } = toggleBlock.wrapper;
+      const numberOfChildren = toggleBlock.getDecendentsNumber(id);
+      expect(numberOfChildren).toBe(toggleBlock.data.items);
+    });
+  });
+
+  describe('validates the highlightToggleItems method', () => {
+    let toggle;
+    let redactor;
+
+    beforeEach(() => {
+      redactor = document.querySelector('div.codex-editor__redactor');
+      toggle = generateFullToggle(toggleBlock, data);
+      toggle.forEach((block) => redactor.appendChild(block));
+    });
+
+    it("Adds the ce-block--selected class to the toggle's children", () => {
+      toggleBlock.render();
+      const { id } = toggleBlock.wrapper;
+      toggleBlock.highlightToggleItems(id);
+      const children = redactor.querySelectorAll(`div[foreignKey="${id}"]`);
+      children.forEach((child) => {
+        expect(child.classList.contains('ce-block--selected')).toBe(true);
+      });
     });
   });
 });
