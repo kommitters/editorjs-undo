@@ -62,7 +62,7 @@ export default class Observer {
           contentMutated = true;
           break;
         case 'attributes':
-          if (!mutation.target.classList.contains('ce-block')) {
+          if (!mutation.target.classList.contains('ce-block') && !mutation.target.classList.contains('tc-toolbox')) {
             contentMutated = true;
           }
           break;
