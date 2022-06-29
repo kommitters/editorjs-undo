@@ -1,6 +1,6 @@
 {
   "name": "editorjs-toggle-block",
-  "version": "0.2.0",
+  "version": "0.2.1",
   "description": "Toogle block tool for Editor.js",
   "main": "./dist/bundle.js",
   "scripts": {

@@ -1,3 +1,8 @@
+## 0.2.1 (29.06.2022)
+
+* Adjust the behaviour of buttons in the toolbar
+* Fix bug when toggle parent is dropped in its children
+
 ## 0.2.0 (07.06.2022)
 
 * Add support to drag and drop
