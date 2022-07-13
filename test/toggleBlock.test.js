@@ -7,8 +7,6 @@ import {
   extractionBlock, createDefaultBlock, createToggle, getEditorElements, nestBlock,
 } from './testHelpers';
 
-global.crypto = require('crypto');
-
 describe('ToggleBlock', () => {
   let toggleBlock;
 

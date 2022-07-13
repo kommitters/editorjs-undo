@@ -1,4 +1,5 @@
 import './index.css';
+import { v4 as uuidv4 } from 'uuid';
 import toggleIcon from '../assets/toggleIcon.svg';
 
 /**
@@ -54,7 +55,7 @@ export default class ToggleBlock {
     this.data = {
       text: data.text || '',
       status: data.status || 'open',
-      fk: data.fk || `fk-${crypto.randomUUID()}`,
+      fk: data.fk || `fk-${uuidv4()}`,
       items: data.items || 0,
     };
     this.itemsId = [];
@@ -132,7 +133,7 @@ export default class ToggleBlock {
    */
   setAttributesToNewBlock(entryIndex = null, foreignKey = this.wrapper.id) {
     const index = entryIndex === null ? this.api.blocks.getCurrentBlockIndex() : entryIndex;
-    const id = crypto.randomUUID();
+    const id = uuidv4();
 
     const newBlock = this.api.blocks.getBlockByIndex(index);
 

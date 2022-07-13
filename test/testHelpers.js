@@ -1,3 +1,5 @@
+import { v4 as uuidv4 } from 'uuid';
+
 export function getHiddenAttribute(redactor) {
   const children = redactor.querySelectorAll('div[hidden="true"]');
   const defaultContent = redactor.querySelectorAll('div.toggle-block__hidden');
@@ -8,7 +10,7 @@ export function createNestedBlock(toggleBlock, data) {
   const newBlock = document.createElement('div');
   newBlock.classList.add('ce-block');
   newBlock.setAttribute('foreignKey', toggleBlock.wrapper.id);
-  newBlock.setAttribute('id', crypto.randomUUID());
+  newBlock.setAttribute('id', uuidv4());
 
   if (toggleBlock.data.status === 'closed') {
     newBlock.setAttribute('hidden', true);
@@ -127,7 +129,7 @@ export function nestBlock(e) {
       const content = cover.firstChild;
 
       block.setAttribute('foreignKey', toggle.id);
-      block.setAttribute('id', crypto.randomUUID());
+      block.setAttribute('id', uuidv4());
 
       content.classList.add('toggle-block__item');
     }
