@@ -1,3 +1,7 @@
+## 0.2.2 (13.07.2022)
+
+* Replace `crypto.randomUUID()` with `uuid.v4()` to avoid incompatibilities between different browser's versions.
+
 ## 0.2.1 (29.06.2022)
 
 * Adjust the behaviour of buttons in the toolbar
