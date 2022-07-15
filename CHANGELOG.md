@@ -1,5 +1,9 @@
 # Changelog
 
+## 2.0.5 (15.07.2022)
+
+- Add workflow for automatic publishing in npm
+
 ## 2.0.4 (29.06.2022)
 
 - Fix bug, hover over @editorjs/table trigger mutationDebouncer
