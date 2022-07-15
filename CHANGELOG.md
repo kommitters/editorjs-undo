@@ -1,3 +1,9 @@
+# Changelog
+
+## 0.2.3 (15.07.2022)
+
+* Add workflow for automatic publishing in npm.
+
 ## 0.2.2 (13.07.2022)
 
 * Replace `crypto.randomUUID()` with `uuid.v4()` to avoid incompatibilities between different browser's versions.
