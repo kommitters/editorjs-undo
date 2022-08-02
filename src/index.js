@@ -330,11 +330,7 @@ export default class Undo {
    * @param {Number} index is the block index
    * @returns 
    */
-  insertSkippedBlocks(prevStateLength, state, index) {
-    if (state.length - prevStateLength === 1) {
-      this.insertBlock(state, index);
-      return;
-    }
+  insertSkippedBlocks(prevStateLength, state) {
     for (let i = prevStateLength; i < state.length; i += 1) {
       this.insertBlock(state, i);
     }
@@ -355,7 +351,7 @@ export default class Undo {
         this.blocks.delete();
         this.caret.setToBlock(index, "end");
       } else if (this.blockWasSkipped(prevIndex, index, state, prevState)) {
-        this.insertSkippedBlocks(prevState.length, state, index);
+        this.insertSkippedBlocks(prevState.length, state);
         this.caret.setToBlock(index, 'end');
       } else if (this.blockWasDropped(state, prevState) && this.position !== 1) {
         this.blocks
