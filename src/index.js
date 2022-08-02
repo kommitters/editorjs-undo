@@ -19,7 +19,7 @@ export default class Undo {
   constructor({ editor, config = {}, onUpdate, maxLength }) {
     const defaultOptions = {
       maxLength: 30,
-      onUpdate() {},
+      onUpdate() { },
       config: {
         debounceTimer: 200,
         shortcuts: {
@@ -163,7 +163,7 @@ export default class Undo {
     if (!state[index]) indexInState -= blockCount - state.length;
     const caretIndex =
       state[indexInState].type === "paragraph" ||
-      state[indexInState].type === "header"
+        state[indexInState].type === "header"
         ? this.getCaretIndex(index)
         : null;
     this.stack.push({ index: indexInState, state, caretIndex });
@@ -308,6 +308,33 @@ export default class Undo {
     }
   }
 
+  insertBlock(state, index) {
+    this.blocks.insert(
+      state[index].type,
+      state[index].data,
+      {},
+      index,
+      true,
+    );
+  }
+
+  /**
+   * Insert a block when is skipped
+   * @param {Number} prevStateLength is the previous state according to this.position.
+   * @param {Array} state is the current state according to this.position.
+   * @param {Number} index is the block index
+   * @returns 
+   */
+  insertSkippedBlocks(prevStateLength, state, index) {
+    if (state.length - prevStateLength === 1) {
+      this.insertBlock(state, index);
+      return;
+    }
+    for (let i = prevStateLength; i < state.length; i += 1) {
+      this.insertBlock(state, i);
+    }
+  }
+
   /**
    * Increases the current position and update the respective block in the editor.
    */
@@ -323,26 +350,8 @@ export default class Undo {
         this.blocks.delete();
         this.caret.setToBlock(index, "end");
       } else if (this.blockWasSkipped(prevIndex, index, state, prevState)) {
-        if (prevState.length + 1 < state.length) {
-          for (let i = prevState.length - 1; i < state.length; i += 1) {
-            this.blocks.insert(
-              state[i].type,
-              state[i].data,
-              {},
-              i,
-              true,
-            );
-          }
-        } else {
-          this.blocks.insert(
-            state[index].type,
-            state[index].data,
-            {},
-            index,
-            true,
-          );
-        }
-        this.caret.setToBlock(index, "end");
+        this.insertSkippedBlocks(prevState.length, state, index);
+        this.caret.setToBlock(index, 'end');
       } else if (this.blockWasDropped(state, prevState) && this.position !== 1) {
         this.blocks
           .render({ blocks: state })
