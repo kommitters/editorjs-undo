@@ -1,5 +1,9 @@
 # Changelog
 
+## 2.0.7 (2.08.2022)
+
+- Fix bug, undo is ignored when pasting more than 1 paragraph
+
 ## 2.0.6 (25.07.2022)
 
 - Add security policy to repository
