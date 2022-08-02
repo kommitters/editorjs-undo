@@ -19,7 +19,7 @@ export default class Undo {
   constructor({ editor, config = {}, onUpdate, maxLength }) {
     const defaultOptions = {
       maxLength: 30,
-      onUpdate() {},
+      onUpdate() { },
       config: {
         debounceTimer: 200,
         shortcuts: {
@@ -163,7 +163,7 @@ export default class Undo {
     if (!state[index]) indexInState -= blockCount - state.length;
     const caretIndex =
       state[indexInState].type === "paragraph" ||
-      state[indexInState].type === "header"
+        state[indexInState].type === "header"
         ? this.getCaretIndex(index)
         : null;
     this.stack.push({ index: indexInState, state, caretIndex });
@@ -248,12 +248,14 @@ export default class Undo {
    * Decreases the current position and update the respective block in the editor.
    */
   undo() {
-    if (this.canUndo()) {
+    if (this.canUndo() && this.position > 0) {
+      console.log(this.position);
+      this.position -= 1;
       this.shouldSaveHistory = false;
-      let { index } = this.stack[(this.position -= 1)];
+      let { index } = this.stack[(this.position)];
       const { state, caretIndex } = this.stack[this.position];
       const { index: nextIndex, state: nextState } =
-        this.stack[this.position + 1];
+        this.stack[this.position];
       this.onUpdate();
       const blockCount = this.blocks.getBlocksCount();
 
@@ -264,40 +266,29 @@ export default class Undo {
 
       if (this.blockWasDeleted(state, nextState)) {
         this.insertDeletedBlock(state, nextState, index);
-        return;
-      }
-
-      if (this.blockWasSkipped(index, nextIndex, state, nextState)) {
+      } else if (this.blockWasSkipped(index, nextIndex, state, nextState)) {
         this.blocks.delete();
         this.caret.setToBlock(index, "end");
-        return;
-      }
-
-      if (blockCount > state.length) {
+      } else if (blockCount > state.length) {
         this.blocks
           .render({ blocks: state })
           .then(() => this.setCaretIndex(index, caretIndex));
-        return;
-      }
-
-      if (this.blockWasDropped(state, nextState)) {
+      } else if (this.blockWasDropped(state, nextState)) {
         this.blocks
           .render({ blocks: state })
           .then(() => this.caret.setToBlock(index, "end"));
-        return;
-      }
-
-      if (this.contentChangedInNoFocusBlock(index, nextIndex)) {
+      } else if (this.contentChangedInNoFocusBlock(index, nextIndex)) {
         const { id } = this.blocks.getBlockByIndex(nextIndex);
 
         this.blocks.update(id, state[nextIndex].data);
         this.setCaretIndex(index, caretIndex);
-        return;
       }
 
-      const { id } = this.blocks.getBlockByIndex(index);
-      this.blocks.update(id, state[index].data);
-      this.setCaretIndex(index, caretIndex);
+      const block = this.blocks.getBlockByIndex(index);
+      if (block) {
+        this.blocks.update(block.id, state[index].data);
+        this.setCaretIndex(index, caretIndex);
+      }
     }
   }
 
