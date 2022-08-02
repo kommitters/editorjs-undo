@@ -327,7 +327,6 @@ export default class Undo {
    * Insert a block when is skipped
    * @param {Number} prevStateLength is the previous state according to this.position.
    * @param {Array} state is the current state according to this.position.
-   * @param {Number} index is the block index
    * @returns 
    */
   insertSkippedBlocks(prevStateLength, state) {
