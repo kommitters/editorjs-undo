@@ -19,7 +19,7 @@ export default class Undo {
   constructor({ editor, config = {}, onUpdate, maxLength }) {
     const defaultOptions = {
       maxLength: 30,
-      onUpdate() { },
+      onUpdate() {},
       config: {
         debounceTimer: 200,
         shortcuts: {
@@ -163,7 +163,7 @@ export default class Undo {
     if (!state[index]) indexInState -= blockCount - state.length;
     const caretIndex =
       state[indexInState].type === "paragraph" ||
-        state[indexInState].type === "header"
+      state[indexInState].type === "header"
         ? this.getCaretIndex(index)
         : null;
     this.stack.push({ index: indexInState, state, caretIndex });
@@ -308,6 +308,11 @@ export default class Undo {
     }
   }
 
+  /**
+   * Insert new block
+   * @param {Array} state is the current state according to this.position.
+   * @param {Number} index is the block index
+   */
   insertBlock(state, index) {
     this.blocks.insert(
       state[index].type,
