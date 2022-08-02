@@ -249,7 +249,6 @@ export default class Undo {
    */
   undo() {
     if (this.canUndo() && this.position >= 0) {
-      console.log(this.position);
       this.position -= 1;
       this.shouldSaveHistory = false;
       let { index } = this.stack[(this.position)];
@@ -314,40 +313,48 @@ export default class Undo {
    */
   redo() {
     if (this.canRedo()) {
+      this.position += 1;
       this.shouldSaveHistory = false;
-      const { index, state, caretIndex } = this.stack[(this.position += 1)];
+      const { index, state, caretIndex } = this.stack[(this.position)];
       const { index: prevIndex, state: prevState } =
         this.stack[this.position - 1];
 
       if (this.blockWasDeleted(prevState, state)) {
         this.blocks.delete();
         this.caret.setToBlock(index, "end");
-        return;
-      }
-
-      if (this.blockWasSkipped(prevIndex, index, state, prevState)) {
-        this.blocks.insert(
-          state[index].type,
-          state[index].data,
-          {},
-          index,
-          true
-        );
+      } else if (this.blockWasSkipped(prevIndex, index, state, prevState)) {
+        if (prevState.length + 1 < state.length) {
+          for (let i = prevState.length - 1; i < state.length; i += 1) {
+            this.blocks.insert(
+              state[i].type,
+              state[i].data,
+              {},
+              i,
+              true,
+            );
+          }
+        } else {
+          this.blocks.insert(
+            state[index].type,
+            state[index].data,
+            {},
+            index,
+            true,
+          );
+        }
         this.caret.setToBlock(index, "end");
-        return;
-      }
-
-      if (this.blockWasDropped(state, prevState) && this.position !== 1) {
+      } else if (this.blockWasDropped(state, prevState) && this.position !== 1) {
         this.blocks
           .render({ blocks: state })
           .then(() => this.caret.setToBlock(index, "end"));
-        return;
       }
 
       this.onUpdate();
-      const { id } = this.blocks.getBlockByIndex(index) || state[index];
-      this.blocks.update(id, state[index].data);
-      this.setCaretIndex(index, caretIndex);
+      const block = this.blocks.getBlockByIndex(index);
+      if (block) {
+        this.blocks.update(block.id, state[index].data);
+        this.setCaretIndex(index, caretIndex);
+      }
     }
   }
 
