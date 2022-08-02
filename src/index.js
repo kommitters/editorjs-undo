@@ -248,7 +248,7 @@ export default class Undo {
    * Decreases the current position and update the respective block in the editor.
    */
   undo() {
-    if (this.canUndo() && this.position > 0) {
+    if (this.canUndo() && this.position >= 0) {
       console.log(this.position);
       this.position -= 1;
       this.shouldSaveHistory = false;
