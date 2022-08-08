@@ -1,6 +1,10 @@
 # Changelog
 
-## 2.0.7 (2.08.2022)
+## 2.0.8 (08.08.2022)
+
+- Add scorecards actions
+
+## 2.0.7 (02.08.2022)
 
 - Fix bug, undo is ignored when pasting more than 1 paragraph
 
