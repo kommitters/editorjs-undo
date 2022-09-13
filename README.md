@@ -1,6 +1,7 @@
-![](https://badgen.net/badge/Editor.js/v2.0/blue)
-
 # EditorJS Undo Plugin
+![](https://badgen.net/badge/Editor.js/v2.0/blue)
+[![OpenSSF Best Practices](https://bestpractices.coreinfrastructure.org/projects/6471/badge)](https://bestpractices.coreinfrastructure.org/projects/6471)
+[![OpenSSF Scorecard](https://api.securityscorecards.dev/projects/github.com/kommitters/editorjs-undo/badge)](https://api.securityscorecards.dev/projects/github.com/kommitters/editorjs-undo)
 
 Undo/Redo feature for [Editor.js](https://editorjs.io).
 
@@ -16,7 +17,7 @@ This new version introduces breaking changes. Remember that it is still in beta 
 Please, report bugs or behavior issues :).
 
 #### What's new?
-* Overall plugin performance is improved, especially with large documents. 
+* Overall plugin performance is improved, especially with large documents.
 * Undo/Redo lifecycle is managed through block updates instead of a full document render.
 * Solves issues in documents with several images, for example the blink with undo/redo.
 * Sets the caret in the respective position when the user is typing inside an existing text.
@@ -59,7 +60,7 @@ On the editor, use <kbd>Ctrl</kbd> + <kbd>Z</kbd> or <kbd>⌘</kbd> + <kbd>Z</kb
 
 ### Usage with [react-editor-js](https://github.com/Jungwoo-An/react-editor-js).
 
-If you are using [react-editor-js](https://github.com/Jungwoo-An/react-editor-js), you could create a function to handle the onReady property, the function will store the undo instance and the respective configuration or initialize method if you want to use them (they will be explained below). Then, you must call the function in onReady in the editorJS instance.   
+If you are using [react-editor-js](https://github.com/Jungwoo-An/react-editor-js), you could create a function to handle the onReady property, the function will store the undo instance and the respective configuration or initialize method if you want to use them (they will be explained below). Then, you must call the function in onReady in the editorJS instance.
 
 ```javascript
 const handleReady = (editor) => {
