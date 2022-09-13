@@ -46,6 +46,16 @@ Include module in your application
 import Undo from 'editorjs-undo';
 ```
 
+### Load from CDN
+
+You can load a specific version of the package from [jsDelivr CDN](https://www.jsdelivr.com/package/npm/editorjs-undo).
+
+Require this script on a page with Editor.js.
+
+```html
+<script src="https://cdn.jsdelivr.net/npm/editorjs-undo"></script>
+```
+
 ## Usage
 
 ```javascript
