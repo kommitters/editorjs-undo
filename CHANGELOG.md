@@ -1,5 +1,9 @@
 # Changelog
 
+## 2.0.11 (28.10.2022)
+
+- Fix "master" branch by "main" in the CI
+
 ## 2.0.10 (28.10.2022)
 
 - Add Coverage Report with Coveralls
