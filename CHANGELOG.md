@@ -1,5 +1,9 @@
 # Changelog
 
+## 2.0.10 (28.10.2022)
+
+- Add Coverage Report with Coveralls
+
 ## 2.0.9 (13.09.2022)
 
 - Add OpenSSF BestPractices & Scorecard badges
