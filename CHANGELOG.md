@@ -1,5 +1,9 @@
 # Changelog
 
+## 2.0.12 (09.11.2022)
+
+- Bump loader-utils from 2.0.2 to 2.0.3
+
 ## 2.0.11 (28.10.2022)
 
 - Fix "master" branch by "main" in the CI
