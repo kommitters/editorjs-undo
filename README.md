@@ -69,9 +69,9 @@ const editor = new EditorJS({
 
 On the editor, use <kbd>Ctrl</kbd> + <kbd>Z</kbd> or <kbd>⌘</kbd> + <kbd>Z</kbd> to undo, or use <kbd>Ctrl</kbd> + <kbd>Y</kbd> or <kbd>⌘</kbd> + <kbd>Y</kbd> to redo.
 
-### Usage with [react-editor-js](https://github.com/Jungwoo-An/react-editor-js).
+### Usage with React
 
-If you are using [react-editor-js](https://github.com/Jungwoo-An/react-editor-js), you could create a function to handle the onReady property, the function will store the undo instance and the respective configuration or initialize method if you want to use them (they will be explained below). Then, you must call the function in onReady in the editorJS instance.
+If you are using React, you could create a function to handle the onReady property, the function will store the Undo instance. Then, you must call the function in onReady in the editorJS instance.
 
 ```javascript
 const handleReady = (editor) => {
@@ -82,8 +82,43 @@ class ReactEditor extends Component {
   render() {
     return (
       <EditorJs
-        onReady = { handleReady }
-        tools = { ... }
+        onReady={ handleReady }
+        tools={ ... }
+      />
+    )
+  }
+}
+
+```
+
+### Usage with [react-editor-js](https://github.com/Jungwoo-An/react-editor-js).
+
+If you are using [react-editor-js](https://github.com/Jungwoo-An/react-editor-js), you could create a function to handle the onReady property, the function will store the undo instance and the respective configuration or initialize method if you want to use them (they will be explained below). Then, you must call the function in onReady in the editorJS instance.
+
+**React class components:**
+```javascript
+
+class ReactEditor extends Component {
+  constructor(props) {
+    super(props);
+    this.editorCore = React.createRef();
+  }
+
+  handleInitialize = (instance) => {
+    this.editorCore.current = instance;
+  };
+
+  handleReady = () => {
+    const editor = this.editorCore.current._editorJS;
+    new Undo({ editor });
+  };
+
+  render() {
+    return (
+      <ReactEditorJS
+        onInitialize={ this.handleInitialize }
+        onReady={ this.handleReady }
+        tools={ ... }
       />
     )
   }
@@ -92,10 +127,41 @@ class ReactEditor extends Component {
 **Note:** If you are already using [editorjs-drag-drop](https://github.com/kommitters/editorjs-drag-drop) your handleReady function must have the editorjs-drag-drop instance.
 
 ```javascript
-const handleReady = (editor) => {
+handleReady = () => {
+  const editor = this.editorCore.current._editorJS;
   new Undo({ editor });
   new DragDrop(editor);
 };
+
+```
+
+**React functional components:**
+
+```javascript
+........
+export const ReactEditor = () => {
+  const editorCore = React.useRef(null)
+
+  const handleInitialize = React.useCallback((instance) => {
+    editorCore.current = instance
+  }, [])
+
+  const handleReady = () => {
+    const editor = editorCore.current._editorJS;
+    new Undo({ editor })
+    new DragDrop(editor);
+  };
+
+  const ReactEditorJS = createReactEditorJS()
+  return(
+  <ReactEditorJS
+    onInitialize={ handleInitialize }
+    onReady={ handleReady }
+    tools={ ... }
+    defaultValue={ ... }
+  />
+  )
+}
 
 ```
 
