@@ -1,5 +1,9 @@
 # Changelog
 
+## 2.0.13 (16.11.2022)
+
+- Fix validation of shortcuts on other keyboard layouts
+
 ## 2.0.12 (09.11.2022)
 
 - Bump loader-utils from 2.0.2 to 2.0.3

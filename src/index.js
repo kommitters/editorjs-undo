@@ -431,10 +431,12 @@ export default class Undo {
     const keysUndoParsed = this.parseKeys(keysUndo);
     const keysRedoParsed = this.parseKeys(keysRedo);
 
+    const getRawKey = (code) => code.replace('Key', '').toLowerCase();
+
     const twoKeysPressed = (e, keys) =>
-      keys.length === 2 && e[keys[0]] && e.key === keys[1];
+      keys.length === 2 && e[keys[0]] && (e.key === keys[1] || getRawKey(e.code) === keys[1]);
     const threeKeysPressed = (e, keys) =>
-      keys.length === 3 && e[keys[0]] && e[keys[1]] && e.key === keys[2];
+      keys.length === 3 && e[keys[0]] && e[keys[1]] && (e.key === keys[2] || getRawKey(e.code) === keys[2]);
 
     const pressedKeys = (e, keys, compKeys) => {
       if (twoKeysPressed(e, keys) && !threeKeysPressed(e, compKeys)) {
