@@ -1,5 +1,10 @@
 # Changelog
 
+## 2.0.14 (17.11.2022)
+
+- Update README usage instructions for React
+- Bump loader-utils from 2.0.3 to 2.0.4
+
 ## 2.0.13 (16.11.2022)
 
 - Fix validation of shortcuts on other keyboard layouts
