@@ -1,5 +1,9 @@
 # Changelog
 
+## 2.0.15 (06.12.2022)
+
+- Fix bug `TypeError: can't access property "type", t[i] is undefined` ([#156](https://github.com/kommitters/editorjs-undo/issues/156))
+
 ## 2.0.14 (17.11.2022)
 
 - Update README usage instructions for React
