@@ -270,8 +270,12 @@ export default class Undo {
         this.blocks.delete();
         this.caret.setToBlock(index, "end");
       } else if (blockCount > state.length) {
+        let newState = state
+        if(state.length==0) {
+          newState =  [{ type: "paragraph", data: {} }]
+        }
         this.blocks
-          .render({ blocks: state })
+          .render({ blocks: newState })
           .then(() => this.setCaretIndex(index, caretIndex));
       } else if (this.blockWasDropped(state, nextState)) {
         this.blocks
