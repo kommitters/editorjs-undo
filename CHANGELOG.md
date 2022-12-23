@@ -1,5 +1,9 @@
 # Changelog
 
+## 2.0.16 (23.12.2022)
+
+- Harden GitHub Actions.
+
 ## 2.0.15 (06.12.2022)
 
 - Fix bug `TypeError: can't access property "type", t[i] is undefined` ([#156](https://github.com/kommitters/editorjs-undo/issues/156))
