@@ -11,9 +11,6 @@ permissions:  # added using https://github.com/step-security/secure-workflows
 
 jobs:
   test:
-    permissions:
-      checks: write  # for coverallsapp/github-action to create new checks
-      contents: read  # for actions/checkout to fetch code
     runs-on: ubuntu-latest
     steps:
       - name: Harden Runner
