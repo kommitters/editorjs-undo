@@ -272,7 +272,10 @@ export default class Undo {
       } else if (blockCount > state.length) {
         this.blocks
           .render({ blocks: state })
-          .then(() => this.setCaretIndex(index, caretIndex));
+          .then(() => {
+            this.editor.blocks.insert("paragraph", {text: ""})
+            this.caret.setToLastBlock("end") ;
+          });
       } else if (this.blockWasDropped(state, nextState)) {
         this.blocks
           .render({ blocks: state })
