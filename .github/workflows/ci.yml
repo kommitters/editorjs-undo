@@ -14,7 +14,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Harden Runner
-        uses: step-security/harden-runner@ebacdc22ef6c2cfb85ee5ded8f2e640f4c776dd5 # v2.0.0
+        uses: step-security/harden-runner@c8454efe5d0bdefd25384362fe217428ca277d57 # v2.2.0
         with:
           disable-sudo: true
           egress-policy: block
@@ -31,6 +31,6 @@ jobs:
       - run: yarn
       - run: yarn test --coverage
       - name: Coveralls
-        uses: coverallsapp/github-action@3284643be2c47fb6432518ecec17f1255e8a06a6
+        uses: coverallsapp/github-action@50c33ad324a9902697adbf2f92c22cf5023eacf1
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
