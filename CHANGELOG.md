@@ -1,5 +1,10 @@
 # Changelog
 
+## 2.0.19 (07.03.2023)
+
+- Fix bug when there is the last element to undo: Uncaught TypeError: Cannot read properties of undefined (reading 'holder').
+- Update all dependencies.
+
 ## 2.0.18 (13.01.2023)
 
 - Block egress traffic in GitHub Actions.
