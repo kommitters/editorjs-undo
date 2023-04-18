@@ -192,7 +192,7 @@ describe('Undo', () => {
       expect(state).toEqual(firstChange.blocks);
     });
 
-    it('redo event  outside Editor\'s holder has not to cause changes in Undo Plugin stack', () => {
+    it('redo event (CMD+Y) outside Editor\'s holder has not to cause changes in Undo Plugin stack', () => {
       undo.undo();
 
       const keyboardEvent = new KeyboardEvent('keydown', {
@@ -209,11 +209,47 @@ describe('Undo', () => {
       expect(state).toEqual(firstChange.blocks);
     });
 
-    it('redo event inside Editor\'s holder has to cause changes in Undo Plugin stack', () => {
+    it('redo event (CMD+Y) inside Editor\'s holder has to cause changes in Undo Plugin stack', () => {
       undo.undo();
 
       const keyboardEvent = new KeyboardEvent('keydown', {
         key: 'y',
+        metaKey: true,
+        ctrlKey: true,
+      });
+
+      editor.configuration.holder.dispatchEvent(keyboardEvent);
+
+      expect(undo.count()).toEqual(2);
+      expect(undo.position).toEqual(2);
+      const { state } = undo.stack[2];
+      expect(state).toEqual(secondChange.blocks);
+    });
+
+    it('redo event (CMD+SHIFT+Z) outside Editor\'s holder has not to cause changes in Undo Plugin stack', () => {
+      undo.undo();
+
+      const keyboardEvent = new KeyboardEvent('keydown', {
+        key: 'y',
+        shiftKey: true,
+        metaKey: true,
+        ctrlKey: true,
+      });
+
+      document.dispatchEvent(keyboardEvent);
+
+      expect(undo.count()).toEqual(2);
+      expect(undo.position).toEqual(1);
+      const { state } = undo.stack[1];
+      expect(state).toEqual(firstChange.blocks);
+    });
+
+    it('redo event (CMD+SHIFT+Z) inside Editor\'s holder has to cause changes in Undo Plugin stack', () => {
+      undo.undo();
+
+      const keyboardEvent = new KeyboardEvent('keydown', {
+        key: 'z',
+        shiftKey: true,
         metaKey: true,
         ctrlKey: true,
       });

@@ -23,8 +23,8 @@ export default class Undo {
       config: {
         debounceTimer: 200,
         shortcuts: {
-          undo: "CMD+Z",
-          redo: "CMD+Y",
+          undo: ["CMD+Z"],
+          redo: ["CMD+Y", "CMD+SHIFT+Z"],
         },
       },
     };
@@ -33,7 +33,10 @@ export default class Undo {
     const { configuration } = editor;
     const { holder } = configuration;
     const defaultShortcuts = defaultOptions.config.shortcuts;
-    const { shortcuts = defaultShortcuts } = config;
+    const { shortcuts: configShortcuts } = config;
+    const shortcuts = { ...defaultShortcuts, ...configShortcuts };
+    const undo = Array.isArray(shortcuts.undo) ? shortcuts.undo : [shortcuts.undo];
+    const redo = Array.isArray(shortcuts.redo) ? shortcuts.redo : [shortcuts.redo];
     const defaultDebounceTimer = defaultOptions.config.debounceTimer;
     const { debounceTimer = defaultDebounceTimer } = config;
 
@@ -46,7 +49,7 @@ export default class Undo {
     this.readOnly = configuration.readOnly;
     this.maxLength = maxLength || defaultOptions.maxLength;
     this.onUpdate = onUpdate || defaultOptions.onUpdate;
-    this.config = { debounceTimer, shortcuts };
+    this.config = { debounceTimer, shortcuts: { undo, redo } };
 
     const observer = new Observer(
       () => this.registerChange(),
@@ -429,11 +432,11 @@ export default class Undo {
     const { holder } = this;
     const { shortcuts } = this.config;
     const { undo, redo } = shortcuts;
-    const keysUndo = undo.replace(/ /g, "").split("+");
-    const keysRedo = redo.replace(/ /g, "").split("+");
-
-    const keysUndoParsed = this.parseKeys(keysUndo);
-    const keysRedoParsed = this.parseKeys(keysRedo);
+    const keysUndo = undo.map((undoShortcut) => undoShortcut.replace(/ /g, "").split("+"));
+    const keysRedo = redo.map((redoShortcut) => redoShortcut.replace(/ /g, "").split("+"));
+    
+    const keysUndoParsed = keysUndo.map((keys) => this.parseKeys(keys));
+    const keysRedoParsed = keysRedo.map((keys) => this.parseKeys(keys));
 
     const getRawKey = (code) => code.replace('Key', '').toLowerCase();
 
@@ -442,11 +445,16 @@ export default class Undo {
     const threeKeysPressed = (e, keys) =>
       keys.length === 3 && e[keys[0]] && e[keys[1]] && (e.key === keys[2] || getRawKey(e.code) === keys[2]);
 
+    const verifyListTwoKeysPressed = (e, keysList) => 
+      keysList.reduce((result, keys) => result || twoKeysPressed(e, keys), false);
+    const verifyListThreeKeysPressed = (e, keysList) =>
+      keysList.reduce((result, keys) => result || threeKeysPressed(e, keys), false);
+
     const pressedKeys = (e, keys, compKeys) => {
-      if (twoKeysPressed(e, keys) && !threeKeysPressed(e, compKeys)) {
+      if (verifyListTwoKeysPressed(e, keys) && !verifyListThreeKeysPressed(e, compKeys)) {
         return true;
       }
-      if (threeKeysPressed(e, keys)) {
+      if (verifyListThreeKeysPressed(e, keys)) {
         return true;
       }
       return false;
