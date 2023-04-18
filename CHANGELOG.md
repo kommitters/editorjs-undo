@@ -1,5 +1,9 @@
 # Changelog
 
+## 2.0.21 (18.04.2023)
+
+- Add default shortcut for `CMD+SHIFT+Z` command to redo.
+
 ## 2.0.20 (10.03.2023)
 
 - Add the `dist/bundle.js` file of previous release - Fix bug when there is the last element to undo: Uncaught TypeError: Cannot read properties of undefined (reading 'holder').
