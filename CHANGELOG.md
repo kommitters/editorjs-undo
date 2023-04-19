@@ -3,6 +3,7 @@
 ## 2.0.21 (18.04.2023)
 
 - Add default shortcut for `CMD+SHIFT+Z` command to redo.
+- Update all dependencies.
 
 ## 2.0.20 (10.03.2023)
 
