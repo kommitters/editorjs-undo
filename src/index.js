@@ -114,7 +114,7 @@ export default class Undo {
    * @returns {Node} Indirectly shows if readOnly was set to true or false
    */
   setReadOnly() {
-    const toolbox = document.querySelector(".ce-toolbox");
+    const toolbox = this.holder.querySelector(".ce-toolbox");
     this.readOnly = !toolbox;
   }
 
@@ -166,8 +166,8 @@ export default class Undo {
     if (!state[index]) indexInState -= blockCount - state.length;
     const caretIndex =
       state[indexInState] && (
-      state[indexInState].type === "paragraph" ||
-      state[indexInState].type === "header")
+        state[indexInState].type === "paragraph" ||
+        state[indexInState].type === "header")
         ? this.getCaretIndex(index)
         : null;
     this.stack.push({ index: indexInState, state, caretIndex });
@@ -181,7 +181,7 @@ export default class Undo {
    * @returns The caret position
    */
   getCaretIndex(index) {
-    const blocks = document.getElementsByClassName("ce-block__content");
+    const blocks = this.holder.getElementsByClassName("ce-block__content");
     const caretBlock = new VanillaCaret(blocks[index].firstChild);
 
     return caretBlock.getPos();
@@ -306,7 +306,7 @@ export default class Undo {
    */
   setCaretIndex(index, caretIndex) {
     if (caretIndex && caretIndex !== -1) {
-      const blocks = document.getElementsByClassName("ce-block__content");
+      const blocks = this.holder.getElementsByClassName("ce-block__content");
       const caretBlock = new VanillaCaret(blocks[index].firstChild);
 
       caretBlock.setPos(caretIndex);
@@ -434,7 +434,7 @@ export default class Undo {
     const { undo, redo } = shortcuts;
     const keysUndo = undo.map((undoShortcut) => undoShortcut.replace(/ /g, "").split("+"));
     const keysRedo = redo.map((redoShortcut) => redoShortcut.replace(/ /g, "").split("+"));
-    
+
     const keysUndoParsed = keysUndo.map((keys) => this.parseKeys(keys));
     const keysRedoParsed = keysRedo.map((keys) => this.parseKeys(keys));
 
@@ -445,7 +445,7 @@ export default class Undo {
     const threeKeysPressed = (e, keys) =>
       keys.length === 3 && e[keys[0]] && e[keys[1]] && (e.key === keys[2] || getRawKey(e.code) === keys[2]);
 
-    const verifyListTwoKeysPressed = (e, keysList) => 
+    const verifyListTwoKeysPressed = (e, keysList) =>
       keysList.reduce((result, keys) => result || twoKeysPressed(e, keys), false);
     const verifyListThreeKeysPressed = (e, keysList) =>
       keysList.reduce((result, keys) => result || threeKeysPressed(e, keys), false);
