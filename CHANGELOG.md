@@ -1,5 +1,9 @@
 # Changelog
 
+## 2.0.22 (16.05.2023)
+
+- Fix bug [#207](https://github.com/kommitters/editorjs-undo/issues/207) - Limit search scope to Editor (holder) only.
+
 ## 2.0.21 (18.04.2023)
 
 - Add default shortcut for `CMD+SHIFT+Z` command to redo.
