@@ -1,5 +1,10 @@
 # Changelog
 
+## 2.0.23 (15.09.2023)
+
+- Fix bug [#213](https://github.com/kommitters/editorjs-undo/issues/213) - Add support to different keyboard distributions.
+- Fix bug [#209](https://github.com/kommitters/editorjs-undo/issues/209) - Solve bug in undo with deleted blocks.
+
 ## 2.0.22 (16.05.2023)
 
 - Fix bug [#207](https://github.com/kommitters/editorjs-undo/issues/207) - Limit search scope to Editor (holder) only.
