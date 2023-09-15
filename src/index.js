@@ -252,13 +252,14 @@ export default class Undo {
    * Decreases the current position and update the respective block in the editor.
    */
   undo() {
-    if (this.canUndo() && this.position >= 0) {
+    if (this.canUndo()) {
+      const { index: nextIndex, state: nextState } = this.stack[this.position];
+
       this.position -= 1;
       this.shouldSaveHistory = false;
-      let { index } = this.stack[(this.position)];
+      let { index } = this.stack[this.position];
       const { state, caretIndex } = this.stack[this.position];
-      const { index: nextIndex, state: nextState } =
-        this.stack[this.position];
+
       this.onUpdate();
       const blockCount = this.blocks.getBlocksCount();
 
@@ -438,12 +439,10 @@ export default class Undo {
     const keysUndoParsed = keysUndo.map((keys) => this.parseKeys(keys));
     const keysRedoParsed = keysRedo.map((keys) => this.parseKeys(keys));
 
-    const getRawKey = (code) => code.replace('Key', '').toLowerCase();
-
     const twoKeysPressed = (e, keys) =>
-      keys.length === 2 && e[keys[0]] && (e.key === keys[1] || getRawKey(e.code) === keys[1]);
+      keys.length === 2 && e[keys[0]] && (e.key.toLowerCase() === keys[1]);
     const threeKeysPressed = (e, keys) =>
-      keys.length === 3 && e[keys[0]] && e[keys[1]] && (e.key === keys[2] || getRawKey(e.code) === keys[2]);
+      keys.length === 3 && e[keys[0]] && e[keys[1]] && (e.key.toLowerCase() === keys[2]);
 
     const verifyListTwoKeysPressed = (e, keysList) =>
       keysList.reduce((result, keys) => result || twoKeysPressed(e, keys), false);
