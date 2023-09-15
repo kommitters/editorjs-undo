@@ -252,13 +252,14 @@ export default class Undo {
    * Decreases the current position and update the respective block in the editor.
    */
   undo() {
-    if (this.canUndo() && this.position >= 0) {
+    if (this.canUndo()) {
+      const { index: nextIndex, state: nextState } = this.stack[this.position];
+
       this.position -= 1;
       this.shouldSaveHistory = false;
-      let { index } = this.stack[(this.position)];
+      let { index } = this.stack[this.position];
       const { state, caretIndex } = this.stack[this.position];
-      const { index: nextIndex, state: nextState } =
-        this.stack[this.position];
+
       this.onUpdate();
       const blockCount = this.blocks.getBlocksCount();
 
