@@ -22,7 +22,7 @@ jobs:
 
     steps:
       - name: Harden Runner
-        uses: step-security/harden-runner@03bee3930647ebbf994244c21ddbc0d4933aab4f # v2.3.0
+        uses: step-security/harden-runner@8ca2b8b2ece13480cda6dacd3511b49857a23c09 # v2.5.1
         with:
           disable-sudo: true
           egress-policy: block
@@ -35,7 +35,6 @@ jobs:
             github.com:443
             rekor.sigstore.dev:443
             bestpractices.dev:443
-            pipelinesghubeus3.actions.githubusercontent.com:443
             *.storage.googleapis.com:443
 
       - name: "Checkout code"
