@@ -31,7 +31,7 @@ export default class Undo {
 
     const { blocks, caret } = editor;
     const { configuration } = editor;
-    const { holder } = configuration;
+    const { holder, defaultBlock } = configuration;
     const defaultShortcuts = defaultOptions.config.shortcuts;
     const { shortcuts: configShortcuts } = config;
     const shortcuts = { ...defaultShortcuts, ...configShortcuts };
@@ -43,6 +43,7 @@ export default class Undo {
     this.holder =
       typeof holder === "string" ? document.getElementById(holder) : holder;
     this.editor = editor;
+    this.defaultBlock = defaultBlock;
     this.blocks = blocks;
     this.caret = caret;
     this.shouldSaveHistory = true;
@@ -277,7 +278,7 @@ export default class Undo {
         this.blocks
           .render({ blocks: state })
           .then(() => {
-            this.editor.blocks.insert("paragraph", {text: ""})
+            this.editor.blocks.insert(this.defaultBlock, {text: ""})
             this.caret.setToLastBlock("end") ;
           });
       } else if (this.blockWasDropped(state, nextState)) {
