@@ -272,14 +272,14 @@ export default class Undo {
       if (this.blockWasDeleted(state, nextState)) {
         this.insertDeletedBlock(state, nextState, index);
       } else if (this.blockWasSkipped(index, nextIndex, state, nextState)) {
-        this.blocks.delete();
+        this.blocks.delete(nextIndex);
         this.caret.setToBlock(index, "end");
       } else if (blockCount > state.length) {
         this.blocks
           .render({ blocks: state })
           .then(() => {
             this.editor.blocks.insert(this.defaultBlock, {});
-            this.caret.setToLastBlock("end");
+            this.setCaretIndex(index, caretIndex);
           });
       } else if (this.blockWasDropped(state, nextState)) {
         this.blocks
