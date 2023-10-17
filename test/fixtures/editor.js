@@ -17,7 +17,9 @@ const editor = {
   caret: {
     setToBlock() {},
   },
-  configuration: {},
+  configuration: {
+    defaultBlock: 'paragraph',
+  },
 };
 
 const readOnlyEditor = {
