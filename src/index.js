@@ -105,7 +105,7 @@ export default class Undo {
   clear() {
     this.stack = this.initialItem
       ? [this.initialItem]
-      : [{ index: 0, state: [{ type: "paragraph", data: { text: "" } }] }];
+      : [{ index: 0, state: [{ type: this.defaultBlock, data: {} }] }];
     this.position = 0;
     this.onUpdate();
   }
@@ -278,8 +278,8 @@ export default class Undo {
         this.blocks
           .render({ blocks: state })
           .then(() => {
-            this.editor.blocks.insert(this.defaultBlock, {text: ""})
-            this.caret.setToLastBlock("end") ;
+            this.editor.blocks.insert(this.defaultBlock, {});
+            this.caret.setToLastBlock("end");
           });
       } else if (this.blockWasDropped(state, nextState)) {
         this.blocks
