@@ -1,5 +1,11 @@
 # Changelog
 
+## 2.0.24 (17.10.2023)
+
+- Fix bug [#227](https://github.com/kommitters/editorjs-undo/issues/227) - Fix unexpected behavior when there are line breaks.
+- Fix bug [#202](https://github.com/kommitters/editorjs-undo/issues/202) - Solve undo with custom blocks.
+- Update [#225](https://github.com/kommitters/editorjs-undo/pull/225) - Update codeql.yml and scorecards.yml allowed-endpoints.
+
 ## 2.0.23 (15.09.2023)
 
 - Fix bug [#213](https://github.com/kommitters/editorjs-undo/issues/213) - Add support to different keyboard distributions.
