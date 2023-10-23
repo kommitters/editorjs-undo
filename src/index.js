@@ -275,16 +275,12 @@ export default class Undo {
         await this.blocks.delete(nextIndex);
         this.caret.setToBlock(index, "end");
       } else if (blockCount > state.length) {
-        await this.blocks
-          .render({ blocks: state })
-          .then(() => {
-            this.editor.blocks.insert(this.defaultBlock, {});
-            this.setCaretIndex(index, caretIndex);
-          });
+        await this.blocks.render({ blocks: state });
+        await this.editor.blocks.insert(this.defaultBlock, {});
+        this.setCaretIndex(index, caretIndex);
       } else if (this.blockWasDropped(state, nextState)) {
-        await this.blocks
-          .render({ blocks: state })
-          .then(() => this.caret.setToBlock(index, "end"));
+        await this.blocks.render({ blocks: state });
+        this.caret.setToBlock(index, 'end');
       } else if (this.contentChangedInNoFocusBlock(index, nextIndex)) {
         const { id } = this.blocks.getBlockByIndex(nextIndex);
 
@@ -360,9 +356,8 @@ export default class Undo {
         this.insertSkippedBlocks(prevState.length, state);
         this.caret.setToBlock(index, 'end');
       } else if (this.blockWasDropped(state, prevState) && this.position !== 1) {
-        await this.blocks
-          .render({ blocks: state })
-          .then(() => this.caret.setToBlock(index, "end"));
+        await this.blocks.render({ blocks: state });
+        this.caret.setToBlock(index, "end");
       }
 
       this.onUpdate();
