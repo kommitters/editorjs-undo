@@ -252,7 +252,7 @@ export default class Undo {
   /**
    * Decreases the current position and update the respective block in the editor.
    */
-  undo() {
+  async undo() {
     if (this.canUndo()) {
       const { index: nextIndex, state: nextState } = this.stack[this.position];
 
@@ -272,29 +272,25 @@ export default class Undo {
       if (this.blockWasDeleted(state, nextState)) {
         this.insertDeletedBlock(state, nextState, index);
       } else if (this.blockWasSkipped(index, nextIndex, state, nextState)) {
-        this.blocks.delete(nextIndex);
+        await this.blocks.delete(nextIndex);
         this.caret.setToBlock(index, "end");
       } else if (blockCount > state.length) {
-        this.blocks
-          .render({ blocks: state })
-          .then(() => {
-            this.editor.blocks.insert(this.defaultBlock, {});
-            this.setCaretIndex(index, caretIndex);
-          });
+        await this.blocks.render({ blocks: state });
+        await this.editor.blocks.insert(this.defaultBlock, {});
+        this.setCaretIndex(index, caretIndex);
       } else if (this.blockWasDropped(state, nextState)) {
-        this.blocks
-          .render({ blocks: state })
-          .then(() => this.caret.setToBlock(index, "end"));
+        await this.blocks.render({ blocks: state });
+        this.caret.setToBlock(index, 'end');
       } else if (this.contentChangedInNoFocusBlock(index, nextIndex)) {
         const { id } = this.blocks.getBlockByIndex(nextIndex);
 
-        this.blocks.update(id, state[nextIndex].data);
+        await this.blocks.update(id, state[nextIndex].data);
         this.setCaretIndex(index, caretIndex);
       }
 
       const block = this.blocks.getBlockByIndex(index);
       if (block) {
-        this.blocks.update(block.id, state[index].data);
+        await this.blocks.update(block.id, state[index].data);
         this.setCaretIndex(index, caretIndex);
       }
     }
@@ -310,8 +306,7 @@ export default class Undo {
     if (caretIndex && caretIndex !== -1) {
       const blocks = this.holder.getElementsByClassName("ce-block__content");
       const caretBlock = new VanillaCaret(blocks[index].firstChild);
-
-      caretBlock.setPos(caretIndex);
+      setTimeout(() => caretBlock.setPos(caretIndex), 50);
     } else {
       this.caret.setToBlock(index, "end");
     }
@@ -322,8 +317,8 @@ export default class Undo {
    * @param {Array} state is the current state according to this.position.
    * @param {Number} index is the block index
    */
-  insertBlock(state, index) {
-    this.blocks.insert(
+  async insertBlock(state, index) {
+    await this.blocks.insert(
       state[index].type,
       state[index].data,
       {},
@@ -346,7 +341,7 @@ export default class Undo {
   /**
    * Increases the current position and update the respective block in the editor.
    */
-  redo() {
+  async redo() {
     if (this.canRedo()) {
       this.position += 1;
       this.shouldSaveHistory = false;
@@ -355,21 +350,20 @@ export default class Undo {
         this.stack[this.position - 1];
 
       if (this.blockWasDeleted(prevState, state)) {
-        this.blocks.delete();
+        await this.blocks.delete();
         this.caret.setToBlock(index, "end");
       } else if (this.blockWasSkipped(prevIndex, index, state, prevState)) {
         this.insertSkippedBlocks(prevState.length, state);
         this.caret.setToBlock(index, 'end');
       } else if (this.blockWasDropped(state, prevState) && this.position !== 1) {
-        this.blocks
-          .render({ blocks: state })
-          .then(() => this.caret.setToBlock(index, "end"));
+        await this.blocks.render({ blocks: state });
+        this.caret.setToBlock(index, "end");
       }
 
       this.onUpdate();
       const block = this.blocks.getBlockByIndex(index);
       if (block) {
-        this.blocks.update(block.id, state[index].data);
+        await this.blocks.update(block.id, state[index].data);
         this.setCaretIndex(index, caretIndex);
       }
     }
