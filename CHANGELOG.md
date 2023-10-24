@@ -1,5 +1,9 @@
 # Changelog
 
+## 2.0.25 (23.10.2023)
+
+- Fix bug [#235](https://github.com/kommitters/editorjs-undo/pull/235) - Fix bug in caret in new Editor.js versions.
+
 ## 2.0.24 (17.10.2023)
 
 - Fix bug [#227](https://github.com/kommitters/editorjs-undo/issues/227) - Fix unexpected behavior when there are line breaks.
