@@ -1,7 +1,6 @@
 /**
  * @jest-environment jsdom
  */
-import 'regenerator-runtime/runtime';
 import Undo from '../src/index';
 import {
   initialData,
