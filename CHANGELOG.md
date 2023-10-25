@@ -1,5 +1,9 @@
 # Changelog
 
+## 2.0.26 (25.10.2023)
+
+- Fix bug [#238](https://github.com/kommitters/editorjs-undo/issues/238) - Fix bug in v2.0.25 related to runtime handle.
+
 ## 2.0.25 (23.10.2023)
 
 - Fix bug [#235](https://github.com/kommitters/editorjs-undo/pull/235) - Fix bug in caret in new Editor.js versions.
