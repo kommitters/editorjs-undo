@@ -23,6 +23,7 @@ jobs:
             github.com:443
             nodejs.org:443
             registry.yarnpkg.com:443
+            objects.githubusercontent.com:443
 
       - uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4.1.1
       - uses: actions/setup-node@60edb5dd545a775178f52524783378180af0d1f8 # v4.0.2
@@ -31,6 +32,6 @@ jobs:
       - run: yarn
       - run: yarn test --coverage
       - name: Coveralls
-        uses: coverallsapp/github-action@c203f016dd0ff7855ebef0ed852000c20c117148
+        uses: coverallsapp/github-action@3dfc5567390f6fa9267c0ee9c251e4c8c3f18949 # v2.2.3
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
