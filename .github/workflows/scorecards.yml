@@ -31,11 +31,11 @@ jobs:
             api.osv.dev:443
             api.securityscorecards.dev:443
             bestpractices.coreinfrastructure.org:443
-            fulcio.sigstore.dev:443
+            *.sigstore.dev:443
             github.com:443
-            rekor.sigstore.dev:443
-            bestpractices.dev:443
-            *.storage.googleapis.com:443
+            sigstore-tuf-root.storage.googleapis.com:443
+            oss-fuzz-build-logs.storage.googleapis.com:443
+            www.bestpractices.dev:443
 
       - name: "Checkout code"
         uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4.1.1
