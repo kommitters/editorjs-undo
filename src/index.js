@@ -328,9 +328,10 @@ export default class Undo {
   }
 
   /**
-   * Insert a block when is skipped
-   * @param {Number} prevStateLength is the previous state according to this.position.
+   * Insert a block when is skipped and update the previous one if it changed.
+   * @param {Array} prevState is the previous state according to this.position.
    * @param {Array} state is the current state according to this.position.
+   * @param {Number} index is the block index.
    */
   async insertSkippedBlocks(prevState, state, index) {
     if (JSON.stringify(prevState[index - 1]) !== JSON.stringify(state[index - 1])) {
