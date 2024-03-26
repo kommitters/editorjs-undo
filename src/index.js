@@ -332,8 +332,13 @@ export default class Undo {
    * @param {Number} prevStateLength is the previous state according to this.position.
    * @param {Array} state is the current state according to this.position.
    */
-  insertSkippedBlocks(prevStateLength, state) {
-    for (let i = prevStateLength; i < state.length; i += 1) {
+  async insertSkippedBlocks(prevState, state, index) {
+    if (JSON.stringify(prevState[index - 1]) !== JSON.stringify(state[index - 1])) {
+      const block = state[index - 1];
+      await this.blocks.update(block.id, block.data);
+    }
+
+    for (let i = prevState.length; i < state.length; i += 1) {
       this.insertBlock(state, i);
     }
   }
@@ -353,7 +358,7 @@ export default class Undo {
         await this.blocks.delete();
         this.caret.setToBlock(index, "end");
       } else if (this.blockWasSkipped(prevIndex, index, state, prevState)) {
-        this.insertSkippedBlocks(prevState.length, state);
+        await this.insertSkippedBlocks(prevState, state, index);
         this.caret.setToBlock(index, 'end');
       } else if (this.blockWasDropped(state, prevState) && this.position !== 1) {
         await this.blocks.render({ blocks: state });
