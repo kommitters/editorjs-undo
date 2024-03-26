@@ -14,7 +14,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Harden Runner
-        uses: step-security/harden-runner@8ca2b8b2ece13480cda6dacd3511b49857a23c09 # v2.5.1
+        uses: step-security/harden-runner@63c24ba6bd7ba022e95695ff85de572c04a18142 # v2.7.0
         with:
           disable-sudo: true
           egress-policy: block
@@ -24,13 +24,13 @@ jobs:
             nodejs.org:443
             registry.yarnpkg.com:443
 
-      - uses: actions/checkout@8e5e7e5ab8b370d6c329ec480221332ada57f0ab # v3.5.2
-      - uses: actions/setup-node@64ed1c7eab4cce3362f8c340dee64e5eaeef8f7c # v3.6.0
+      - uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4.1.1
+      - uses: actions/setup-node@60edb5dd545a775178f52524783378180af0d1f8 # v4.0.2
         with:
           node-version: 16.x
       - run: yarn
       - run: yarn test --coverage
       - name: Coveralls
-        uses: coverallsapp/github-action@66741573064b23a82206aebd518f4bb11802fa5a
+        uses: coverallsapp/github-action@c203f016dd0ff7855ebef0ed852000c20c117148
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
