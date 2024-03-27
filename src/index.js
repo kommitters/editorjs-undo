@@ -17,6 +17,7 @@ export default class Undo {
    * @param options — Plugin custom options.
    */
   constructor({ editor, config = {}, onUpdate, maxLength }) {
+    console.log("In editorjs-undp")
     const defaultOptions = {
       maxLength: 30,
       onUpdate() {},
@@ -218,15 +219,13 @@ export default class Undo {
   }
 
   /**
-   * return true if the block has to be deleted becuase it was skipped previously.
-   * @param {Number} index is the block index in state.
-   * @param {Number} compIndex is the index to compare and know if the block was inserted previously
+   * return true if the block has to be deleted because it was skipped previously.
    * @param {Array} state is the current state according to this.position.
-   * @param {Array} compState is the stato to compare if there was a deleted block.
+   * @param {Array} compState is the state to compare if there was a deleted block.
    * @returns {Boolean} true if a block was inserted previously.
    */
-  blockWasSkipped(index, compIndex, state, compState) {
-    return index < compIndex && state.length !== compState.length;
+  blockWasSkipped(state, compState) {
+    return state.length !== compState.length;
   }
 
   /**
@@ -247,6 +246,18 @@ export default class Undo {
    */
   blockWasDeleted(state, compState) {
     return state.length > compState.length;
+  }
+
+  /**
+   * returns true if the content was copied.
+   * @param {Array} state is the current state according to this.position.
+   * @param {Array} compState is the state to compare and know if the content was copied.
+   * @param {Number} index is the block index in state.
+   * @returns {Boolean} true if a block was deleted previously.
+   */
+  contentWasCopied(state, compState, index) {
+    return Object.keys(state[index].data).length === 0
+      && JSON.stringify(compState[index + 1]) !== JSON.stringify(state[index + 1]);
   }
 
   /**
@@ -271,12 +282,14 @@ export default class Undo {
 
       if (this.blockWasDeleted(state, nextState)) {
         this.insertDeletedBlock(state, nextState, index);
-      } else if (this.blockWasSkipped(index, nextIndex, state, nextState)) {
+      } else if (this.contentWasCopied(state, nextState, index)) {
+        await this.blocks.render({ blocks: state });
+        this.caret.setToBlock(index, 'end');
+      } else if (index < nextIndex && this.blockWasSkipped(state, nextState)) {
         await this.blocks.delete(nextIndex);
         this.caret.setToBlock(index, "end");
       } else if (blockCount > state.length) {
         await this.blocks.render({ blocks: state });
-        await this.editor.blocks.insert(this.defaultBlock, {});
         this.setCaretIndex(index, caretIndex);
       } else if (this.blockWasDropped(state, nextState)) {
         await this.blocks.render({ blocks: state });
@@ -334,14 +347,24 @@ export default class Undo {
    * @param {Number} index is the block index.
    */
   async insertSkippedBlocks(prevState, state, index) {
-    if (JSON.stringify(prevState[index - 1]) !== JSON.stringify(state[index - 1])) {
-      const block = state[index - 1];
-      await this.blocks.update(block.id, block.data);
-    }
-
     for (let i = prevState.length; i < state.length; i += 1) {
       this.insertBlock(state, i);
     }
+
+    if (JSON.stringify(prevState[index - 1]) !== JSON.stringify(state[index - 1])) {
+      await this.updateModifiedBlock(state, index);
+    }
+  }
+
+  /**
+   * Update the passed block or render the state when the content was copied.
+   * @param {Array} state is the current state according to this.position.
+   * @param {Number} index is the block index.
+   */
+  async updateModifiedBlock(state, index) {
+    const block = state[index - 1];
+    if (this.editor.blocks.getById(block.id)) return this.blocks.update(block.id, block.data);
+    return this.blocks.render({ blocks: state });
   }
 
   /**
@@ -358,7 +381,7 @@ export default class Undo {
       if (this.blockWasDeleted(prevState, state)) {
         await this.blocks.delete();
         this.caret.setToBlock(index, "end");
-      } else if (this.blockWasSkipped(prevIndex, index, state, prevState)) {
+      } else if (this.blockWasSkipped(state, prevState)) {
         await this.insertSkippedBlocks(prevState, state, index);
         this.caret.setToBlock(index, 'end');
       } else if (this.blockWasDropped(state, prevState) && this.position !== 1) {
