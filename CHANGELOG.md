@@ -1,5 +1,12 @@
 # Changelog
 
+## 2.0.27 (01.04.2024)
+
+- Fix bug [#243](https://github.com/kommitters/editorjs-undo/issues/243) - Fix unexpected behavior when there are initial data loaded.
+- Fix bug [#243](https://github.com/kommitters/editorjs-undo/issues/243) - Fix unexpected behavior when there are several copied paragraphs.
+- Update [#206](https://github.com/kommitters/editorjs-undo/pull/206) - Update Github workflows dependencies and allowed-endpoints.
+- Fix bug [#224](https://github.com/kommitters/editorjs-undo/pull/244) - Fix unexpected behavior when trying to split and create a new paragraph.
+
 ## 2.0.26 (25.10.2023)
 
 - Fix bug [#238](https://github.com/kommitters/editorjs-undo/issues/238) - Fix bug in v2.0.25 related to runtime handle.
