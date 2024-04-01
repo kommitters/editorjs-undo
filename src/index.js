@@ -17,7 +17,6 @@ export default class Undo {
    * @param options — Plugin custom options.
    */
   constructor({ editor, config = {}, onUpdate, maxLength }) {
-    console.log("In editorjs-undp")
     const defaultOptions = {
       maxLength: 30,
       onUpdate() {},
@@ -112,7 +111,7 @@ export default class Undo {
   }
 
   /**
-   * returns true if readOnly was toggled to true
+   * Returns true if readOnly was toggled to true
    * @returns {Node} Indirectly shows if readOnly was set to true or false
    */
   setReadOnly() {
@@ -178,7 +177,7 @@ export default class Undo {
   }
 
   /**
-   * get the caret position.
+   * Gets the caret position.
    * @param {Number} index is the block index
    * @returns The caret position
    */
@@ -190,7 +189,7 @@ export default class Undo {
   }
 
   /**
-   * insert a block deleted previously
+   * Inserts a block deleted previously
    * @param {Array} state is the current state according to this.position.
    * @param {Array} compState is the state to compare and know the deleted block.
    * @param {Number} index is the block index in state.
@@ -206,7 +205,7 @@ export default class Undo {
   }
 
   /**
-   * return true if a block was dropped previously
+   * Returns true if a block was dropped previously
    * @param {Array} state is the current state according to this.position.
    * @param {Array} compState is the state to compare and know the dropped block.
    * @returns {Boolean} true if the block was dropped
@@ -219,7 +218,7 @@ export default class Undo {
   }
 
   /**
-   * return true if the block has to be deleted because it was skipped previously.
+   * Returns true if the block has to be deleted because it was skipped previously.
    * @param {Array} state is the current state according to this.position.
    * @param {Array} compState is the state to compare if there was a deleted block.
    * @returns {Boolean} true if a block was inserted previously.
@@ -229,7 +228,7 @@ export default class Undo {
   }
 
   /**
-   * return true if the content in a block without the focus was modified.
+   * Returns true if the content in a block without the focus was modified.
    * @param {Number} index is the block index in state.
    * @param {Number} compIndex is the index to compare and know if the block was inserted previously
    * @returns true if the content in a block without the focus was modified.
@@ -239,7 +238,7 @@ export default class Undo {
   }
 
   /**
-   * returns true if a block was deleted previously.
+   * Returns true if a block was deleted previously.
    * @param {Array} state is the current state according to this.position.
    * @param {Array} compState is the state to compare and know if a block was deleted.
    * @returns {Boolean} true if a block was deleted previously.
@@ -249,7 +248,7 @@ export default class Undo {
   }
 
   /**
-   * returns true if the content was copied.
+   * Returns true if the content was copied.
    * @param {Array} state is the current state according to this.position.
    * @param {Array} compState is the state to compare and know if the content was copied.
    * @param {Number} index is the block index in state.
@@ -310,7 +309,7 @@ export default class Undo {
   }
 
   /**
-   * Set the caret position.
+   * Sets the caret position.
    * @param {Number} index is the block index
    * @param {Number} caretIndex is the caret position
    * @param {Array} state is the current state according to this.position.
@@ -326,7 +325,7 @@ export default class Undo {
   }
 
   /**
-   * Insert new block
+   * Inserts new block
    * @param {Array} state is the current state according to this.position.
    * @param {Number} index is the block index
    */
@@ -341,7 +340,7 @@ export default class Undo {
   }
 
   /**
-   * Insert a block when is skipped and update the previous one if it changed.
+   * Inserts a block when is skipped and update the previous one if it changed.
    * @param {Array} prevState is the previous state according to this.position.
    * @param {Array} state is the current state according to this.position.
    * @param {Number} index is the block index.
@@ -357,7 +356,7 @@ export default class Undo {
   }
 
   /**
-   * Update the passed block or render the state when the content was copied.
+   * Updates the passed block or render the state when the content was copied.
    * @param {Array} state is the current state according to this.position.
    * @param {Number} index is the block index.
    */
