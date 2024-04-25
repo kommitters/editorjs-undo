@@ -1,5 +1,9 @@
 # Changelog
 
+## 2.0.28 (25.04.2024)
+
+- Add stale issues policy. See [PR #250](https://github.com/kommitters/editorjs-undo/pull/250)
+
 ## 2.0.27 (01.04.2024)
 
 - Fix bug [#243](https://github.com/kommitters/editorjs-undo/issues/243) - Fix unexpected behavior when there are initial data loaded.
