@@ -162,6 +162,8 @@ export default class Undo {
    * Adds the saved data in the history stack and updates current position.
    */
   save(state) {
+    console.log('entra en save');
+
     if (this.position >= this.maxLength) {
       this.truncate(this.stack, this.maxLength);
     }
@@ -179,9 +181,25 @@ export default class Undo {
         || state[indexInState].type === 'header')
       ? this.getCaretIndex(index)
       : null;
-    this.stack.push({ index: indexInState, state, caretIndex });
+
+    console.log('entry state');
+    console.log(state);
+
+    console.log('baseData');
+    console.log(this.baseData);
+
+    const newState = diff(this.baseData, state);
+
+    console.log('diff');
+    console.log(newState);
+
+    this.stack.push({ index: indexInState, state: newState, caretIndex });
+    this.baseData = state;
     this.position += 1;
     this.onUpdate();
+
+    console.log('stack');
+    console.log(this.stack);
   }
 
   /**
