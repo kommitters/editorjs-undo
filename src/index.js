@@ -12,6 +12,7 @@ import Observer from './observer';
  * @property {Function} onUpdate - Callback called when the user performs an undo or redo action.
  * @property {Boolean} shouldSaveHistory - Defines if the plugin should save the change in the stack
  * @property {Object} initialItem - Initial data object.
+ * @property {Object} baseData - Saved data object.
  */
 export default class Undo {
   /**
@@ -53,6 +54,7 @@ export default class Undo {
     this.maxLength = maxLength || defaultOptions.maxLength;
     this.onUpdate = onUpdate || defaultOptions.onUpdate;
     this.config = { debounceTimer, shortcuts: { undo, redo } };
+    this.baseData = [];
 
     const observer = new Observer(
       () => this.registerChange(),
