@@ -98,8 +98,15 @@ export default class Undo {
     const initialData = 'blocks' in initialItem ? initialItem.blocks : initialItem;
     const initialIndex = initialData.length - 1;
     const firstElement = { index: initialIndex, state: initialData };
-    this.stack[0] = firstElement;
+    this.stack[0] = { index: initialIndex, state: [] };
     this.initialItem = firstElement;
+    this.baseData = initialData;
+
+    console.log('baseData initialize');
+    console.log(this.baseData);
+
+    console.log('stack initialize');
+    console.log(this.stack);
   }
 
   /**
