@@ -1,4 +1,5 @@
 import VanillaCaret from 'vanilla-caret-js';
+import { diff } from 'jsondiffpatch';
 import Observer from './observer';
 
 /**
