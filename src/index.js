@@ -343,28 +343,14 @@ export default class Undo {
    */
   async redo() {
     if (this.canRedo()) {
-      this.position += 1;
       this.shouldSaveHistory = false;
-      const { index, state, caretIndex } = this.stack[(this.position)];
-      const { index: prevIndex, state: prevState } = this.stack[this.position - 1];
+      const { state: lastRedoState, caretIndex, jsonpatch } = this.redoStack.pop();
 
-      if (this.blockWasDeleted(prevState, state)) {
-        await this.blocks.delete();
-        this.caret.setToBlock(index, 'end');
-      } else if (this.blockWasSkipped(state, prevState)) {
-        await this.insertSkippedBlocks(prevState, state, index);
-        this.caret.setToBlock(index, 'end');
-      } else if (this.blockWasDropped(state, prevState) && this.position !== 1) {
-        await this.blocks.render({ blocks: state });
-        this.caret.setToBlock(index, 'end');
-      }
+      // Restore the last redo state in the undo stack
+      this.undoStack.push({ state: lastRedoState, caretIndex });
+      patch(this.basicData, lastRedoState);
 
       this.onUpdate();
-      const block = this.blocks.getBlockByIndex(index);
-      if (block) {
-        await this.blocks.update(block.id, state[index].data);
-        this.setCaretIndex(index, caretIndex);
-      }
     }
   }
 
