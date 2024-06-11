@@ -110,13 +110,11 @@ export default class Undo {
   }
 
   /**
-   * Clears the history stack.
+   * Clears the history stacks.
    */
   clear() {
-    this.stack = this.initialItem
-      ? [this.initialItem]
-      : [{ index: 0, state: [{ type: this.defaultBlock, data: {} }] }];
-    this.position = 0;
+    this.undoStack = [];
+    this.redoStack = [];
     this.onUpdate();
   }
 
