@@ -355,30 +355,21 @@ export default class Undo {
   }
 
   /**
-   * Checks if the history stack can perform an undo action.
+   * Checks if the history undoStack can perform an undo action.
    *
    * @returns {Boolean}
    */
   canUndo() {
-    return !this.readOnly && this.position > 0;
+    return !this.readOnly && this.undoStack.length > 0;
   }
 
   /**
-   * Checks if the history stack can perform a redo action.
+   * Checks if the history undoStack can perform a redo action.
    *
    * @returns {Boolean}
    */
   canRedo() {
-    return !this.readOnly && this.position < this.count();
-  }
-
-  /**
-   * Returns the number of changes recorded in the history stack.
-   *
-   * @returns {Number}
-   */
-  count() {
-    return this.stack.length - 1; // -1 because of initial item
+    return !this.readOnly && this.redoStack.length > 0;
   }
 
   /**
