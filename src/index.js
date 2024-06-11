@@ -156,47 +156,26 @@ export default class Undo {
   }
 
   /**
-   * Adds the saved data in the history stack and updates current position.
+   * Adds the saved data in the history undoStack and updates current position.
    */
-  save(state) {
-    console.log('entra en save');
-
-    if (this.position >= this.maxLength) {
-      this.truncate(this.stack, this.maxLength);
-    }
-    this.position = Math.min(this.position, this.stack.length - 1);
-
-    this.stack = this.stack.slice(0, this.position + 1);
-
+  async save(state) {
+    // With this code we get the caret position in the block
     const index = this.blocks.getCurrentBlockIndex();
     const blockCount = this.blocks.getBlocksCount();
     let indexInState = index;
 
     if (!state[index]) indexInState -= blockCount - state.length;
-    const caretIndex = state[indexInState] && (
-      state[indexInState].type === 'paragraph'
+    const caretIndex = state[indexInState]
+      && (state[indexInState].type === 'paragraph'
         || state[indexInState].type === 'header')
       ? this.getCaretIndex(index)
       : null;
 
-    console.log('entry state');
-    console.log(state);
+    const lastState = diff(this.basicData, state);
 
-    console.log('baseData');
-    console.log(this.baseData);
-
-    const newState = diff(this.baseData, state);
-
-    console.log('diff');
-    console.log(newState);
-
-    this.stack.push({ index: indexInState, state: newState, caretIndex });
-    this.baseData = state;
-    this.position += 1;
+    this.undoStack.push({ state: lastState, caretIndex });
+    this.basicData = state;
     this.onUpdate();
-
-    console.log('stack');
-    console.log(this.stack);
   }
 
   /**
