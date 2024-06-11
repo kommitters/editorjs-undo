@@ -10,11 +10,11 @@ import Observer from './observer';
  * @typedef {Object} Undo
  * @description Feature's initialization class.
  * @property {Object} editor — Editor.js instance object.
- * @property {Number} maxLength - Max amount of changes recorded by the history stack.
+ * @property {Number} maxLength - Max amount of changes recorded by the history undoStack.
  * @property {Function} onUpdate - Callback called when the user performs an undo or redo action.
- * @property {Boolean} shouldSaveHistory - Defines if the plugin should save the change in the stack
+ * @property {Boolean} shouldSaveHistory - Defines if the plugin should save the change in the undoStack
  * @property {Object} initialItem - Initial data object.
- * @property {Object} baseData - Saved data object.
+ * @property {Object} basicData - Saved data object.
  */
 export default class Undo {
   /**
@@ -41,8 +41,12 @@ export default class Undo {
     const defaultShortcuts = defaultOptions.config.shortcuts;
     const { shortcuts: configShortcuts } = config;
     const shortcuts = { ...defaultShortcuts, ...configShortcuts };
-    const undo = Array.isArray(shortcuts.undo) ? shortcuts.undo : [shortcuts.undo];
-    const redo = Array.isArray(shortcuts.redo) ? shortcuts.redo : [shortcuts.redo];
+    const undo = Array.isArray(shortcuts.undo)
+      ? shortcuts.undo
+      : [shortcuts.undo];
+    const redo = Array.isArray(shortcuts.redo)
+      ? shortcuts.redo
+      : [shortcuts.redo];
     const defaultDebounceTimer = defaultOptions.config.debounceTimer;
     const { debounceTimer = defaultDebounceTimer } = config;
 
@@ -56,7 +60,7 @@ export default class Undo {
     this.maxLength = maxLength || defaultOptions.maxLength;
     this.onUpdate = onUpdate || defaultOptions.onUpdate;
     this.config = { debounceTimer, shortcuts: { undo, redo } };
-    this.baseData = [];
+    this.basicData = [];
 
     const observer = new Observer(
       () => this.registerChange(),
