@@ -266,47 +266,17 @@ export default class Undo {
    */
   async undo() {
     if (this.canUndo()) {
-      const { index: nextIndex, state: nextState } = this.stack[this.position];
-
-      this.position -= 1;
       this.shouldSaveHistory = false;
-      let { index } = this.stack[this.position];
-      const { state, caretIndex } = this.stack[this.position];
+      const { state: lastState, caretIndex } = this.undoStack.pop();
+
+      // Add formatter to identify the type of modification
+      const jsonPatch = jsonpatchFormatter.format(lastState, this.basicData);
+
+      // Add the Undo state, caret and inverse operation in the Redo undoStack
+      this.redoStack.push({ state: lastState, caretIndex, jsonPatch });
+      unpatch(this.basicData, lastState);
 
       this.onUpdate();
-      const blockCount = this.blocks.getBlocksCount();
-
-      if (!state[index]) {
-        index -= 1;
-        this.stack[this.position].index = index;
-      }
-
-      if (this.blockWasDeleted(state, nextState)) {
-        this.insertDeletedBlock(state, nextState, index);
-      } else if (this.contentWasCopied(state, nextState, index)) {
-        await this.blocks.render({ blocks: state });
-        this.caret.setToBlock(index, 'end');
-      } else if (index < nextIndex && this.blockWasSkipped(state, nextState)) {
-        await this.blocks.delete(nextIndex);
-        this.caret.setToBlock(index, 'end');
-      } else if (blockCount > state.length) {
-        await this.blocks.render({ blocks: state });
-        this.setCaretIndex(index, caretIndex);
-      } else if (this.blockWasDropped(state, nextState)) {
-        await this.blocks.render({ blocks: state });
-        this.caret.setToBlock(index, 'end');
-      } else if (this.contentChangedInNoFocusBlock(index, nextIndex)) {
-        const { id } = this.blocks.getBlockByIndex(nextIndex);
-
-        await this.blocks.update(id, state[nextIndex].data);
-        this.setCaretIndex(index, caretIndex);
-      }
-
-      const block = this.blocks.getBlockByIndex(index);
-      if (block) {
-        await this.blocks.update(block.id, state[index].data);
-        this.setCaretIndex(index, caretIndex);
-      }
     }
   }
 
