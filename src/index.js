@@ -84,14 +84,14 @@ export default class Undo {
   }
 
   /**
-   * Truncates the history stack when it excedes the limit of changes.
+   * Truncates the history undoStack when it excedes the limit of changes.
    *
-   * @param {Object} stack  Changes history stack.
-   * @param {Number} stack  Limit of changes recorded by the history stack.
+   * @param {Object} undoStack  Changes history undoStack.
+   * @param {Number} undoStack  Limit of changes recorded by the history undoStack.
    */
-  truncate(stack, limit) {
-    while (stack.length > limit) {
-      stack.shift();
+  truncate(undoStack, limit) {
+    while (undoStack.length > limit) {
+      undoStack.shift();
     }
   }
 
@@ -128,7 +128,7 @@ export default class Undo {
   }
 
   /**
-   * Registers the data returned by API's save method into the history stack.
+   * Registers the data returned by API's save method into the history undoStack.
    */
   registerChange() {
     this.setReadOnly();
@@ -257,8 +257,10 @@ export default class Undo {
    * @returns {Boolean} true if a block was deleted previously.
    */
   contentWasCopied(state, compState, index) {
-    return Object.keys(state[index].data).length === 0
-      && JSON.stringify(compState[index + 1]) !== JSON.stringify(state[index + 1]);
+    return (
+      Object.keys(state[index].data).length === 0
+      && JSON.stringify(compState[index + 1]) !== JSON.stringify(state[index + 1])
+    );
   }
 
   /**
@@ -322,7 +324,9 @@ export default class Undo {
       this.insertBlock(state, i);
     }
 
-    if (JSON.stringify(prevState[index - 1]) !== JSON.stringify(state[index - 1])) {
+    if (
+      JSON.stringify(prevState[index - 1]) !== JSON.stringify(state[index - 1])
+    ) {
       await this.updateModifiedBlock(state, index);
     }
   }
@@ -409,14 +413,26 @@ export default class Undo {
     const keysUndoParsed = keysUndo.map((keys) => this.parseKeys(keys));
     const keysRedoParsed = keysRedo.map((keys) => this.parseKeys(keys));
 
-    const twoKeysPressed = (e, keys) => keys.length === 2 && e[keys[0]] && (e.key.toLowerCase() === keys[1]);
-    const threeKeysPressed = (e, keys) => keys.length === 3 && e[keys[0]] && e[keys[1]] && (e.key.toLowerCase() === keys[2]);
+    const twoKeysPressed = (e, keys) => keys.length === 2 && e[keys[0]] && e.key.toLowerCase() === keys[1];
+    const threeKeysPressed = (e, keys) => keys.length === 3
+      && e[keys[0]]
+      && e[keys[1]]
+      && e.key.toLowerCase() === keys[2];
 
-    const verifyListTwoKeysPressed = (e, keysList) => keysList.reduce((result, keys) => result || twoKeysPressed(e, keys), false);
-    const verifyListThreeKeysPressed = (e, keysList) => keysList.reduce((result, keys) => result || threeKeysPressed(e, keys), false);
+    const verifyListTwoKeysPressed = (e, keysList) => keysList.reduce(
+      (result, keys) => result || twoKeysPressed(e, keys),
+      false,
+    );
+    const verifyListThreeKeysPressed = (e, keysList) => keysList.reduce(
+      (result, keys) => result || threeKeysPressed(e, keys),
+      false,
+    );
 
     const pressedKeys = (e, keys, compKeys) => {
-      if (verifyListTwoKeysPressed(e, keys) && !verifyListThreeKeysPressed(e, compKeys)) {
+      if (
+        verifyListTwoKeysPressed(e, keys)
+        && !verifyListThreeKeysPressed(e, compKeys)
+      ) {
         return true;
       }
       if (verifyListThreeKeysPressed(e, keys)) {
