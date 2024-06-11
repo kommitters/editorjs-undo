@@ -96,23 +96,17 @@ export default class Undo {
   }
 
   /**
-   * Initializes the stack when the user provides initial data.
+   * Initializes the undoStack when the user provides initial data.
    *
    * @param {Object} initialItem  Initial data provided by the user.
    */
   initialize(initialItem) {
     const initialData = 'blocks' in initialItem ? initialItem.blocks : initialItem;
-    const initialIndex = initialData.length - 1;
-    const firstElement = { index: initialIndex, state: initialData };
-    this.stack[0] = { index: initialIndex, state: diff([], initialData) };
+    this.caret.setToLastBlock('end', 0);
+
+    const firstElement = { state: initialData, caretIndex: 0 };
     this.initialItem = firstElement;
-    this.baseData = initialData;
-
-    console.log('baseData initialize');
-    console.log(this.baseData);
-
-    console.log('stack initialize');
-    console.log(this.stack);
+    this.basicData = initialData;
   }
 
   /**
