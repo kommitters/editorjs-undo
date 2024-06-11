@@ -143,17 +143,16 @@ export default class Undo {
   }
 
   /**
-   * Checks if the saved data has to be added to the history stack.
+   * Checks if the saved data has to be added to the history undoStack.
    *
-   * @param {Object} newData  New data to be saved in the history stack.
+   * @param {Object} newData  New data to be saved in the history undoStack.
    * @returns {Boolean}
    */
   editorDidUpdate(newData) {
-    const { state } = this.stack[this.position];
     if (!newData.length) return false;
-    if (newData.length !== state.length) return true;
+    if (newData.length !== this.basicData.length) return true;
 
-    return JSON.stringify(state) !== JSON.stringify(newData);
+    return JSON.stringify(this.basicData) !== JSON.stringify(newData);
   }
 
   /**
