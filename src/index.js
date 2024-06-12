@@ -14,7 +14,7 @@ import Observer from './observer';
  * @property {Function} onUpdate - Callback called when the user performs an undo or redo action.
  * @property {Boolean} shouldSaveHistory - Defines if the plugin should save the change in the undoStack
  * @property {Object} initialItem - Initial data object.
- * @property {Object} basicData - Saved data object.
+ * @property {Object} baseData - Saved data object.
  */
 export default class Undo {
   /**
@@ -60,7 +60,7 @@ export default class Undo {
     this.maxLength = maxLength || defaultOptions.maxLength;
     this.onUpdate = onUpdate || defaultOptions.onUpdate;
     this.config = { debounceTimer, shortcuts: { undo, redo } };
-    this.basicData = [];
+    this.baseData = [];
 
     const observer = new Observer(
       () => this.registerChange(),
@@ -106,7 +106,7 @@ export default class Undo {
 
     const firstElement = { state: initialData, caretIndex: 0 };
     this.initialItem = firstElement;
-    this.basicData = initialData;
+    this.baseData = initialData;
   }
 
   /**
@@ -150,9 +150,9 @@ export default class Undo {
    */
   editorDidUpdate(newData) {
     if (!newData.length) return false;
-    if (newData.length !== this.basicData.length) return true;
+    if (newData.length !== this.baseData.length) return true;
 
-    return JSON.stringify(this.basicData) !== JSON.stringify(newData);
+    return JSON.stringify(this.baseData) !== JSON.stringify(newData);
   }
 
   /**
@@ -171,10 +171,10 @@ export default class Undo {
       ? this.getCaretIndex(index)
       : null;
 
-    const lastState = diff(this.basicData, state);
+    const lastState = diff(this.baseData, state);
 
     this.undoStack.push({ state: lastState, caretIndex });
-    this.basicData = state;
+    this.baseData = state;
     this.onUpdate();
   }
 
@@ -272,14 +272,14 @@ export default class Undo {
       const { state: lastState, caretIndex } = this.undoStack.pop();
 
       // Add formatter to identify the type of modification
-      const jsonPatch = jsonpatchFormatter.format(lastState, this.basicData);
+      const jsonPatch = jsonpatchFormatter.format(lastState, this.baseData);
 
       // Add the Undo state, caret and inverse operation in the Redo undoStack
       this.redoStack.push({ state: lastState, caretIndex, jsonPatch });
 
-      // To build the previous state of 'basicData', removing the changes
+      // To build the previous state of 'baseData', removing the changes
       // specified in 'lastState'
-      unpatch(this.basicData, lastState);
+      unpatch(this.baseData, lastState);
 
       this.onUpdate();
     }
@@ -356,8 +356,8 @@ export default class Undo {
       // Restore the last redo state in the undo stack
       this.undoStack.push({ state: lastRedoState, caretIndex });
 
-      // To build the next state of 'basicData' applying the changes contained in 'lastRedoState'
-      patch(this.basicData, lastRedoState);
+      // To build the next state of 'baseData' applying the changes contained in 'lastRedoState'
+      patch(this.baseData, lastRedoState);
 
       this.onUpdate();
     }
