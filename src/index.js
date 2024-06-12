@@ -276,6 +276,9 @@ export default class Undo {
 
       // Add the Undo state, caret and inverse operation in the Redo undoStack
       this.redoStack.push({ state: lastState, caretIndex, jsonPatch });
+
+      // To build the previous state of 'basicData', removing the changes
+      // specified in 'lastState'
       unpatch(this.basicData, lastState);
 
       this.onUpdate();
@@ -352,6 +355,8 @@ export default class Undo {
 
       // Restore the last redo state in the undo stack
       this.undoStack.push({ state: lastRedoState, caretIndex });
+
+      // To build the next state of 'basicData' applying the changes contained in 'lastRedoState'
       patch(this.basicData, lastRedoState);
 
       this.onUpdate();
