@@ -12,7 +12,7 @@
   "scripts": {
     "build": "webpack --mode production",
     "build:dev": "webpack --mode development --watch",
-    "test": "jest --testPathIgnorePatterns test --passWithNoTests"
+    "test": "jest"
   },
   "repository": {
     "type": "git",
