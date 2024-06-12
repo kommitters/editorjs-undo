@@ -3,6 +3,7 @@ import { diff, unpatch, patch } from 'jsondiffpatch';
 // eslint-disable-next-line import/no-unresolved
 import * as jsonpatchFormatter from 'jsondiffpatch/formatters/jsonpatch';
 import Observer from './observer';
+import ManagerHistory from './managerHistory';
 
 /**
  * Undo/Redo feature for Editor.js.
@@ -61,6 +62,7 @@ export default class Undo {
     this.onUpdate = onUpdate || defaultOptions.onUpdate;
     this.config = { debounceTimer, shortcuts: { undo, redo } };
     this.baseData = [];
+    this.managerHistory = new ManagerHistory(this.editor);
 
     const observer = new Observer(
       () => this.registerChange(),
@@ -281,6 +283,9 @@ export default class Undo {
       // specified in 'lastState'
       unpatch(this.baseData, lastState);
 
+      // Make the add, remove or replace operation in base to jsonPatch response
+      this.managerHistory.delegator(jsonPatch, 'undo');
+
       this.onUpdate();
     }
   }
@@ -351,13 +356,16 @@ export default class Undo {
   async redo() {
     if (this.canRedo()) {
       this.shouldSaveHistory = false;
-      const { state: lastRedoState, caretIndex, jsonpatch } = this.redoStack.pop();
+      const { state: lastRedoState, caretIndex, jsonPatch } = this.redoStack.pop();
 
       // Restore the last redo state in the undo stack
       this.undoStack.push({ state: lastRedoState, caretIndex });
 
       // To build the next state of 'baseData' applying the changes contained in 'lastRedoState'
       patch(this.baseData, lastRedoState);
+
+      // Make the add, remove or replace operation in base to jsonPatch response
+      this.managerHistory.delegator(jsonPatch, 'redo');
 
       this.onUpdate();
     }
