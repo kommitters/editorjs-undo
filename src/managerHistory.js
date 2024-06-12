@@ -9,6 +9,14 @@ export default class ManagerHistory {
    */
   constructor(editorjs) {
     this.editorjs = editorjs;
+    this.operations = {
+      'add|redo': this.add,
+      'add|undo': this.remove,
+      'remove|redo': this.remove,
+      'remove|undo': this.add,
+      'replace|redo': this.replace,
+      'replace|undo': this.replace,
+    };
   }
 
   /**
@@ -45,29 +53,10 @@ export default class ManagerHistory {
 
   delegator(jsonpatchArray, actionType) {
     jsonpatchArray.forEach(async (jsonpatchElement) => {
-      switch (`${jsonpatchElement.op}|${actionType}`) {
-        case 'add|undo':
-          await this.remove(jsonpatchElement);
-          break;
-        case 'add|redo':
-          await this.add(jsonpatchElement);
-          break;
-
-        case 'remove|undo':
-          await this.add(jsonpatchElement);
-          break;
-        case 'remove|redo':
-          await this.remove(jsonpatchElement);
-          break;
-
-        case 'replace|redo':
-        case 'replace|undo':
-          await this.replace(jsonpatchElement);
-          break;
-
-        default:
-          throw new Error('Invalid action.');
+      if (typeof this.operations[`${jsonpatchElement.op}|${actionType}`] !== 'function') {
+        throw new Error('Invalid operation.');
       }
+      this.operations[`${jsonpatchElement.op}|${actionType}`](jsonpatchElement);
     });
   }
 }
