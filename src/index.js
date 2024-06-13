@@ -1,5 +1,5 @@
 import VanillaCaret from 'vanilla-caret-js';
-import { diff, unpatch, patch } from 'jsondiffpatch';
+import * as jsondiffpatch from 'jsondiffpatch';
 // eslint-disable-next-line import/no-unresolved
 import * as jsonpatchFormatter from 'jsondiffpatch/formatters/jsonpatch';
 import Observer from './observer';
