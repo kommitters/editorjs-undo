@@ -1,5 +1,5 @@
 import VanillaCaret from 'vanilla-caret-js';
-import * as jsondiffpatch from 'jsondiffpatch';
+import { create } from 'jsondiffpatch';
 // eslint-disable-next-line import/no-unresolved
 import * as jsonpatchFormatter from 'jsondiffpatch/formatters/jsonpatch';
 import Observer from './observer';
@@ -74,24 +74,7 @@ export default class Undo {
     this.setEventListeners();
     this.initialItem = null;
     this.clear();
-
-    this.jsonDiffInstance = jsondiffpatch.create({
-      objectHash(obj, index) {
-        const objRecord = obj;
-
-        if (typeof objRecord._id !== 'undefined') {
-          return objRecord._id;
-        }
-        if (typeof objRecord.id !== 'undefined') {
-          return objRecord.id;
-        }
-        if (typeof objRecord.name !== 'undefined') {
-          return objRecord.name;
-        }
-
-        return `$$index:${index}`;
-      },
-    });
+    this.createJsonDiffPatchInstance();
   }
 
   /**
@@ -136,6 +119,29 @@ export default class Undo {
     this.undoStack = [];
     this.redoStack = [];
     this.onUpdate();
+  }
+
+  /**
+   * Creates a jsondiffpatch instance
+   */
+  createJsonDiffPatchInstance() {
+    this.jsonDiffInstance = create({
+      objectHash(obj, index) {
+        const objRecord = obj;
+
+        if (typeof objRecord._id !== 'undefined') {
+          return objRecord._id;
+        }
+        if (typeof objRecord.id !== 'undefined') {
+          return objRecord.id;
+        }
+        if (typeof objRecord.name !== 'undefined') {
+          return objRecord.name;
+        }
+
+        return `$$index:${index}`;
+      },
+    });
   }
 
   /**
