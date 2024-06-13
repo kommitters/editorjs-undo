@@ -12,6 +12,8 @@ export default class ManagerHistory {
     this.operations = {
       'add|redo': this.add,
       'add|undo': this.remove,
+      'move|redo': this.move,
+      'move|undo': this.move,
       'remove|redo': this.remove,
       'remove|undo': this.add,
       'replace|redo': this.replace,
@@ -25,6 +27,14 @@ export default class ManagerHistory {
   */
   async add(jsonpatchElement) {
     // Actions to restore the jsonpatchElement in the editor
+  }
+
+  /**
+   * @param {Object} jsonpatchElement
+   * @description Update blocks to editorjs on base to jsonpatch move operation
+  */
+  async move(jsonpatchElement) {
+    // Actions to move the jsonpatchElement in the editor
   }
 
   /**
