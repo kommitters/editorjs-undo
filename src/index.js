@@ -191,7 +191,7 @@ export default class Undo {
       ? this.getCaretIndex(index)
       : null;
 
-    const lastState = diff(this.baseData, state);
+    const lastState = this.jsonDiffInstance.diff(this.baseData, state);
 
     this.undoStack.push({ state: lastState, caretIndex });
     this.baseData = state;
@@ -299,7 +299,7 @@ export default class Undo {
 
       // To build the previous state of 'baseData', removing the changes
       // specified in 'lastState'
-      unpatch(this.baseData, lastState);
+      this.jsonDiffInstance.unpatch(this.baseData, lastState);
 
       // Make the add, remove or replace operation in base to jsonPatch response
       this.managerHistory.delegator(jsonPatch, 'undo');
@@ -380,7 +380,7 @@ export default class Undo {
       this.undoStack.push({ state: lastRedoState, caretIndex });
 
       // To build the next state of 'baseData' applying the changes contained in 'lastRedoState'
-      patch(this.baseData, lastRedoState);
+      this.jsonDiffInstance.patch(this.baseData, lastRedoState);
 
       // Make the add, remove or replace operation in base to jsonPatch response
       this.managerHistory.delegator(jsonPatch, 'redo');
