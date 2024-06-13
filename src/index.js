@@ -74,6 +74,24 @@ export default class Undo {
     this.setEventListeners();
     this.initialItem = null;
     this.clear();
+
+    this.jsonDiffInstance = jsondiffpatch.create({
+      objectHash(obj, index) {
+        const objRecord = obj;
+
+        if (typeof objRecord._id !== 'undefined') {
+          return objRecord._id;
+        }
+        if (typeof objRecord.id !== 'undefined') {
+          return objRecord.id;
+        }
+        if (typeof objRecord.name !== 'undefined') {
+          return objRecord.name;
+        }
+
+        return `$$index:${index}`;
+      },
+    });
   }
 
   /**
