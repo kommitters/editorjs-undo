@@ -1,12 +1,9 @@
 /**
  * @typedef ManagerHistory
- * @description Core functions to handle the update of editorjs blocks in base to history log
+ * @description Core functions to handle the update of editorjs blocks based on history log
  * @property {Object} editorjs — Editor.js instance object.
  */
 export default class ManagerHistory {
-  /**
-   * @param editorjs - Instance of editorjs to handle history
-   */
   constructor(editorjs) {
     this.editorjs = editorjs;
     this.operations = {
@@ -22,51 +19,51 @@ export default class ManagerHistory {
   }
 
   /**
-   * @param {Object} jsonpatchElement
-   * @description Add blocks to editorjs on base to jsonpatch add operation
+   * @param {Object} jsonPatchElement
+   * @description Add blocks in the editor based on the jsonPatch add operation
   */
-  async add(jsonpatchElement) {
-    // Actions to restore the jsonpatchElement in the editor
+  async add(jsonPatchElement) {
+    // Actions to restore the jsonPatchElement in the editor
   }
 
   /**
-   * @param {Object} jsonpatchElement
-   * @description Update blocks to editorjs on base to jsonpatch move operation
+   * @param {Object} jsonPatchElement
+   * @description Update blocks in the editor based on the jsonpatch move operation
   */
-  async move(jsonpatchElement) {
-    // Actions to move the jsonpatchElement in the editor
+  async move(jsonPatchElement) {
+    // Actions to move the jsonPatchElement in the editor
   }
 
   /**
-   * @param {Object} jsonpatchElement
-   * @description Remove blocks to editorjs on base to jsonpatch remove operation
+   * @param {Object} jsonPatchElement
+   * @description Remove blocks from the editor based on the jsonpatch remove operation
   */
-  async remove(jsonpatchElement) {
-    // Actions to remove the jsonpatchElement from the editor
+  async remove(jsonPatchElement) {
+    // Actions to remove the jsonPatchElement from the editor
   }
 
   /**
-   * @param {Object} jsonpatchElement
-   * @description Update blocks to editorjs on base to jsonpatch replace operation
+   * @param {Object} jsonPatchElement
+   * @description Update blocks in editorjs based on the jsonPatch replace operation
   */
-  async replace(jsonpatchElement) {
-    // Actions to replace the jsonpatchElement in the editor
+  async replace(jsonPatchElement) {
+    // Actions to replace the jsonPatchElement in the editor
   }
 
   /**
    *
-   * @param {Array} jsonpatchArray
+   * @param {Array} jsonPatchArray
    * @param {String} actionType
-   * @description Loop the jsonpatchArray and check were the actionType and operation
+   * @description Iterate on the jsonPatchArray and check what are the actionType and operation
    * to call the right function
    */
 
-  delegator(jsonpatchArray, actionType) {
-    jsonpatchArray.forEach(async (jsonpatchElement) => {
-      if (typeof this.operations[`${jsonpatchElement.op}|${actionType}`] !== 'function') {
+  delegator(jsonPatchArray, actionType) {
+    jsonPatchArray.forEach(async (jsonPatchElement) => {
+      if (typeof this.operations[`${jsonPatchElement.op}|${actionType}`] !== 'function') {
         throw new Error('Invalid operation.');
       }
-      this.operations[`${jsonpatchElement.op}|${actionType}`](jsonpatchElement);
+      this.operations[`${jsonPatchElement.op}|${actionType}`](jsonPatchElement);
     });
   }
 }

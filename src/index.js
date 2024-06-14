@@ -1,7 +1,7 @@
 import VanillaCaret from 'vanilla-caret-js';
 import { create } from 'jsondiffpatch';
 // eslint-disable-next-line import/no-unresolved
-import * as jsonpatchFormatter from 'jsondiffpatch/formatters/jsonpatch';
+import * as jsonPatchFormatter from 'jsondiffpatch/formatters/jsonpatch';
 import Observer from './observer';
 import ManagerHistory from './managerHistory';
 
@@ -298,7 +298,7 @@ export default class Undo {
       const { state: lastState, caretIndex } = this.undoStack.pop();
 
       // Add formatter to identify the type of modification
-      const jsonPatch = jsonpatchFormatter.format(lastState, this.baseData);
+      const jsonPatch = jsonPatchFormatter.format(lastState, this.baseData);
 
       // Add the Undo state, caret and inverse operation in the Redo undoStack
       this.redoStack.push({ state: lastState, caretIndex, jsonPatch });
