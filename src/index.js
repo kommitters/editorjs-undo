@@ -1,8 +1,9 @@
 import VanillaCaret from 'vanilla-caret-js';
-import { diff, unpatch, patch } from 'jsondiffpatch';
+import { create } from 'jsondiffpatch';
 // eslint-disable-next-line import/no-unresolved
-import * as jsonpatchFormatter from 'jsondiffpatch/formatters/jsonpatch';
+import * as jsonPatchFormatter from 'jsondiffpatch/formatters/jsonpatch';
 import Observer from './observer';
+import HistoryManager from './historyManager';
 
 /**
  * Undo/Redo feature for Editor.js.
@@ -12,7 +13,8 @@ import Observer from './observer';
  * @property {Object} editor — Editor.js instance object.
  * @property {Number} maxLength - Max amount of changes recorded by the history undoStack.
  * @property {Function} onUpdate - Callback called when the user performs an undo or redo action.
- * @property {Boolean} shouldSaveHistory - Defines if the plugin should save the change in the undoStack
+ * @property {Boolean} shouldSaveHistory - Defines if the plugin should save the change
+ * in the undoStack
  * @property {Object} initialItem - Initial data object.
  * @property {Object} baseData - Saved data object.
  */
@@ -61,6 +63,7 @@ export default class Undo {
     this.onUpdate = onUpdate || defaultOptions.onUpdate;
     this.config = { debounceTimer, shortcuts: { undo, redo } };
     this.baseData = [];
+    this.historyManager = new HistoryManager(this.editor);
 
     const observer = new Observer(
       () => this.registerChange(),
@@ -72,6 +75,7 @@ export default class Undo {
     this.setEventListeners();
     this.initialItem = null;
     this.clear();
+    this.createJsonDiffPatchInstance();
   }
 
   /**
@@ -116,6 +120,29 @@ export default class Undo {
     this.undoStack = [];
     this.redoStack = [];
     this.onUpdate();
+  }
+
+  /**
+   * Creates a jsondiffpatch instance
+   */
+  createJsonDiffPatchInstance() {
+    this.jsonDiffInstance = create({
+      objectHash(obj, index) {
+        const objRecord = obj;
+
+        if (typeof objRecord._id !== 'undefined') {
+          return objRecord._id;
+        }
+        if (typeof objRecord.id !== 'undefined') {
+          return objRecord.id;
+        }
+        if (typeof objRecord.name !== 'undefined') {
+          return objRecord.name;
+        }
+
+        return `$$index:${index}`;
+      },
+    });
   }
 
   /**
@@ -171,7 +198,7 @@ export default class Undo {
       ? this.getCaretIndex(index)
       : null;
 
-    const lastState = diff(this.baseData, state);
+    const lastState = this.jsonDiffInstance.diff(this.baseData, state);
 
     this.undoStack.push({ state: lastState, caretIndex });
     this.baseData = state;
@@ -272,14 +299,17 @@ export default class Undo {
       const { state: lastState, caretIndex } = this.undoStack.pop();
 
       // Add formatter to identify the type of modification
-      const jsonPatch = jsonpatchFormatter.format(lastState, this.baseData);
+      const jsonPatch = jsonPatchFormatter.format(lastState, this.baseData);
 
       // Add the Undo state, caret and inverse operation in the Redo undoStack
       this.redoStack.push({ state: lastState, caretIndex, jsonPatch });
 
       // To build the previous state of 'baseData', removing the changes
       // specified in 'lastState'
-      unpatch(this.baseData, lastState);
+      this.jsonDiffInstance.unpatch(this.baseData, lastState);
+
+      // Make the add, remove or replace operation in base to jsonPatch response
+      this.historyManager.delegator(jsonPatch, 'undo');
 
       this.onUpdate();
     }
@@ -351,13 +381,16 @@ export default class Undo {
   async redo() {
     if (this.canRedo()) {
       this.shouldSaveHistory = false;
-      const { state: lastRedoState, caretIndex, jsonpatch } = this.redoStack.pop();
+      const { state: lastRedoState, caretIndex, jsonPatch } = this.redoStack.pop();
 
       // Restore the last redo state in the undo stack
       this.undoStack.push({ state: lastRedoState, caretIndex });
 
       // To build the next state of 'baseData' applying the changes contained in 'lastRedoState'
-      patch(this.baseData, lastRedoState);
+      this.jsonDiffInstance.patch(this.baseData, lastRedoState);
+
+      // Make the add, remove or replace operation in base to jsonPatch response
+      this.historyManager.delegator(jsonPatch, 'redo');
 
       this.onUpdate();
     }
