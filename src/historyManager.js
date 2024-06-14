@@ -1,9 +1,9 @@
 /**
- * @typedef ManagerHistory
+ * @typedef HistoryManager
  * @description Core functions to handle the update of editorjs blocks based on history log
  * @property {Object} editor — Editor.js instance object.
  */
-export default class ManagerHistory {
+export default class HistoryManager {
   constructor(editor) {
     this.editor = editor;
     this.operations = {

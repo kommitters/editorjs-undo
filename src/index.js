@@ -3,7 +3,7 @@ import { create } from 'jsondiffpatch';
 // eslint-disable-next-line import/no-unresolved
 import * as jsonPatchFormatter from 'jsondiffpatch/formatters/jsonpatch';
 import Observer from './observer';
-import ManagerHistory from './managerHistory';
+import HistoryManager from './historyManager';
 
 /**
  * Undo/Redo feature for Editor.js.
@@ -13,7 +13,8 @@ import ManagerHistory from './managerHistory';
  * @property {Object} editor — Editor.js instance object.
  * @property {Number} maxLength - Max amount of changes recorded by the history undoStack.
  * @property {Function} onUpdate - Callback called when the user performs an undo or redo action.
- * @property {Boolean} shouldSaveHistory - Defines if the plugin should save the change in the undoStack
+ * @property {Boolean} shouldSaveHistory - Defines if the plugin should save the change
+ * in the undoStack
  * @property {Object} initialItem - Initial data object.
  * @property {Object} baseData - Saved data object.
  */
@@ -62,7 +63,7 @@ export default class Undo {
     this.onUpdate = onUpdate || defaultOptions.onUpdate;
     this.config = { debounceTimer, shortcuts: { undo, redo } };
     this.baseData = [];
-    this.managerHistory = new ManagerHistory(this.editor);
+    this.historyManager = new HistoryManager(this.editor);
 
     const observer = new Observer(
       () => this.registerChange(),
@@ -308,7 +309,7 @@ export default class Undo {
       this.jsonDiffInstance.unpatch(this.baseData, lastState);
 
       // Make the add, remove or replace operation in base to jsonPatch response
-      this.managerHistory.delegator(jsonPatch, 'undo');
+      this.historyManager.delegator(jsonPatch, 'undo');
 
       this.onUpdate();
     }
@@ -389,7 +390,7 @@ export default class Undo {
       this.jsonDiffInstance.patch(this.baseData, lastRedoState);
 
       // Make the add, remove or replace operation in base to jsonPatch response
-      this.managerHistory.delegator(jsonPatch, 'redo');
+      this.historyManager.delegator(jsonPatch, 'redo');
 
       this.onUpdate();
     }
