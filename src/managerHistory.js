@@ -1,11 +1,11 @@
 /**
  * @typedef ManagerHistory
  * @description Core functions to handle the update of editorjs blocks based on history log
- * @property {Object} editorjs — Editor.js instance object.
+ * @property {Object} editor — Editor.js instance object.
  */
 export default class ManagerHistory {
-  constructor(editorjs) {
-    this.editorjs = editorjs;
+  constructor(editor) {
+    this.editor = editor;
     this.operations = {
       'add|redo': this.add,
       'add|undo': this.remove,
@@ -44,7 +44,7 @@ export default class ManagerHistory {
 
   /**
    * @param {Object} jsonPatchElement
-   * @description Update blocks in editorjs based on the jsonPatch replace operation
+   * @description Update blocks in the editor based on the jsonPatch replace operation
   */
   async replace(jsonPatchElement) {
     // Actions to replace the jsonPatchElement in the editor
