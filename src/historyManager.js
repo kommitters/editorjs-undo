@@ -2,7 +2,7 @@
  * @typedef HistoryManager
  * @description Core functions for handling the update of editor blocks based on the history log
  * @property {Object} operations - Object that contains the allowed operations and uses the action
- * that invoked the delegator as a key to define which method should use next
+ * that invoked the delegator as a key to define which method should be used next
 */
 export default class HistoryManager {
   constructor() {
