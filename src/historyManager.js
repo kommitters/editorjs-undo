@@ -19,11 +19,28 @@ export default class HistoryManager {
   }
 
   /**
-   * @param {Object} jsonPatchElement
-   * @description Add blocks in the editor based on the jsonPatch add operation
+   *
+   * @param {Array} jsonPatchElement - Formatted changes gotten between the state and baseData
+   * @param {Object} blocks — API to make operations on the editor blocks
+   * @param {String} actionType - Indicates the action that invoked the delegator ('undo' or 'redo')
+   * @param {String} state - Last state saved to restore in the editor
+   * @description Adds blocks in the editor based on the jsonPatch add operation
   */
-  async add(jsonPatchElement) {
-    // Actions to restore the jsonPatchElement in the editor
+  async add({
+    jsonPatchElement,
+    blocks,
+    actionType,
+    state,
+  }) {
+    const index = jsonPatchElement.path.split('/')[1];
+    const value = actionType === 'undo' ? state[`_${index}`][0] : jsonPatchElement.value;
+
+    if (index === '0') {
+      await blocks.insert(value.type, value.data, {}, index + 1, true);
+      await blocks.move(index + 1, index);
+    } else {
+      await blocks.insert(value.type, value.data, {}, index, true);
+    }
   }
 
   /**
