@@ -1,11 +1,11 @@
 /**
  * @typedef HistoryManager
- * @description Core functions to handle the update of editorjs blocks based on history log
- * @property {Object} editor — Editor.js instance object.
- */
+ * @description Core functions for handling the update of editor blocks based on the history log
+ * @property {Object} operations - Object that contains the allowed operations and uses the action
+ * that invoked the delegator as a key to define which method should use next
+*/
 export default class HistoryManager {
-  constructor(editor) {
-    this.editor = editor;
+  constructor() {
     this.operations = {
       'add|redo': this.add,
       'add|undo': this.remove,
@@ -27,35 +27,40 @@ export default class HistoryManager {
   }
 
   /**
-   * @param {Object} jsonPatchElement
-   * @description Update blocks in the editor based on the jsonpatch move operation
+   * @param {Array} jsonPatchElement - Formatted changes gotten between the state and baseData
+   * @param {Object} blocks — API to make operations on the editor blocks
+   * @description Updates blocks in the editor based on jsonpatch move operation
   */
-  async move(jsonPatchElement) {
+  async move({ jsonPatchElement, blocks }) {
     // Actions to move the jsonPatchElement in the editor
   }
 
   /**
-   * @param {Object} jsonPatchElement
-   * @description Remove blocks from the editor based on the jsonpatch remove operation
+   * @param {Array} jsonPatchElement - Formatted changes gotten between the state and baseData
+   * @param {Object} blocks — API to make operations on the editor blocks
+   * @description Removes blocks from the editor based on the jsonpatch remove operation
   */
-  async remove(jsonPatchElement) {
+  async remove({ jsonPatchElement, blocks }) {
     // Actions to remove the jsonPatchElement from the editor
   }
 
   /**
-   * @param {Object} jsonPatchElement
-   * @description Update blocks in the editor based on the jsonPatch replace operation
+   * @param {Array} jsonPatchElement - Formatted changes gotten between the state and baseData
+   * @param {Object} blocks — API to make operations on the editor blocks
+   * @description Updates blocks in the editor based on the jsonPatch replace operation
   */
-  async replace(jsonPatchElement) {
+  async replace({ jsonPatchElement, blocks }) {
     // Actions to replace the jsonPatchElement in the editor
   }
 
   /**
    *
-   * @param {Array} jsonPatchArray
-   * @param {String} actionType
-   * @description Iterate on the jsonPatchArray and check what are the actionType and operation
-   * to call the right function
+   * @param {Array} jsonPatchArray - Set of formatted changes gotten between the state and baseData
+   * @param {Object} blocks — API to make operations on the editor blocks
+   * @param {String} actionType - Indicates the action that invoked the delegator ('undo' or 'redo')
+   * @param {String} state - Last state saved to restore in the editor
+   * @description Iterates over the jsonPatchArray and check what are the actionType and operation
+   * to call the correct function
    */
 
   delegator(jsonPatchArray, actionType) {
