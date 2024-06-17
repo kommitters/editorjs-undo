@@ -63,12 +63,23 @@ export default class HistoryManager {
    * to call the correct function
    */
 
-  delegator(jsonPatchArray, actionType) {
+  async delegator({
+    jsonPatchArray,
+    blocks,
+    actionType,
+    state,
+  }) {
     jsonPatchArray.forEach(async (jsonPatchElement) => {
       if (typeof this.operations[`${jsonPatchElement.op}|${actionType}`] !== 'function') {
         throw new Error('Invalid operation.');
       }
-      this.operations[`${jsonPatchElement.op}|${actionType}`](jsonPatchElement);
+
+      await this.operations[`${jsonPatchElement.op}|${actionType}`]({
+        jsonPatchElement,
+        blocks,
+        actionType,
+        state,
+      });
     });
   }
 }
