@@ -63,7 +63,7 @@ export default class Undo {
     this.onUpdate = onUpdate || defaultOptions.onUpdate;
     this.config = { debounceTimer, shortcuts: { undo, redo } };
     this.baseData = [];
-    this.historyManager = new HistoryManager(this.editor);
+    this.historyManager = new HistoryManager();
 
     const observer = new Observer(
       () => this.registerChange(),
