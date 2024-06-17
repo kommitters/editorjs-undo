@@ -63,7 +63,7 @@ export default class Undo {
     this.onUpdate = onUpdate || defaultOptions.onUpdate;
     this.config = { debounceTimer, shortcuts: { undo, redo } };
     this.baseData = [];
-    this.historyManager = new HistoryManager(this.editor);
+    this.historyManager = new HistoryManager();
 
     const observer = new Observer(
       () => this.registerChange(),
@@ -309,7 +309,12 @@ export default class Undo {
       this.jsonDiffInstance.unpatch(this.baseData, lastState);
 
       // Make the add, remove or replace operation in base to jsonPatch response
-      this.historyManager.delegator(jsonPatch, 'undo');
+      await this.historyManager.delegator({
+        jsonPatchArray: jsonPatch,
+        blocks: this.blocks,
+        actionType: 'undo',
+        state: lastState,
+      });
 
       this.onUpdate();
     }
@@ -390,7 +395,11 @@ export default class Undo {
       this.jsonDiffInstance.patch(this.baseData, lastRedoState);
 
       // Make the add, remove or replace operation in base to jsonPatch response
-      this.historyManager.delegator(jsonPatch, 'redo');
+      await this.historyManager.delegator({
+        jsonPatchArray: jsonPatch,
+        blocks: this.blocks,
+        actionType: 'redo',
+      });
 
       this.onUpdate();
     }
