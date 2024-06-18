@@ -9,7 +9,6 @@ import HistoryManager from './historyManager';
  * Undo/Redo feature for Editor.js.
  *
  * @typedef {Object} Undo
- * @description Feature's initialization class.
  * @property {Object} editor — Editor.js instance object.
  * @property {Number} maxLength - Max amount of changes recorded by the history undoStack.
  * @property {Function} onUpdate - Callback called when the user performs an undo or redo action.
@@ -17,6 +16,7 @@ import HistoryManager from './historyManager';
  * in the undoStack
  * @property {Object} initialItem - Initial data object.
  * @property {Object} baseData - Saved data object.
+ * @description Feature's initialization class.
  */
 export default class Undo {
   /**
@@ -26,10 +26,10 @@ export default class Undo {
     editor, config = {}, onUpdate, maxLength,
   }) {
     const defaultOptions = {
-      maxLength: 30,
+      // maxLength: 30,
       onUpdate() {},
       config: {
-        debounceTimer: 200,
+        debounceTimer: 100,
         shortcuts: {
           undo: ['CMD+Z'],
           redo: ['CMD+Y', 'CMD+SHIFT+Z'],
@@ -87,17 +87,17 @@ export default class Undo {
     return true;
   }
 
-  /**
-   * Truncates the history undoStack when it excedes the limit of changes.
-   *
-   * @param {Object} undoStack  Changes history undoStack.
-   * @param {Number} undoStack  Limit of changes recorded by the history undoStack.
-   */
-  truncate(undoStack, limit) {
-    while (undoStack.length > limit) {
-      undoStack.shift();
-    }
-  }
+  // /**
+  //  * Truncates the history undoStack when it exceeds the limit of changes.
+  //  *
+  //  * @param {Object} undoStack  Changes history undoStack.
+  //  * @param {Number} undoStack  Limit of changes recorded by the history undoStack.
+  //  */
+  // truncate(undoStack, limit) {
+  //   while (undoStack.length > limit) {
+  //     undoStack.shift();
+  //   }
+  // }
 
   /**
    * Initializes the undoStack when the user provides initial data.
@@ -200,7 +200,17 @@ export default class Undo {
 
     const lastState = this.jsonDiffInstance.diff(this.baseData, state);
 
-    this.undoStack.push({ state: lastState, caretIndex });
+    if (lastState !== undefined) {
+      // Add formatter to identify the type of modification
+      const jsonPatch = jsonPatchFormatter.format(lastState, this.baseData);
+
+      this.undoStack.push({ state: lastState, caretIndex, jsonPatch });
+    }
+
+    // console.log('#################### in save ###################');
+    // console.log('redoStack:', this.redoStack);
+    // console.log('undoStack:', this.undoStack);
+
     this.baseData = state;
     this.onUpdate();
   }
@@ -218,166 +228,44 @@ export default class Undo {
   }
 
   /**
-   * Inserts a block deleted previously
-   * @param {Array} state is the current state according to this.position.
-   * @param {Array} compState is the state to compare and know the deleted block.
-   * @param {Number} index is the block index in state.
-   */
-  insertDeletedBlock(state, compState, index) {
-    for (let i = 0; i < state.length; i += 1) {
-      if (!compState[i] || state[i].id !== compState[i].id) {
-        this.blocks.insert(state[i].type, state[i].data, {}, i, true);
-        this.caret.setToBlock(index, 'end');
-        break;
-      }
-    }
-  }
-
-  /**
-   * Returns true if a block was dropped previously
-   * @param {Array} state is the current state according to this.position.
-   * @param {Array} compState is the state to compare and know the dropped block.
-   * @returns {Boolean} true if the block was dropped
-   */
-  blockWasDropped(state, compState) {
-    if (state.length === compState.length) {
-      return state.some((block, i) => block.id !== compState[i].id);
-    }
-    return false;
-  }
-
-  /**
-   * Returns true if the block has to be deleted because it was skipped previously.
-   * @param {Array} state is the current state according to this.position.
-   * @param {Array} compState is the state to compare if there was a deleted block.
-   * @returns {Boolean} true if a block was inserted previously.
-   */
-  blockWasSkipped(state, compState) {
-    return state.length !== compState.length;
-  }
-
-  /**
-   * Returns true if the content in a block without the focus was modified.
-   * @param {Number} index is the block index in state.
-   * @param {Number} compIndex is the index to compare and know if the block was inserted previously
-   * @returns true if the content in a block without the focus was modified.
-   */
-  contentChangedInNoFocusBlock(index, compIndex) {
-    return index !== compIndex;
-  }
-
-  /**
-   * Returns true if a block was deleted previously.
-   * @param {Array} state is the current state according to this.position.
-   * @param {Array} compState is the state to compare and know if a block was deleted.
-   * @returns {Boolean} true if a block was deleted previously.
-   */
-  blockWasDeleted(state, compState) {
-    return state.length > compState.length;
-  }
-
-  /**
-   * Returns true if the content was copied.
-   * @param {Array} state is the current state according to this.position.
-   * @param {Array} compState is the state to compare and know if the content was copied.
-   * @param {Number} index is the block index in state.
-   * @returns {Boolean} true if a block was deleted previously.
-   */
-  contentWasCopied(state, compState, index) {
-    return (
-      Object.keys(state[index].data).length === 0
-      && JSON.stringify(compState[index + 1]) !== JSON.stringify(state[index + 1])
-    );
-  }
-
-  /**
    * Decreases the current position and update the respective block in the editor.
    */
   async undo() {
     if (this.canUndo()) {
       this.shouldSaveHistory = false;
-      const { state: lastState, caretIndex } = this.undoStack.pop();
+      const { state: lastState, caretIndex, jsonPatch } = this.undoStack.pop();
 
-      // Add formatter to identify the type of modification
-      const jsonPatch = jsonPatchFormatter.format(lastState, this.baseData);
+      // // Add formatter to identify the type of modification
+      // const jsonPatch = jsonPatchFormatter.format(lastState, this.baseData);
 
       // Add the Undo state, caret and inverse operation in the Redo undoStack
       this.redoStack.push({ state: lastState, caretIndex, jsonPatch });
 
+      // console.log('#################### in undo ###################');
+      // console.log('redoStack:', this.redoStack);
+      // console.log('undoStack:', this.undoStack);
+
+      const baseDataCopy = Array.from(this.baseData);
+
       // To build the previous state of 'baseData', removing the changes
       // specified in 'lastState'
-      this.jsonDiffInstance.unpatch(this.baseData, lastState);
+      const reversedState = this.jsonDiffInstance.reverse(lastState);
+      await this.jsonDiffInstance.patch(baseDataCopy, reversedState);
+      console.log('undo: ', baseDataCopy);
 
       // Make the add, remove or replace operation in base to jsonPatch response
       await this.historyManager.delegator({
         jsonPatchArray: jsonPatch,
         blocks: this.blocks,
+        caret: this.caret,
         actionType: 'undo',
         state: lastState,
+        baseData: baseDataCopy,
       });
 
+      this.baseData = baseDataCopy;
       this.onUpdate();
     }
-  }
-
-  /**
-   * Sets the caret position.
-   * @param {Number} index is the block index
-   * @param {Number} caretIndex is the caret position
-   * @param {Array} state is the current state according to this.position.
-   */
-  setCaretIndex(index, caretIndex) {
-    if (caretIndex && caretIndex !== -1) {
-      const blocks = this.holder.getElementsByClassName('ce-block__content');
-      const caretBlock = new VanillaCaret(blocks[index].firstChild);
-      setTimeout(() => caretBlock.setPos(caretIndex), 50);
-    } else {
-      this.caret.setToBlock(index, 'end');
-    }
-  }
-
-  /**
-   * Inserts new block
-   * @param {Array} state is the current state according to this.position.
-   * @param {Number} index is the block index
-   */
-  async insertBlock(state, index) {
-    await this.blocks.insert(
-      state[index].type,
-      state[index].data,
-      {},
-      index,
-      true,
-    );
-  }
-
-  /**
-   * Inserts a block when is skipped and update the previous one if it changed.
-   * @param {Array} prevState is the previous state according to this.position.
-   * @param {Array} state is the current state according to this.position.
-   * @param {Number} index is the block index.
-   */
-  async insertSkippedBlocks(prevState, state, index) {
-    for (let i = prevState.length; i < state.length; i += 1) {
-      this.insertBlock(state, i);
-    }
-
-    if (
-      JSON.stringify(prevState[index - 1]) !== JSON.stringify(state[index - 1])
-    ) {
-      await this.updateModifiedBlock(state, index);
-    }
-  }
-
-  /**
-   * Updates the passed block or render the state when the content was copied.
-   * @param {Array} state is the current state according to this.position.
-   * @param {Number} index is the block index.
-   */
-  async updateModifiedBlock(state, index) {
-    const block = state[index - 1];
-    if (this.editor.blocks.getById(block.id)) return this.blocks.update(block.id, block.data);
-    return this.blocks.render({ blocks: state });
   }
 
   /**
@@ -389,18 +277,27 @@ export default class Undo {
       const { state: lastRedoState, caretIndex, jsonPatch } = this.redoStack.pop();
 
       // Restore the last redo state in the undo stack
-      this.undoStack.push({ state: lastRedoState, caretIndex });
+      this.undoStack.push({ state: lastRedoState, caretIndex, jsonPatch });
+
+      // console.log('#################### in redo ###################');
+      // console.log('redoStack:', this.redoStack);
+      // console.log('undoStack:', this.undoStack);
+
+      const baseDataCopy = Array.from(this.baseData);
 
       // To build the next state of 'baseData' applying the changes contained in 'lastRedoState'
-      this.jsonDiffInstance.patch(this.baseData, lastRedoState);
-
+      await this.jsonDiffInstance.patch(baseDataCopy, lastRedoState);
+      console.log('redo: ', baseDataCopy);
       // Make the add, remove or replace operation in base to jsonPatch response
       await this.historyManager.delegator({
         jsonPatchArray: jsonPatch,
         blocks: this.blocks,
+        caret: this.caret,
         actionType: 'redo',
+        baseData: baseDataCopy,
       });
 
+      this.baseData = baseDataCopy;
       this.onUpdate();
     }
   }
