@@ -34,14 +34,19 @@ export default class HistoryManager {
     actionType,
     state,
   }) {
+    console.log(jsonPatchElement.path)
     const index = jsonPatchElement.path.split('/')[1];
     const value = actionType === 'undo' ? state[`_${index}`][0] : jsonPatchElement.value;
-    const correctedIndex = index === '0' ? parseInt(index, 2) : index;
+    const correctedIndex = index === '0' ? 1 : index + 1;
 
-    // console.log('data add:', value);
+    // const val = value.data.text.trim().length === 0 ? 'algo random' : value;
+    // value.data.text = 'algo random'
+    // const final = blocks.getBlocksCount();
+    // const currentBlock = blocks.getCurrentBlockIndex();
 
+    // console.log(index);
+    // console.log(currentBlock);
     await blocks.insert(value.type, value.data, {}, correctedIndex, true);
-    await caret.setToBlock(index, 'end');
   }
 
   /**
@@ -61,7 +66,14 @@ export default class HistoryManager {
   async remove({ jsonPatchElement, blocks }) {
     // Actions to remove the jsonPatchElement from the editor
     const { path } = jsonPatchElement;
-    const index = path.split('/')[1];
+    let index = path.split('/')[1];
+    console.log("in remove:", index)
+
+    // const editorBlocks = blocks.getBlocksCount();
+
+    // while (index > editorBlocks - 1) {
+    //   index -= 1;
+    // }
 
     await blocks.delete(index);
   }
@@ -75,6 +87,7 @@ export default class HistoryManager {
   async replace({
     jsonPatchElement, blocks, caret, baseData,
   }) {
+    console.log("in replace")
     // Actions to replace the jsonPatchElement in the editor
     const { path } = jsonPatchElement;
     const index = path.split('/')[1];

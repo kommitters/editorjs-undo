@@ -5,6 +5,9 @@ import * as jsonPatchFormatter from 'jsondiffpatch/formatters/jsonpatch';
 import Observer from './observer';
 import HistoryManager from './historyManager';
 
+import { applyPatch } from 'json-joy/lib/json-patch';
+
+
 /**
  * Undo/Redo feature for Editor.js.
  *
@@ -202,9 +205,9 @@ export default class Undo {
 
     if (lastState !== undefined) {
       // Add formatter to identify the type of modification
-      const jsonPatch = jsonPatchFormatter.format(lastState, this.baseData);
+      // const jsonPatch = jsonPatchFormatter.format(lastState, this.baseData);
 
-      this.undoStack.push({ state: lastState, caretIndex, jsonPatch });
+      this.undoStack.push({ state: lastState, caretIndex });
     }
 
     // console.log('#################### in save ###################');
@@ -233,26 +236,25 @@ export default class Undo {
   async undo() {
     if (this.canUndo()) {
       this.shouldSaveHistory = false;
-      const { state: lastState, caretIndex, jsonPatch } = this.undoStack.pop();
+      const { state: lastState, caretIndex } = this.undoStack.pop();
 
       // // Add formatter to identify the type of modification
-      // const jsonPatch = jsonPatchFormatter.format(lastState, this.baseData);
-
+      const jsonPatch = jsonPatchFormatter.format(lastState, this.baseData);
+      console.log('op: ', jsonPatch)
       // Add the Undo state, caret and inverse operation in the Redo undoStack
       this.redoStack.push({ state: lastState, caretIndex, jsonPatch });
 
-      // console.log('#################### in undo ###################');
-      // console.log('redoStack:', this.redoStack);
-      // console.log('undoStack:', this.undoStack);
-
-      const baseDataCopy = Array.from(this.baseData);
-
       // To build the previous state of 'baseData', removing the changes
       // specified in 'lastState'
+      console.log('normal: ', jsonPatch);
       const reversedState = this.jsonDiffInstance.reverse(lastState);
-      await this.jsonDiffInstance.patch(baseDataCopy, reversedState);
-      console.log('undo: ', baseDataCopy);
+      const reversedJsonPatch = jsonPatchFormatter.format(reversedState, this.baseData);
+      console.log('reverse: ', reversedJsonPatch);
 
+      const result = applyPatch(this.baseData, reversedJsonPatch, false);
+
+      this.baseData = result.doc;
+      console.log(this.baseData);
       // Make the add, remove or replace operation in base to jsonPatch response
       await this.historyManager.delegator({
         jsonPatchArray: jsonPatch,
@@ -260,10 +262,13 @@ export default class Undo {
         caret: this.caret,
         actionType: 'undo',
         state: lastState,
-        baseData: baseDataCopy,
+        baseData: this.baseData,
       });
 
-      this.baseData = baseDataCopy;
+      // this.baseData = baseDataCopy;
+      //await this.jsonDiffInstance.unpatch(this.baseData, lastState);
+      
+
       this.onUpdate();
     }
   }
@@ -277,27 +282,25 @@ export default class Undo {
       const { state: lastRedoState, caretIndex, jsonPatch } = this.redoStack.pop();
 
       // Restore the last redo state in the undo stack
-      this.undoStack.push({ state: lastRedoState, caretIndex, jsonPatch });
-
-      // console.log('#################### in redo ###################');
-      // console.log('redoStack:', this.redoStack);
-      // console.log('undoStack:', this.undoStack);
-
-      const baseDataCopy = Array.from(this.baseData);
+      this.undoStack.push({ state: lastRedoState, caretIndex });
 
       // To build the next state of 'baseData' applying the changes contained in 'lastRedoState'
-      await this.jsonDiffInstance.patch(baseDataCopy, lastRedoState);
-      console.log('redo: ', baseDataCopy);
+      //this.jsonDiffInstance.patch(this.baseData, lastRedoState);
+      const result = applyPatch(this.baseData, jsonPatch, false);
+
+      this.baseData = result.doc;
+
       // Make the add, remove or replace operation in base to jsonPatch response
       await this.historyManager.delegator({
         jsonPatchArray: jsonPatch,
         blocks: this.blocks,
         caret: this.caret,
         actionType: 'redo',
-        baseData: baseDataCopy,
+        baseData: this.baseData,
       });
 
-      this.baseData = baseDataCopy;
+
+
       this.onUpdate();
     }
   }
