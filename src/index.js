@@ -10,7 +10,6 @@ import HistoryManager from './historyManager';
  * Undo/Redo feature for Editor.js.
  *
  * @typedef {Object} Undo
- * @description Feature's initialization class.
  * @property {Object} editor — Editor.js instance object.
  * @property {Number} maxLength - Max amount of changes recorded by the history undoStack.
  * @property {Function} onUpdate - Callback called when the user performs an undo or redo action.
@@ -18,6 +17,7 @@ import HistoryManager from './historyManager';
  * in the undoStack
  * @property {Object} initialItem - Initial data object.
  * @property {Object} baseData - Saved data object.
+ * @description Feature's initialization class.
  */
 export default class Undo {
   /**
