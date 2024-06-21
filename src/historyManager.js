@@ -41,10 +41,20 @@ export default class HistoryManager {
   /**
    * @param {Array} jsonPatchElement - Formatted changes gotten between the state and baseData
    * @param {Object} blocks — API to make operations on the editor blocks
+   * @param {Object} caret — API to send the focus to a specific block in the editor
+   * @param {String} actionType - Indicates the action that invoked the delegator ('undo' or 'redo')
    * @description Updates blocks in the editor based on jsonpatch move operation
   */
-  async move({ jsonPatchElement, blocks }) {
-    // Actions to move the jsonPatchElement in the editor
+  async move({
+    jsonPatchElement, blocks, caret, actionType,
+  }) {
+    const { path, from: fromPath } = jsonPatchElement;
+    const from = path.split('/')[1];
+    const to = fromPath.split('/')[1];
+    const focus = actionType === 'undo' ? to - 1 : to;
+
+    await blocks.move(to, from);
+    await caret.setToBlock(focus, 'end');
   }
 
   /**
