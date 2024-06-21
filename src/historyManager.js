@@ -53,7 +53,10 @@ export default class HistoryManager {
    * @description Removes blocks from the editor based on the jsonpatch remove operation
   */
   async remove({ jsonPatchElement, blocks }) {
-    // Actions to remove the jsonPatchElement from the editor
+    const { path } = jsonPatchElement;
+    const index = path.split('/')[1];
+
+    await blocks.delete(index);
   }
 
   /**
