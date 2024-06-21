@@ -35,20 +35,33 @@ export default class HistoryManager {
     state,
     editor,
     counter,
-    patchSize
+    patchSize,
   }) {
-    console.log(counter);
+    // console.log(counter);
     // update the blocks
-    await editor.save();
+    // await editor.save();
 
-    const index = jsonPatchElement.path.split('/')[1];
+    console.log('entró en add');
+
+    let index = jsonPatchElement.path.split('/')[1];
     const value = actionType === 'undo' ? state[`_${index}`][0] : jsonPatchElement.value;
-    let correctedIndex = index === '0' ? 1 : index;
-    console.log('index: ', correctedIndex);
-    // if(counter === 0 && patchSize > 1) {
-    //   correctedIndex -= 1
+    console.log('index', index);
+    console.log('value:', value.data);
+    // const correctedIndex = index === '0' ? 1 : index;
+    // console.log('index: ', correctedIndex);
+    if (actionType === 'undo' && counter === 1 && patchSize > 1) {
+      index -= 1;
+      console.log('nuevo indice recalculado:', index);
+    }
+    // const val = value.data === '' ? 'algo random' : value.data;
+    // console.log(val);
+    // if (counter > 0) {
+    //   index -= 1;
     // }
-    await blocks.insert(value.type, value.data, {}, correctedIndex, true);
+    await blocks.insert(value.type, value.data, {}, parseInt(index, 10), true);
+    console.log('terminará add');
+    // debugger;
+    return 'en add';
   }
 
   /**
@@ -65,19 +78,35 @@ export default class HistoryManager {
    * @param {Object} blocks — API to make operations on the editor blocks
    * @description Removes blocks from the editor based on the jsonpatch remove operation
   */
-  async remove({ jsonPatchElement, blocks }) {
+  async remove({
+    jsonPatchElement, blocks, editor, counter, patchSize,
+  }) {
     // await editor.save();
     // Actions to remove the jsonPatchElement from the editor
     const { path } = jsonPatchElement;
     let index = path.split('/')[1];
+
+    // editor.save().then(async (data) => {
+    console.log('entró en remove');
+    // console.log(data);
+
+    // console.log('bloque a eliminar:', data.blocks[index]);
+
     // const editorBlocks = blocks.getBlocksCount();
-    
+    console.log('index', index);
     // while (index > editorBlocks - 1) {
     //   index -= 1;
     // }
 
+    if (counter > 0) {
+      index -= 1;
+    }
+
     await blocks.delete(index);
-    
+    console.log('terminará remove');
+    // debugger;
+    return 'en remove';
+    // });
   }
 
   /**
@@ -89,8 +118,8 @@ export default class HistoryManager {
   async replace({
     jsonPatchElement, blocks, caret, baseData,
   }) {
-    await editor.save();
-    console.log("in replace")
+    // await editor.save();
+    console.log('in replace');
     // Actions to replace the jsonPatchElement in the editor
     const { path } = jsonPatchElement;
     const index = path.split('/')[1];
@@ -129,16 +158,17 @@ export default class HistoryManager {
 
     const patchSize = jsonPatchArray.length;
 
-    jsonPatchArray.forEach(async (jsonPatchElement, index) => {
-      console.log('opppp', jsonPatchElement.op);
+    const orderedJsonPatch = actionType === 'undo' ? this.sortUndo(jsonPatchArray) : this.sortRedo(jsonPatchArray);
+    console.log('ordered', orderedJsonPatch);
+
+    orderedJsonPatch.forEach(async (jsonPatchElement, index) => {
+      console.log('operación entró', jsonPatchElement.op);
       if (typeof this.operations[`${jsonPatchElement.op}|${actionType}`] !== 'function') {
         throw new Error('Invalid operation.');
       }
 
-      
-
-      console.log("counter antes de llamado:", index);
-      await this.operations[`${jsonPatchElement.op}|${actionType}`]({
+      // console.log('counter antes de llamado:', index);
+      this.operations[`${jsonPatchElement.op}|${actionType}`]({
         jsonPatchElement,
         blocks,
         caret,
@@ -147,8 +177,16 @@ export default class HistoryManager {
         baseData,
         editor,
         counter: index,
-        patchSize
-      });
+        patchSize,
+      }).then((x) => console.log(`terminó el ${jsonPatchElement.op} ${actionType}: ${x} `));
     });
+  }
+
+  sortUndo(array) {
+    return array.sort((a, b) => a.op > b.op);
+  }
+
+  sortRedo(array) {
+    return array.sort((a, b) => a.op < b.op);
   }
 }

@@ -2,11 +2,9 @@ import VanillaCaret from 'vanilla-caret-js';
 import { create } from 'jsondiffpatch';
 // eslint-disable-next-line import/no-unresolved
 import * as jsonPatchFormatter from 'jsondiffpatch/formatters/jsonpatch';
+import { applyPatch } from 'json-joy/lib/json-patch';
 import Observer from './observer';
 import HistoryManager from './historyManager';
-
-import { applyPatch } from 'json-joy/lib/json-patch';
-
 
 /**
  * Undo/Redo feature for Editor.js.
@@ -207,10 +205,9 @@ export default class Undo {
       const jsonPatch = jsonPatchFormatter.format(lastState, this.baseData);
       this.undoStack.push({ state: lastState, caretIndex });
 
-      console.log(state);
-      console.log(jsonPatch);
-      console.log(lastState);
-
+      // console.log(state);
+      // console.log(jsonPatch);
+      // console.log(lastState);
     }
 
     // console.log('#################### in save ###################');
@@ -244,23 +241,23 @@ export default class Undo {
 
       // // Add formatter to identify the type of modification
       const jsonPatch = jsonPatchFormatter.format(lastState, this.baseData);
-      console.log('op: ', jsonPatch)
+      // console.log('op: ', jsonPatch)
       // Add the Undo state, caret and inverse operation in the Redo undoStack
       this.redoStack.push({ state: lastState, caretIndex, jsonPatch });
 
       // To build the previous state of 'baseData', removing the changes
       // specified in 'lastState'
-      console.log('normal: ', jsonPatch);
+      // console.log('normal: ', jsonPatch);
       const reversedState = this.jsonDiffInstance.reverse(lastState);
       const reversedJsonPatch = jsonPatchFormatter.format(reversedState, this.baseData);
-      console.log('reverse: ', reversedJsonPatch);
+      // console.log('reverse: ', reversedJsonPatch);
 
       const result = applyPatch(this.baseData, reversedJsonPatch, false);
 
       this.baseData = result.doc;
-      console.log(this.baseData);
-      const response = await this.editor.save();
-      console.log('blocks outside: ', response?.blocks);
+      // console.log(this.baseData);
+      // const response = await this.editor.save();
+      // console.log('blocks outside: ', response?.blocks);
       // Make the add, remove or replace operation in base to jsonPatch response
       await this.historyManager.delegator({
         jsonPatchArray: jsonPatch,
@@ -273,13 +270,12 @@ export default class Undo {
         historySave: this.shouldSaveHistory,
       });
 
-      
-      console.log(this.shouldSaveHistory);
+      // console.log(this.shouldSaveHistory);
 
       // this.baseData = baseDataCopy;
-      //await this.jsonDiffInstance.unpatch(this.baseData, lastState);
-      
-      // test the insert function 
+      // await this.jsonDiffInstance.unpatch(this.baseData, lastState);
+
+      // test the insert function
       this.onUpdate();
     }
   }
@@ -296,13 +292,13 @@ export default class Undo {
       this.undoStack.push({ state: lastRedoState, caretIndex });
 
       // To build the next state of 'baseData' applying the changes contained in 'lastRedoState'
-      //this.jsonDiffInstance.patch(this.baseData, lastRedoState);
+      // this.jsonDiffInstance.patch(this.baseData, lastRedoState);
       const result = applyPatch(this.baseData, jsonPatch, false);
 
       this.baseData = result.doc;
 
-      const response = await this.editor.save();
-      console.log('blocks outside: ', response?.blocks);
+      // const response = await this.editor.save();
+      // console.log('blocks outside: ', response?.blocks);
 
       // Make the add, remove or replace operation in base to jsonPatch response
       await this.historyManager.delegator({
@@ -313,8 +309,6 @@ export default class Undo {
         baseData: this.baseData,
         editor: this.editor,
       });
-
-
 
       this.onUpdate();
     }
