@@ -226,7 +226,10 @@ export default class Undo {
 
       // To build the previous state of 'baseData', removing the changes
       // specified in 'lastState'
-      this.jsonDiffInstance.unpatch(this.baseData, lastState);
+      const reversedState = this.jsonDiffInstance.reverse(lastState);
+      const reversedJsonPatch = jsonPatchFormatter.format(reversedState, this.baseData);
+      const result = applyPatch(this.baseData, reversedJsonPatch, false);
+      this.baseData = result.doc;
 
       // Make the add, remove or replace operation in base to jsonPatch response
       await this.historyManager.delegator({
