@@ -33,19 +33,21 @@ export default class HistoryManager {
     caret,
     actionType,
     state,
+    editor,
+    counter,
+    patchSize
   }) {
-    console.log(jsonPatchElement.path)
+    console.log(counter);
+    // update the blocks
+    await editor.save();
+
     const index = jsonPatchElement.path.split('/')[1];
     const value = actionType === 'undo' ? state[`_${index}`][0] : jsonPatchElement.value;
-    const correctedIndex = index === '0' ? 1 : index + 1;
-
-    // const val = value.data.text.trim().length === 0 ? 'algo random' : value;
-    // value.data.text = 'algo random'
-    // const final = blocks.getBlocksCount();
-    // const currentBlock = blocks.getCurrentBlockIndex();
-
-    // console.log(index);
-    // console.log(currentBlock);
+    let correctedIndex = index === '0' ? 1 : index;
+    console.log('index: ', correctedIndex);
+    // if(counter === 0 && patchSize > 1) {
+    //   correctedIndex -= 1
+    // }
     await blocks.insert(value.type, value.data, {}, correctedIndex, true);
   }
 
@@ -64,18 +66,18 @@ export default class HistoryManager {
    * @description Removes blocks from the editor based on the jsonpatch remove operation
   */
   async remove({ jsonPatchElement, blocks }) {
+    // await editor.save();
     // Actions to remove the jsonPatchElement from the editor
     const { path } = jsonPatchElement;
     let index = path.split('/')[1];
-    console.log("in remove:", index)
-
     // const editorBlocks = blocks.getBlocksCount();
-
+    
     // while (index > editorBlocks - 1) {
     //   index -= 1;
     // }
 
     await blocks.delete(index);
+    
   }
 
   /**
@@ -87,6 +89,7 @@ export default class HistoryManager {
   async replace({
     jsonPatchElement, blocks, caret, baseData,
   }) {
+    await editor.save();
     console.log("in replace")
     // Actions to replace the jsonPatchElement in the editor
     const { path } = jsonPatchElement;
@@ -119,15 +122,22 @@ export default class HistoryManager {
     actionType,
     state,
     baseData,
+    editor,
   }) {
     // console.log('baseDAta', baseData);
     // console.log('jsonpatharray:', jsonPatchArray);
 
-    jsonPatchArray.forEach(async (jsonPatchElement) => {
+    const patchSize = jsonPatchArray.length;
+
+    jsonPatchArray.forEach(async (jsonPatchElement, index) => {
+      console.log('opppp', jsonPatchElement.op);
       if (typeof this.operations[`${jsonPatchElement.op}|${actionType}`] !== 'function') {
         throw new Error('Invalid operation.');
       }
 
+      
+
+      console.log("counter antes de llamado:", index);
       await this.operations[`${jsonPatchElement.op}|${actionType}`]({
         jsonPatchElement,
         blocks,
@@ -135,6 +145,9 @@ export default class HistoryManager {
         actionType,
         state,
         baseData,
+        editor,
+        counter: index,
+        patchSize
       });
     });
   }

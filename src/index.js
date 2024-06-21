@@ -202,12 +202,15 @@ export default class Undo {
       : null;
 
     const lastState = this.jsonDiffInstance.diff(this.baseData, state);
-
     if (lastState !== undefined) {
       // Add formatter to identify the type of modification
-      // const jsonPatch = jsonPatchFormatter.format(lastState, this.baseData);
-
+      const jsonPatch = jsonPatchFormatter.format(lastState, this.baseData);
       this.undoStack.push({ state: lastState, caretIndex });
+
+      console.log(state);
+      console.log(jsonPatch);
+      console.log(lastState);
+
     }
 
     // console.log('#################### in save ###################');
@@ -236,6 +239,7 @@ export default class Undo {
   async undo() {
     if (this.canUndo()) {
       this.shouldSaveHistory = false;
+
       const { state: lastState, caretIndex } = this.undoStack.pop();
 
       // // Add formatter to identify the type of modification
@@ -255,6 +259,8 @@ export default class Undo {
 
       this.baseData = result.doc;
       console.log(this.baseData);
+      const response = await this.editor.save();
+      console.log('blocks outside: ', response?.blocks);
       // Make the add, remove or replace operation in base to jsonPatch response
       await this.historyManager.delegator({
         jsonPatchArray: jsonPatch,
@@ -263,12 +269,17 @@ export default class Undo {
         actionType: 'undo',
         state: lastState,
         baseData: this.baseData,
+        editor: this.editor,
+        historySave: this.shouldSaveHistory,
       });
+
+      
+      console.log(this.shouldSaveHistory);
 
       // this.baseData = baseDataCopy;
       //await this.jsonDiffInstance.unpatch(this.baseData, lastState);
       
-
+      // test the insert function 
       this.onUpdate();
     }
   }
@@ -290,6 +301,9 @@ export default class Undo {
 
       this.baseData = result.doc;
 
+      const response = await this.editor.save();
+      console.log('blocks outside: ', response?.blocks);
+
       // Make the add, remove or replace operation in base to jsonPatch response
       await this.historyManager.delegator({
         jsonPatchArray: jsonPatch,
@@ -297,6 +311,7 @@ export default class Undo {
         caret: this.caret,
         actionType: 'redo',
         baseData: this.baseData,
+        editor: this.editor,
       });
 
 
