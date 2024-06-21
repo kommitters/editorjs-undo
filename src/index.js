@@ -30,7 +30,7 @@ export default class Undo {
       maxLength: 30,
       onUpdate() {},
       config: {
-        debounceTimer: 200,
+        debounceTimer: 100,
         shortcuts: {
           undo: ['CMD+Z'],
           redo: ['CMD+Y', 'CMD+SHIFT+Z'],
@@ -189,7 +189,11 @@ export default class Undo {
 
     const lastState = this.jsonDiffInstance.diff(this.baseData, state);
 
-    this.undoStack.push({ state: lastState, caretIndex });
+    if (lastState !== undefined) {
+      // Add formatter to identify the type of modification
+      this.undoStack.push({ state: lastState, caretIndex });
+    }
+
     this.baseData = state;
     this.onUpdate();
   }
