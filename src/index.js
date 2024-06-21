@@ -2,6 +2,7 @@ import VanillaCaret from 'vanilla-caret-js';
 import { create } from 'jsondiffpatch';
 // eslint-disable-next-line import/no-unresolved
 import * as jsonPatchFormatter from 'jsondiffpatch/formatters/jsonpatch';
+import { applyPatch } from 'json-joy/lib/json-patch';
 import Observer from './observer';
 import HistoryManager from './historyManager';
 
