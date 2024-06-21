@@ -257,7 +257,8 @@ export default class Undo {
       this.undoStack.push({ state: lastRedoState, caretIndex });
 
       // To build the next state of 'baseData' applying the changes contained in 'lastRedoState'
-      this.jsonDiffInstance.patch(this.baseData, lastRedoState);
+      const result = applyPatch(this.baseData, jsonPatch, false);
+      this.baseData = result.doc;
 
       // Make the add, remove or replace operation in base to jsonPatch response
       await this.historyManager.delegator({
