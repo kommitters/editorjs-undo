@@ -35,12 +35,7 @@ export default class HistoryManager {
     const index = jsonPatchElement.path.split('/')[1];
     const value = actionType === 'undo' ? state[`_${index}`][0] : jsonPatchElement.value;
 
-    if (index === '0') {
-      await blocks.insert(value.type, value.data, {}, index + 1, true);
-      await blocks.move(index + 1, index);
-    } else {
-      await blocks.insert(value.type, value.data, {}, index, true);
-    }
+    await blocks.insert(value.type, value.data, {}, parseInt(index, 10), true);
   }
 
   /**
@@ -58,7 +53,10 @@ export default class HistoryManager {
    * @description Removes blocks from the editor based on the jsonpatch remove operation
   */
   async remove({ jsonPatchElement, blocks }) {
-    // Actions to remove the jsonPatchElement from the editor
+    const { path } = jsonPatchElement;
+    const index = path.split('/')[1];
+
+    await blocks.delete(index);
   }
 
   /**
