@@ -7,14 +7,10 @@
 export default class HistoryManager {
   constructor() {
     this.operations = {
-      'add|redo': this.add,
-      'add|undo': this.remove,
-      'move|redo': this.move,
-      'move|undo': this.move,
-      'remove|redo': this.remove,
-      'remove|undo': this.add,
-      'replace|redo': this.replace,
-      'replace|undo': this.replace,
+      'add': this.add,
+      'remove': this.remove,
+      'move': this.move,
+      'replace': this.replace,
     };
   }
 
@@ -46,7 +42,10 @@ export default class HistoryManager {
    * @description Updates blocks in the editor based on jsonpatch move operation
   */
   async move({
-    jsonPatchElement, blocks, caret, actionType,
+    jsonPatchElement,
+    blocks,
+    caret,
+    actionType,
   }) {
     const { path, from: fromPath } = jsonPatchElement;
     const from = path.split('/')[1];
@@ -114,11 +113,11 @@ export default class HistoryManager {
     baseData,
   }) {
     jsonPatchArray.forEach(async (jsonPatchElement) => {
-      if (typeof this.operations[`${jsonPatchElement.op}|${actionType}`] !== 'function') {
+      if (typeof this.operations[jsonPatchElement.op] !== 'function') {
         throw new Error('Invalid operation.');
       }
 
-      await this.operations[`${jsonPatchElement.op}|${actionType}`]({
+      await this.operations[jsonPatchElement.op]({
         jsonPatchElement,
         blocks,
         caret,

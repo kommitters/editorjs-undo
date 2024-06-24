@@ -233,7 +233,7 @@ export default class Undo {
 
       // Make the add, remove or replace operation in base to jsonPatch response
       await this.historyManager.delegator({
-        jsonPatchArray: jsonPatch,
+        jsonPatchArray: reversedJsonPatch,
         blocks: this.blocks,
         caret: this.caret,
         actionType: 'undo',
