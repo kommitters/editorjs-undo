@@ -64,18 +64,35 @@ export default class HistoryManager {
   /**
    * @param {Array} jsonPatchElement - Formatted changes gotten between the state and baseData
    * @param {Object} blocks — API to make operations on the editor blocks
+   * @param {Object} caret — API to send the focus to a specific block in the editor
+   * @param {Object} baseData - Copy of the saved data object.
    * @description Updates blocks in the editor based on the jsonPatch replace operation
   */
-  async replace({ jsonPatchElement, blocks }) {
-    // Actions to replace the jsonPatchElement in the editor
+  async replace({
+    jsonPatchElement,
+    blocks,
+    caret,
+    baseData,
+  }) {
+    const { path } = jsonPatchElement;
+    const index = path.split('/')[1];
+
+    const { id, data } = await blocks.getBlockByIndex(index).save();
+    const { data: oldData } = baseData[index];
+    const updatedData = Object.assign(data, oldData);
+
+    await blocks.update(id, updatedData);
+    await caret.setToBlock(index, 'end');
   }
 
   /**
    *
    * @param {Array} jsonPatchArray - Set of formatted changes gotten between the state and baseData
    * @param {Object} blocks — API to make operations on the editor blocks
+   * @param {Object} caret — API to send the focus to a specific block in the editor
    * @param {String} actionType - Indicates the action that invoked the delegator ('undo' or 'redo')
    * @param {String} state - Last state saved to restore in the editor
+   * @param {Object} baseData - Copy of the saved data object.
    * @description Iterates over the jsonPatchArray and check what are the actionType and operation
    * to call the correct function
    */
@@ -83,8 +100,10 @@ export default class HistoryManager {
   async delegator({
     jsonPatchArray,
     blocks,
+    caret,
     actionType,
     state,
+    baseData,
   }) {
     jsonPatchArray.forEach(async (jsonPatchElement) => {
       if (typeof this.operations[`${jsonPatchElement.op}|${actionType}`] !== 'function') {
@@ -94,8 +113,10 @@ export default class HistoryManager {
       await this.operations[`${jsonPatchElement.op}|${actionType}`]({
         jsonPatchElement,
         blocks,
+        caret,
         actionType,
         state,
+        baseData,
       });
     });
   }

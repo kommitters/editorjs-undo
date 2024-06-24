@@ -312,8 +312,10 @@ export default class Undo {
       await this.historyManager.delegator({
         jsonPatchArray: jsonPatch,
         blocks: this.blocks,
+        caret: this.caret,
         actionType: 'undo',
         state: lastState,
+        baseData: this.baseData,
       });
 
       this.onUpdate();
@@ -398,7 +400,9 @@ export default class Undo {
       await this.historyManager.delegator({
         jsonPatchArray: jsonPatch,
         blocks: this.blocks,
+        caret: this.caret,
         actionType: 'redo',
+        baseData: this.baseData,
       });
 
       this.onUpdate();
