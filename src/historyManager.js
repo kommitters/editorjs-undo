@@ -7,10 +7,10 @@
 export default class HistoryManager {
   constructor() {
     this.operations = {
-      'add': this.add,
-      'remove': this.remove,
-      'move': this.move,
-      'replace': this.replace,
+      add: this.add,
+      remove: this.remove,
+      move: this.move,
+      replace: this.replace,
     };
   }
 
