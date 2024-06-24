@@ -6,6 +6,7 @@ import { applyPatch } from 'json-joy/lib/json-patch';
 import Observer from './observer';
 import HistoryManager from './historyManager';
 
+
 /**
  * Undo/Redo feature for Editor.js.
  *
@@ -253,14 +254,21 @@ export default class Undo {
       // console.log('reverse: ', reversedJsonPatch);
 
       const result = applyPatch(this.baseData, reversedJsonPatch, false);
-
       this.baseData = result.doc;
+
       // console.log(this.baseData);
       // const response = await this.editor.save();
       // console.log('blocks outside: ', response?.blocks);
+
+
+      //Example with immutable json patch
+      // const reverseOperations = revertJSONPatch(this.baseData, jsonPatch)
+      // const revertedDocument = immutableJSONPatch(this.baseData, reverseOperations)
+      // this.baseData = revertedDocument;
+
       // Make the add, remove or replace operation in base to jsonPatch response
       await this.historyManager.delegator({
-        jsonPatchArray: jsonPatch,
+        jsonPatchArray: reversedJsonPatch,
         blocks: this.blocks,
         caret: this.caret,
         actionType: 'undo',
@@ -268,6 +276,8 @@ export default class Undo {
         baseData: this.baseData,
         editor: this.editor,
         historySave: this.shouldSaveHistory,
+        jsonDiffInstance: this.jsonDiffInstance,
+        jsonPatchFormatter,
       });
 
       // console.log(this.shouldSaveHistory);
@@ -293,12 +303,16 @@ export default class Undo {
 
       // To build the next state of 'baseData' applying the changes contained in 'lastRedoState'
       // this.jsonDiffInstance.patch(this.baseData, lastRedoState);
-      const result = applyPatch(this.baseData, jsonPatch, false);
 
+      const result = applyPatch(this.baseData, jsonPatch, false);
       this.baseData = result.doc;
 
       // const response = await this.editor.save();
       // console.log('blocks outside: ', response?.blocks);
+      
+      // Immutable json patch
+      // const updatedDocument = immutableJSONPatch(this.baseData, jsonPatch);
+      // this.baseData = updatedDocument;
 
       // Make the add, remove or replace operation in base to jsonPatch response
       await this.historyManager.delegator({
@@ -308,6 +322,8 @@ export default class Undo {
         actionType: 'redo',
         baseData: this.baseData,
         editor: this.editor,
+        jsonDiffInstance: this.jsonDiffInstance,
+        // jsonPatchFormatter
       });
 
       this.onUpdate();

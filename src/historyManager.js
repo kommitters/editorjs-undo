@@ -1,18 +1,20 @@
+import { applyPatch } from 'json-joy/lib/json-patch';
 /**
  * @typedef HistoryManager
  * @property {Object} operations - Object that contains the allowed operations and uses the action
  * that invoked the delegator as a key to define which method should be used next
  * @description Core functions for handling the update of editor blocks based on the history log
 */
+
 export default class HistoryManager {
   constructor() {
     this.operations = {
       'add|redo': this.add,
-      'add|undo': this.remove,
+      'add|undo': this.add,
       'move|redo': this.move,
       'move|undo': this.move,
       'remove|redo': this.remove,
-      'remove|undo': this.add,
+      'remove|undo': this.remove,
       'replace|redo': this.replace,
       'replace|undo': this.replace,
     };
@@ -35,33 +37,17 @@ export default class HistoryManager {
     state,
     editor,
     counter,
-    patchSize,
   }) {
-    // console.log(counter);
     // update the blocks
-    // await editor.save();
-
     console.log('entró en add');
+    console.log(state);
 
     let index = jsonPatchElement.path.split('/')[1];
     const value = actionType === 'undo' ? state[`_${index}`][0] : jsonPatchElement.value;
-    console.log('index', index);
-    console.log('value:', value.data);
-    // const correctedIndex = index === '0' ? 1 : index;
-    // console.log('index: ', correctedIndex);
-    if (actionType === 'undo' && counter === 1 && patchSize > 1) {
-      index -= 1;
-      console.log('nuevo indice recalculado:', index);
-    }
-    // const val = value.data === '' ? 'algo random' : value.data;
-    // console.log(val);
-    // if (counter > 0) {
-    //   index -= 1;
-    // }
-    await blocks.insert(value.type, value.data, {}, parseInt(index, 10), true);
-    console.log('terminará add');
-    // debugger;
-    return 'en add';
+    console.log(value)
+
+    await blocks.insert(value.type, value.data, {}, parseInt(index, 10), false);
+    await caret.setToBlock(index, 'end');
   }
 
   /**
@@ -79,34 +65,18 @@ export default class HistoryManager {
    * @description Removes blocks from the editor based on the jsonpatch remove operation
   */
   async remove({
-    jsonPatchElement, blocks, editor, counter, patchSize,
+    jsonPatchElement, blocks, editor, counter,
   }) {
-    // await editor.save();
-    // Actions to remove the jsonPatchElement from the editor
-    const { path } = jsonPatchElement;
-    let index = path.split('/')[1];
-
-    // editor.save().then(async (data) => {
     console.log('entró en remove');
-    // console.log(data);
+    // Actions to remove the jsonPatchElement from the editor
+    console.log("jsonPatchElement", jsonPatchElement);
+    const { path } = jsonPatchElement;
+    console.log("path", path)
+    let index = path.split('/')[1];
+    console.log("idnex", index)
 
-    // console.log('bloque a eliminar:', data.blocks[index]);
-
-    // const editorBlocks = blocks.getBlocksCount();
-    console.log('index', index);
-    // while (index > editorBlocks - 1) {
-    //   index -= 1;
-    // }
-
-    if (counter > 0) {
-      index -= 1;
-    }
-
-    await blocks.delete(index);
-    console.log('terminará remove');
-    // debugger;
-    return 'en remove';
-    // });
+    await blocks.delete(index, 10)
+    console.log("luego delete")
   }
 
   /**
@@ -119,18 +89,24 @@ export default class HistoryManager {
     jsonPatchElement, blocks, caret, baseData,
   }) {
     // await editor.save();
-    console.log('in replace');
     // Actions to replace the jsonPatchElement in the editor
+    console.log('entró en replace');
+    // Actions to remove the jsonPatchElement from the editor
+    console.log("jsonPatchElement", jsonPatchElement);
     const { path } = jsonPatchElement;
     const index = path.split('/')[1];
 
     const { id, data } = await blocks.getBlockByIndex(index).save();
+    console.log("llega despues de data")
     const { data: oldData } = baseData[index];
     const updatedData = Object.assign(data, oldData);
+    console.log("llega despues de assign")
     // console.log('data replace:', updatedData);
 
     await blocks.update(id, updatedData);
+    console.log("llega despues de update")
     await caret.setToBlock(index, 'end');
+    console.log("llega despues de caret")
   }
 
   /**
@@ -152,23 +128,18 @@ export default class HistoryManager {
     state,
     baseData,
     editor,
+    jsonDiffInstance,
+    jsonPatchFormatter,
   }) {
-    // console.log('baseDAta', baseData);
-    // console.log('jsonpatharray:', jsonPatchArray);
+    // const orderedJsonPatch = actionType === 'undo' ? this.sortUndo(jsonPatchArray) : this.sortRedo(jsonPatchArray);
 
-    const patchSize = jsonPatchArray.length;
-
-    const orderedJsonPatch = actionType === 'undo' ? this.sortUndo(jsonPatchArray) : this.sortRedo(jsonPatchArray);
-    console.log('ordered', orderedJsonPatch);
-
-    orderedJsonPatch.forEach(async (jsonPatchElement, index) => {
-      console.log('operación entró', jsonPatchElement.op);
+    console.log(jsonPatchArray);
+    jsonPatchArray.forEach(async (jsonPatchElement, index) => {
       if (typeof this.operations[`${jsonPatchElement.op}|${actionType}`] !== 'function') {
         throw new Error('Invalid operation.');
       }
 
-      // console.log('counter antes de llamado:', index);
-      this.operations[`${jsonPatchElement.op}|${actionType}`]({
+      await this.operations[`${jsonPatchElement.op}|${actionType}`]({
         jsonPatchElement,
         blocks,
         caret,
@@ -177,16 +148,8 @@ export default class HistoryManager {
         baseData,
         editor,
         counter: index,
-        patchSize,
-      }).then((x) => console.log(`terminó el ${jsonPatchElement.op} ${actionType}: ${x} `));
-    });
-  }
+      })
 
-  sortUndo(array) {
-    return array.sort((a, b) => a.op > b.op);
-  }
-
-  sortRedo(array) {
-    return array.sort((a, b) => a.op < b.op);
+      });
   }
 }
