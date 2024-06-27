@@ -50,7 +50,6 @@
   },
   "dependencies": {
     "json-joy": "^16.9.0",
-    "jsondiffpatch": "^0.6.0",
-    "vanilla-caret-js": "^1.0.1"
+    "jsondiffpatch": "^0.6.0"
   }
 }

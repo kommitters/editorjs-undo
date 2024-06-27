@@ -10,7 +10,6 @@ import {
 } from './fixtures/data';
 import { editor, readOnlyEditor, tools } from './fixtures/editor';
 
-jest.mock('vanilla-caret-js');
 jest.mock('jsondiffpatch', () => ({ create: jest.fn() }));
 jest.mock('jsondiffpatch/formatters/jsonpatch', () => jest.fn());
 
