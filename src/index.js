@@ -1,10 +1,11 @@
-import VanillaCaret from 'vanilla-caret-js';
-import { create } from 'jsondiffpatch';
 // eslint-disable-next-line import/no-unresolved
 import * as jsonPatchFormatter from 'jsondiffpatch/formatters/jsonpatch';
 import { applyPatch } from 'json-joy/lib/json-patch';
+import { create } from 'jsondiffpatch';
+
 import Observer from './observer';
 import HistoryManager from './historyManager';
+import Caret from './caret';
 
 /**
  * Undo/Redo feature for Editor.js.
@@ -205,9 +206,9 @@ export default class Undo {
    */
   getCaretIndex(index) {
     const blocks = this.holder.getElementsByClassName('ce-block__content');
-    const caretBlock = new VanillaCaret(blocks[index].firstChild);
+    const caretBlock = new Caret(blocks[index].firstChild);
 
-    return caretBlock.getPos();
+    return caretBlock.getPosition();
   }
 
   /**
