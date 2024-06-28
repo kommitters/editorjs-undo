@@ -1,3 +1,5 @@
+import Caret from './caret';
+
 /**
  * @typedef HistoryManager
  * @property {Object} operations - Object that contains the allowed operations and uses the action
@@ -82,6 +84,7 @@ export default class HistoryManager {
    * @param {Array} jsonPatchArray - Set of formatted changes gotten between the state and baseData
    * @param {Object} blocks — API to make operations on the editor blocks
    * @param {Object} caret — API to send the focus to a specific block in the editor
+   * @param {Object} caretInfo — Indicates which block to focus on and un which position
    * @param {String} actionType - Indicates the action that invoked the delegator ('undo' or 'redo')
    * @param {String} state - Last state saved to restore in the editor
    * @param {Object} baseData - Copy of the saved data object.
@@ -93,23 +96,43 @@ export default class HistoryManager {
     jsonPatchArray,
     blocks,
     caret,
+    caretInfo,
     actionType,
     state,
     baseData,
   }) {
-    jsonPatchArray.forEach(async (jsonPatchElement) => {
-      if (typeof this.operations[jsonPatchElement.op] !== 'function') {
-        throw new Error('Invalid operation.');
-      }
+    const restorationPromise = new Promise((resolve) => {
+      jsonPatchArray.forEach(async (jsonPatchElement, index) => {
+        if (typeof this.operations[jsonPatchElement.op] !== 'function') {
+          throw new Error('Invalid operation.');
+        }
 
-      await this.operations[jsonPatchElement.op]({
-        jsonPatchElement,
-        blocks,
-        caret,
-        actionType,
-        state,
-        baseData,
+        await this.operations[jsonPatchElement.op]({
+          jsonPatchElement,
+          blocks,
+          actionType,
+          state,
+          baseData,
+        });
+
+        if (index === jsonPatchArray.length - 1) {
+          resolve();
+        }
       });
+    });
+
+    // Executes the block restoration and, when finished, executes the caret instructions
+    restorationPromise.then(async () => {
+      const { caretIndex, indexInState } = caretInfo;
+      const editorBlocks = document.getElementsByClassName('ce-block__content');
+      const target = editorBlocks[indexInState];
+
+      if (target === undefined) {
+        await caret.setToLastBlock('end');
+      } else {
+        const holder = new Caret(target.firstChild);
+        holder.setPosition(caretIndex);
+      }
     });
   }
 }
