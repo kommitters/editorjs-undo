@@ -192,7 +192,7 @@ export default class Undo {
 
     if (lastState !== undefined) {
       // Add formatter to identify the type of modification
-      this.undoStack.push({ state: lastState, caretIndex });
+      this.undoStack.push({ state: lastState, caret: { caretIndex, indexInState } });
     }
 
     this.baseData = state;
@@ -217,13 +217,13 @@ export default class Undo {
   async undo() {
     if (this.canUndo()) {
       this.shouldSaveHistory = false;
-      const { state: lastState, caretIndex } = this.undoStack.pop();
+      const { state: lastState, caret } = this.undoStack.pop();
 
       // Add formatter to identify the type of modification
       const jsonPatch = jsonPatchFormatter.format(lastState, this.baseData);
 
       // Add the Undo state, caret and inverse operation in the Redo undoStack
-      this.redoStack.push({ state: lastState, caretIndex, jsonPatch });
+      this.redoStack.push({ state: lastState, caret, jsonPatch });
 
       // To build the previous state of 'baseData', removing the changes
       // specified in 'lastState'
@@ -237,6 +237,7 @@ export default class Undo {
         jsonPatchArray: reversedJsonPatch,
         blocks: this.blocks,
         caret: this.caret,
+        caretInfo: caret,
         actionType: 'undo',
         state: lastState,
         baseData: this.baseData,
@@ -252,10 +253,10 @@ export default class Undo {
   async redo() {
     if (this.canRedo()) {
       this.shouldSaveHistory = false;
-      const { state: lastRedoState, caretIndex, jsonPatch } = this.redoStack.pop();
+      const { state: lastRedoState, caret, jsonPatch } = this.redoStack.pop();
 
       // Restore the last redo state in the undo stack
-      this.undoStack.push({ state: lastRedoState, caretIndex });
+      this.undoStack.push({ state: lastRedoState, caret });
 
       // To build the next state of 'baseData' applying the changes contained in 'lastRedoState'
       const result = applyPatch(this.baseData, jsonPatch, false);
@@ -266,6 +267,7 @@ export default class Undo {
         jsonPatchArray: jsonPatch,
         blocks: this.blocks,
         caret: this.caret,
+        caretInfo: caret,
         actionType: 'redo',
         baseData: this.baseData,
       });
