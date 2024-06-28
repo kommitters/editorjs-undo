@@ -39,7 +39,6 @@ export default class HistoryManager {
   /**
    * @param {Array} jsonPatchElement - Formatted changes gotten between the state and baseData
    * @param {Object} blocks — API to make operations on the editor blocks
-   * @param {String} actionType - Indicates the action that invoked the delegator ('undo' or 'redo')
    * @description Updates blocks in the editor based on jsonPatch move operation
   */
   async move({ jsonPatchElement, blocks }) {
