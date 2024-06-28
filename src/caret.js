@@ -33,11 +33,17 @@ export default class Caret {
   setPosition(pos) {
     const selection = window.getSelection();
     const range = document.createRange();
+    let position = pos;
 
-    const contentLength = this.target.childNodes[0].length;
-    const position = pos > contentLength ? contentLength : pos;
+    if (this.target.firstChild === null) {
+      this.target.innerHTML = '&nbsp';
+      position = 0;
+    }
 
-    range.setStart(this.target.childNodes[0], position);
+    const content = this.target.firstChild;
+    position = position > content.length ? content.length : position;
+
+    range.setStart(content, position);
     range.collapse(true);
 
     selection.removeAllRanges();
