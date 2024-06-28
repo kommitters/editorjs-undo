@@ -37,29 +37,21 @@ export default class HistoryManager {
   /**
    * @param {Array} jsonPatchElement - Formatted changes gotten between the state and baseData
    * @param {Object} blocks — API to make operations on the editor blocks
-   * @param {Object} caret — API to send the focus to a specific block in the editor
    * @param {String} actionType - Indicates the action that invoked the delegator ('undo' or 'redo')
-   * @description Updates blocks in the editor based on jsonpatch move operation
+   * @description Updates blocks in the editor based on jsonPatch move operation
   */
-  async move({
-    jsonPatchElement,
-    blocks,
-    caret,
-    actionType,
-  }) {
+  async move({ jsonPatchElement, blocks }) {
     const { path, from: fromPath } = jsonPatchElement;
     const from = path.split('/')[1];
     const to = fromPath.split('/')[1];
-    const focus = actionType === 'undo' ? to - 1 : to;
 
     await blocks.move(to, from);
-    await caret.setToBlock(focus, 'end');
   }
 
   /**
    * @param {Array} jsonPatchElement - Formatted changes gotten between the state and baseData
    * @param {Object} blocks — API to make operations on the editor blocks
-   * @description Removes blocks from the editor based on the jsonpatch remove operation
+   * @description Removes blocks from the editor based on the jsonPatch remove operation
   */
   async remove({ jsonPatchElement, blocks }) {
     const { path } = jsonPatchElement;
@@ -71,16 +63,10 @@ export default class HistoryManager {
   /**
    * @param {Array} jsonPatchElement - Formatted changes gotten between the state and baseData
    * @param {Object} blocks — API to make operations on the editor blocks
-   * @param {Object} caret — API to send the focus to a specific block in the editor
    * @param {Object} baseData - Copy of the saved data object.
    * @description Updates blocks in the editor based on the jsonPatch replace operation
   */
-  async replace({
-    jsonPatchElement,
-    blocks,
-    caret,
-    baseData,
-  }) {
+  async replace({ jsonPatchElement, blocks, baseData }) {
     const { path } = jsonPatchElement;
     const index = path.split('/')[1];
 
@@ -89,7 +75,6 @@ export default class HistoryManager {
     const updatedData = Object.assign(data, oldData);
 
     await blocks.update(id, updatedData);
-    await caret.setToBlock(index, 'end');
   }
 
   /**
