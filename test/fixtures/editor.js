@@ -8,6 +8,8 @@ const editor = {
     render: (blocks) => {
       const wrapperEditor = document.querySelector('#editorjs div.codex-editor__redactor');
 
+      wrapperEditor.replaceChildren();
+
       blocks.forEach((block) => {
         const defaultBlock = createDefaultBlock(block);
         wrapperEditor.appendChild(defaultBlock);
