@@ -2,6 +2,7 @@
  * @jest-environment jsdom
  */
 import Undo from '../src/index';
+import { startDocument, setFocus } from './testHelpers';
 import { editor, readOnlyEditor, tools } from './fixtures/editor';
 
 // Mocks user provided initial data.
@@ -75,5 +76,10 @@ jest.mock('json-joy/lib/json-patch', () => ({
 }));
 
 describe('Undo', () => {
-
+  beforeEach(() => {
+    startDocument();
+    const holder = document.querySelector('#editorjs');
+    editor.configuration.holder = holder;
+    readOnlyEditor.configuration.holder = holder;
+  });
 });
