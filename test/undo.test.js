@@ -110,4 +110,30 @@ describe('Undo', () => {
       expect(undo.config.debounceTimer).toEqual(debounceTimer);
     });
   });
+
+  describe('Operations without changes', () => {
+    let undo;
+
+    beforeEach(() => {
+      undo = new Undo({ editor });
+    });
+
+    it('is unable to perform an undo operation in an empty stack', () => {
+      expect(undo.canUndo()).toBe(false);
+      expect(undo.undoStack).toEqual([]);
+    });
+
+    it('is unable to perform a redo operation in an empty stack', () => {
+      expect(undo.canRedo()).toBe(false);
+      expect(undo.redoStack).toEqual([]);
+    });
+
+    it('initializes the plugin with initial data', () => {
+      undo.initialize(initialData.blocks);
+      const { baseData, undoStack } = undo;
+
+      expect(undoStack).toEqual([]);
+      expect(baseData).toEqual(initialData.blocks);
+    });
+  });
 });
