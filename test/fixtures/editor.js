@@ -16,7 +16,20 @@ const editor = {
       });
     },
     getCurrentBlockIndex: () => 0,
-    getBlockByIndex: () => ({ id: '123id', type: 'paragraph', data: {} }),
+    getBlockByIndex: (index) => {
+      const blocks = document.querySelector('#editorjs div.codex-editor__redactor').children;
+      const searchedBlock = blocks[index];
+      const blockId = searchedBlock.getAttribute('data-id');
+      const blockText = searchedBlock.firstChild.firstChild.innerHTML;
+
+      return ({
+        save: () => ({
+          id: blockId,
+          type: 'paragraph',
+          data: { text: blockText },
+        }),
+      });
+    },
     getBlocksCount: () => 1,
     update: () => {},
     delete: () => {},
