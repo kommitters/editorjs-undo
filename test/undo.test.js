@@ -82,4 +82,18 @@ describe('Undo', () => {
     editor.configuration.holder = holder;
     readOnlyEditor.configuration.holder = holder;
   });
+
+  describe('Read-only mode active', () => {
+    let undo;
+
+    beforeEach(() => {
+      undo = new Undo({ editor: readOnlyEditor });
+    });
+
+    it('is unable to perform an undo/redo operation', () => {
+      expect(undo.canUndo()).toBe(false);
+      expect(undo.canRedo()).toBe(false);
+      expect(undo.registerChange()).toBeUndefined();
+    });
+  });
 });
