@@ -59,6 +59,21 @@ jest.mock('jsondiffpatch/formatters/jsonpatch', () => ({
   },
 }));
 
+jest.mock('json-joy/lib/json-patch', () => ({
+  applyPatch: (baseData, jsonPatch) => {
+    switch (jsonPatch) {
+      case firstChange.formattedReverse:
+        return { doc: initialData.blocks };
+
+      case firstChange.formattedChange:
+        return { doc: firstChange.blocks };
+
+      default:
+        return { doc: baseData };
+    }
+  },
+}));
+
 describe('Undo', () => {
 
 });
