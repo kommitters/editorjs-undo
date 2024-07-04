@@ -15,7 +15,11 @@ const editor = {
         wrapperEditor.appendChild(defaultBlock);
       });
     },
-    getCurrentBlockIndex: () => 0,
+    getCurrentBlockIndex: () => {
+      const blocks = document.querySelector('#editorjs div.codex-editor__redactor').children;
+
+      return blocks.length - 1;
+    },
     getBlockByIndex: (index) => {
       const blocks = document.querySelector('#editorjs div.codex-editor__redactor').children;
       const searchedBlock = blocks[index];
