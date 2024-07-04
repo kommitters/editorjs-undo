@@ -39,7 +39,7 @@ export function setFocus(target, pos) {
 
   const content = target.firstChild;
   let position = pos || content.length;
-  position = pos > content.length ? content.length : pos;
+  position = position >= content.length ? content.length - 1 : position;
 
   range.setStart(content, position);
   range.collapse(true);
