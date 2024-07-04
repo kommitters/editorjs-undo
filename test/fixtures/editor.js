@@ -1,4 +1,3 @@
-import { firstChange } from './data';
 import { createDefaultBlock } from '../testHelpers';
 
 /**
@@ -6,7 +5,6 @@ import { createDefaultBlock } from '../testHelpers';
  */
 const editor = {
   blocks: {
-    save: () => new Promise((resolve) => resolve(firstChange)),
     render: (blocks) => {
       const wrapperEditor = document.querySelector('#editorjs div.codex-editor__redactor');
 
@@ -46,8 +44,6 @@ const editor = {
 
 const readOnlyEditor = {
   blocks: {
-    save: () => new Promise((resolve) => resolve(firstChange)),
-    render: () => new Promise((resolve) => resolve(true)),
     getCurrentBlockIndex: () => 0,
   },
   caret: {
