@@ -1,4 +1,5 @@
 import { firstChange } from './data';
+import { createDefaultBlock } from '../testHelpers';
 
 /**
  * Mocks for Editor.js instance object.
@@ -6,7 +7,14 @@ import { firstChange } from './data';
 const editor = {
   blocks: {
     save: () => new Promise((resolve) => resolve(firstChange)),
-    render: () => new Promise((resolve) => resolve(true)),
+    render: (blocks) => {
+      const wrapperEditor = document.querySelector('#editorjs div.codex-editor__redactor');
+
+      blocks.forEach((block) => {
+        const defaultBlock = createDefaultBlock(block);
+        wrapperEditor.appendChild(defaultBlock);
+      });
+    },
     getCurrentBlockIndex: () => 0,
     getBlockByIndex: () => ({ id: '123id', type: 'paragraph', data: {} }),
     getBlocksCount: () => 1,
