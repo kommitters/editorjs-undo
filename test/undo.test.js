@@ -44,7 +44,20 @@ jest.mock('jsondiffpatch', () => ({
   }),
 }));
 
-jest.mock('jsondiffpatch/formatters/jsonpatch', () => jest.fn());
+jest.mock('jsondiffpatch/formatters/jsonpatch', () => ({
+  format: (lastState) => {
+    switch (lastState) {
+      case firstChange.diff:
+        return firstChange.formattedChange;
+
+      case firstChange.reverse:
+        return firstChange.formattedReverse;
+
+      default:
+        return undefined;
+    }
+  },
+}));
 
 describe('Undo', () => {
 
