@@ -17,7 +17,7 @@ export default class Caret {
   */
   getPosition() {
     this.target.focus();
-    const oldRange = document.getSelection().getRangeAt(0);
+    const oldRange = window.getSelection().getRangeAt(0);
     const range = oldRange.cloneRange();
 
     range.selectNodeContents(this.target);
