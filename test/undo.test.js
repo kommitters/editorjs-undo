@@ -27,7 +27,23 @@ const firstChange = {
   formattedReverse: [{ op: 'remove', path: '/1' }],
 };
 
-jest.mock('jsondiffpatch', () => ({ create: jest.fn() }));
+jest.mock('jsondiffpatch', () => ({
+  create: () => ({
+    diff: (_baseData, state) => {
+      if (state === firstChange.blocks) {
+        return firstChange.diff;
+      }
+      return undefined;
+    },
+    reverse: (lastState) => {
+      if (lastState === firstChange.diff) {
+        return firstChange.reverse;
+      }
+      return undefined;
+    },
+  }),
+}));
+
 jest.mock('jsondiffpatch/formatters/jsonpatch', () => jest.fn());
 
 describe('Undo', () => {
