@@ -37,6 +37,7 @@ const editor = {
   },
   caret: {
     setToBlock() {},
+    setToLastBlock() {},
   },
   configuration: {
     defaultBlock: 'paragraph',
@@ -50,7 +51,8 @@ const readOnlyEditor = {
     getCurrentBlockIndex: () => 0,
   },
   caret: {
-    setToBlock() {},
+    setToBlock() { },
+    setToLastBlock() { },
   },
   configuration: {
     readOnly: true,
