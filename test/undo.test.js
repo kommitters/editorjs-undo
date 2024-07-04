@@ -96,4 +96,18 @@ describe('Undo', () => {
       expect(undo.registerChange()).toBeUndefined();
     });
   });
+
+  describe('Custom debounce timer provided', () => {
+    let undo;
+
+    beforeEach(() => {
+      const { config } = tools.undo;
+      undo = new Undo({ editor, config });
+    });
+
+    it('is configured with a custom debounce timer', () => {
+      const { debounceTimer } = tools.undo.config;
+      expect(undo.config.debounceTimer).toEqual(debounceTimer);
+    });
+  });
 });
