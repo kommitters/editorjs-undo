@@ -136,4 +136,81 @@ describe('Undo', () => {
       expect(baseData).toEqual(initialData.blocks);
     });
   });
+
+  describe('Operations with one change', () => {
+    let undo;
+
+    beforeEach(() => {
+      // Editor initialization
+      undo = new Undo({ editor });
+      undo.initialize(initialData.blocks);
+
+      // Apply the change
+      editor.blocks.render(firstChange.blocks);
+      const renderedBlocks = document.querySelectorAll('.ce-block__content');
+      const countBlocks = renderedBlocks.length;
+      const target = renderedBlocks[countBlocks - 1];
+      setFocus(target.firstChild);
+
+      // Save the change
+      undo.save(firstChange.blocks);
+    });
+
+    it('registers a change in the stack', () => {
+      const { state, caret } = undo.undoStack[0];
+      const insertedText = firstChange.diff[1][0].data.text;
+
+      expect(undo.undoStack.length).toEqual(1);
+      expect(state).toEqual(firstChange.diff);
+      expect(caret.caretIndex).toEqual(insertedText.length - 1);
+    });
+
+    it('removes the state from undoStack and inserts it in redoStack when undo action is called', () => {
+      const { state: undoState, caret: undoCaret } = undo.undoStack[0];
+      const { text } = firstChange.reverse._1[0].data;
+
+      undo.undo();
+
+      const { state: redoState, caret: redoCaret } = undo.redoStack[0];
+
+      expect(undo.undoStack.length).toEqual(0);
+      expect(undo.redoStack.length).toEqual(1);
+      expect(redoState).toEqual(firstChange.diff);
+      expect(redoCaret.caretIndex).toEqual(text.length - 1);
+      expect(undo.baseData).toEqual(initialData.blocks);
+      expect(undoState).toEqual(redoState);
+      expect(undoCaret).toEqual(redoCaret);
+    });
+
+    it('removes the state from redoStack and inserts it in undoStack when redo action is called', () => {
+      const { state: previousState, caret: perviousCaret } = undo.undoStack[0];
+      const { text } = firstChange.diff[1][0].data;
+
+      undo.undo();
+
+      const { state: redoState, caret: redoCaret } = undo.redoStack[0];
+
+      expect(undo.undoStack.length).toEqual(0);
+      expect(undo.redoStack.length).toEqual(1);
+      expect(redoState).toEqual(firstChange.diff);
+      expect(redoCaret.caretIndex).toEqual(text.length - 1);
+      expect(undo.baseData).toEqual(initialData.blocks);
+      expect(previousState).toEqual(redoState);
+      expect(perviousCaret).toEqual(redoCaret);
+
+      undo.redo();
+
+      const { state: nextState, caret: nextCaret } = undo.undoStack[0];
+
+      expect(undo.undoStack.length).toEqual(1);
+      expect(undo.redoStack.length).toEqual(0);
+      expect(nextState).toEqual(firstChange.diff);
+      expect(nextCaret.caretIndex).toEqual(text.length - 1);
+      expect(redoState).toEqual(nextState);
+      expect(redoCaret).toEqual(nextCaret);
+      expect(undo.baseData).toEqual(firstChange.blocks);
+      expect(previousState).toEqual(nextState);
+      expect(perviousCaret).toEqual(nextCaret);
+    });
+  });
 });
