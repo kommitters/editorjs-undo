@@ -64,7 +64,7 @@ const readOnlyEditor = {
 const tools = {
   undo: {
     config: {
-      debounceTimer: 100,
+      debounceTimer: 50,
       shortcuts: {
         undo: 'CMD+X',
         redo: 'CMD+C',

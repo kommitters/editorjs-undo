@@ -173,12 +173,15 @@ describe('Undo', () => {
       expect(undo.undoStack.length).toEqual(1);
       expect(state).toEqual(firstChange.diff);
       expect(caret.caretIndex).toEqual(insertedText.length - 1);
+      expect(undo.baseData).toEqual(firstChange.blocks);
     });
 
     it('removes the state from undoStack and inserts it in redoStack when undo action is called', () => {
+      // Status when one change was applied but no redo or undo action has been performed
       const { state: undoState, caret: undoCaret } = undo.undoStack[0];
       const { text } = firstChange.reverse._1[0].data;
 
+      // Status when an undo action has been performed
       undo.undo();
 
       const { state: redoState, caret: redoCaret } = undo.redoStack[0];
@@ -193,21 +196,16 @@ describe('Undo', () => {
     });
 
     it('removes the state from redoStack and inserts it in undoStack when redo action is called', () => {
+      // Status when one change was applied but no redo or undo action has been performed
       const { state: previousState, caret: previousCaret } = undo.undoStack[0];
       const { text } = firstChange.diff[1][0].data;
 
+      // Status when an undo action has been performed
       undo.undo();
 
       const { state: redoState, caret: redoCaret } = undo.redoStack[0];
 
-      expect(undo.undoStack.length).toEqual(0);
-      expect(undo.redoStack.length).toEqual(1);
-      expect(redoState).toEqual(firstChange.diff);
-      expect(redoCaret.caretIndex).toEqual(text.length - 1);
-      expect(undo.baseData).toEqual(initialData.blocks);
-      expect(previousState).toEqual(redoState);
-      expect(previousCaret).toEqual(redoCaret);
-
+      // Status when an redo action has been performed
       undo.redo();
 
       const { state: nextState, caret: nextCaret } = undo.undoStack[0];
@@ -253,31 +251,23 @@ describe('Undo', () => {
     });
 
     it('registers two changes in the undoStack', () => {
-      const { length } = undo.undoStack;
       const { text: secondText } = secondChange.diff[2][0].data;
       const { text: firstText } = firstChange.diff[1][0].data;
 
-      expect(length).toEqual(2);
+      expect(undo.undoStack.length).toEqual(2);
       expect(undo.redoStack.length).toEqual(0);
-
       expect(undo.undoStack[1].state).toEqual(secondChange.diff);
       expect(undo.undoStack[0].state).toEqual(firstChange.diff);
-
       expect(undo.undoStack[1].caret.caretIndex).toEqual(secondText.length - 1);
       expect(undo.undoStack[0].caret.caretIndex).toEqual(firstText.length - 1);
+      expect(undo.baseData).toEqual(secondChange.blocks);
     });
 
     it('removes one state from undoStack and inserts it in redoStack when undo action is called', () => {
       // Status when two changes were applied but no redo or undo action has been performed
       const { length: previousLength } = undo.undoStack;
       const { state: previousState, caret: previousCaret } = undo.undoStack[previousLength - 1];
-      const { text } = secondChange.diff[2][0].data; // Third paragraph
-
-      expect(previousLength).toBe(2);
-      expect(undo.redoStack.length).toBe(0);
-      expect(undo.undoStack[0].state).toEqual(firstChange.diff);
-      expect(previousState).toEqual(secondChange.diff);
-      expect(previousCaret.caretIndex).toEqual(text.length - 1);
+      const { text } = secondChange.diff[2][0].data;
 
       // Status when an undo action has been performed
       undo.undo();
@@ -291,32 +281,19 @@ describe('Undo', () => {
       expect(redoCaret.caretIndex).toEqual(text.length - 1);
       expect(redoState).toEqual(previousState);
       expect(redoCaret).toEqual(previousCaret);
+      expect(undo.baseData).toEqual(firstChange.blocks);
     });
 
     it('removes one state from redoStack and inserts it in undoStack when redo action is called', () => {
       // Status when two changes were applied but no redo or undo action has been performed
       const { length: previousLength } = undo.undoStack;
       const { state: previousState, caret: previousCaret } = undo.undoStack[previousLength - 1];
-      const { text } = secondChange.diff[2][0].data; // Third paragraph
-
-      expect(previousLength).toBe(2);
-      expect(undo.redoStack.length).toBe(0);
-      expect(undo.undoStack[0].state).toEqual(firstChange.diff);
-      expect(previousState).toEqual(secondChange.diff);
-      expect(previousCaret.caretIndex).toEqual(text.length - 1);
 
       // Status when an undo action has been performed
       undo.undo();
 
       const { length: redoLength } = undo.redoStack;
       const { state: redoState, caret: redoCaret } = undo.redoStack[redoLength - 1];
-
-      expect(redoLength).toBe(1);
-      expect(undo.undoStack.length).toBe(1);
-      expect(redoState).toEqual(secondChange.diff);
-      expect(redoCaret.caretIndex).toEqual(text.length - 1);
-      expect(redoState).toEqual(previousState);
-      expect(redoCaret).toEqual(previousCaret);
 
       // Status when an redo action has been performed
       undo.redo();
@@ -332,6 +309,7 @@ describe('Undo', () => {
       expect(nextCaret).toEqual(redoCaret);
       expect(nextState).toEqual(previousState);
       expect(nextCaret).toEqual(previousCaret);
+      expect(undo.baseData).toEqual(secondChange.blocks);
     });
   });
 
