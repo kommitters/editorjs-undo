@@ -223,4 +223,115 @@ describe('Undo', () => {
       expect(previousCaret).toEqual(nextCaret);
     });
   });
+
+  describe('Operations with two changes', () => {
+    let undo;
+
+    beforeEach(() => {
+      undo = new Undo({ editor });
+      undo.initialize(initialData.blocks);
+
+      // Apply the first change
+      editor.blocks.render(firstChange.blocks);
+      let renderedBlocks = document.querySelectorAll('.ce-block__content');
+      let countBlocks = renderedBlocks.length;
+      let target = renderedBlocks[countBlocks - 1];
+      setFocus(target.firstChild);
+
+      // Save the first change
+      undo.save(firstChange.blocks);
+
+      // Apply the second change
+      editor.blocks.render(secondChange.blocks);
+      renderedBlocks = document.querySelectorAll('.ce-block__content');
+      countBlocks = renderedBlocks.length;
+      target = renderedBlocks[countBlocks - 1];
+      setFocus(target.firstChild);
+
+      // Save the second change
+      undo.save(secondChange.blocks);
+    });
+
+    it('registers two changes in the undoStack', () => {
+      const { length } = undo.undoStack;
+      const { text: secondText } = secondChange.diff[2][0].data;
+      const { text: firstText } = firstChange.diff[1][0].data;
+
+      expect(length).toEqual(2);
+      expect(undo.redoStack.length).toEqual(0);
+
+      expect(undo.undoStack[1].state).toEqual(secondChange.diff);
+      expect(undo.undoStack[0].state).toEqual(firstChange.diff);
+
+      expect(undo.undoStack[1].caret.caretIndex).toEqual(secondText.length - 1);
+      expect(undo.undoStack[0].caret.caretIndex).toEqual(firstText.length - 1);
+    });
+
+    it('removes one state from undoStack and inserts it in redoStack when undo action is called', () => {
+      // Status when two changes were applied but no redo or undo action has been performed
+      const { length: previousLength } = undo.undoStack;
+      const { state: previousState, caret: previousCaret } = undo.undoStack[previousLength - 1];
+      const { text } = secondChange.diff[2][0].data; // Third paragraph
+
+      expect(previousLength).toBe(2);
+      expect(undo.redoStack.length).toBe(0);
+      expect(undo.undoStack[0].state).toEqual(firstChange.diff);
+      expect(previousState).toEqual(secondChange.diff);
+      expect(previousCaret.caretIndex).toEqual(text.length - 1);
+
+      // Status when an undo action has been performed
+      undo.undo();
+
+      const { length: redoLength } = undo.redoStack;
+      const { state: redoState, caret: redoCaret } = undo.redoStack[redoLength - 1];
+
+      expect(redoLength).toBe(1);
+      expect(undo.undoStack.length).toBe(1);
+      expect(redoState).toEqual(secondChange.diff);
+      expect(redoCaret.caretIndex).toEqual(text.length - 1);
+      expect(redoState).toEqual(previousState);
+      expect(redoCaret).toEqual(previousCaret);
+    });
+
+    it('removes one state from redoStack and inserts it in undoStack when redo action is called', () => {
+      // Status when two changes were applied but no redo or undo action has been performed
+      const { length: previousLength } = undo.undoStack;
+      const { state: previousState, caret: previousCaret } = undo.undoStack[previousLength - 1];
+      const { text } = secondChange.diff[2][0].data; // Third paragraph
+
+      expect(previousLength).toBe(2);
+      expect(undo.redoStack.length).toBe(0);
+      expect(undo.undoStack[0].state).toEqual(firstChange.diff);
+      expect(previousState).toEqual(secondChange.diff);
+      expect(previousCaret.caretIndex).toEqual(text.length - 1);
+
+      // Status when an undo action has been performed
+      undo.undo();
+
+      const { length: redoLength } = undo.redoStack;
+      const { state: redoState, caret: redoCaret } = undo.redoStack[redoLength - 1];
+
+      expect(redoLength).toBe(1);
+      expect(undo.undoStack.length).toBe(1);
+      expect(redoState).toEqual(secondChange.diff);
+      expect(redoCaret.caretIndex).toEqual(text.length - 1);
+      expect(redoState).toEqual(previousState);
+      expect(redoCaret).toEqual(previousCaret);
+
+      // Status when an redo action has been performed
+      undo.redo();
+
+      const { length: undoLength } = undo.undoStack;
+      const { state: nextState, caret: nextCaret } = undo.undoStack[undoLength - 1];
+
+      expect(undoLength).toBe(2);
+      expect(undo.redoStack.length).toBe(0);
+      expect(undo.undoStack[0].state).toEqual(firstChange.diff);
+      expect(nextState).toEqual(secondChange.diff);
+      expect(nextState).toEqual(redoState);
+      expect(nextCaret).toEqual(redoCaret);
+      expect(nextState).toEqual(previousState);
+      expect(nextCaret).toEqual(previousCaret);
+    });
+  });
 });
