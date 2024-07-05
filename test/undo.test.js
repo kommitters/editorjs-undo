@@ -166,7 +166,7 @@ describe('Undo', () => {
       undo.save(firstChange.blocks);
     });
 
-    it('registers a change in the stack', () => {
+    it('registers a change in the undoStack', () => {
       const { state, caret } = undo.undoStack[0];
       const insertedText = firstChange.diff[1][0].data.text;
 
@@ -193,7 +193,7 @@ describe('Undo', () => {
     });
 
     it('removes the state from redoStack and inserts it in undoStack when redo action is called', () => {
-      const { state: previousState, caret: perviousCaret } = undo.undoStack[0];
+      const { state: previousState, caret: previousCaret } = undo.undoStack[0];
       const { text } = firstChange.diff[1][0].data;
 
       undo.undo();
@@ -206,7 +206,7 @@ describe('Undo', () => {
       expect(redoCaret.caretIndex).toEqual(text.length - 1);
       expect(undo.baseData).toEqual(initialData.blocks);
       expect(previousState).toEqual(redoState);
-      expect(perviousCaret).toEqual(redoCaret);
+      expect(previousCaret).toEqual(redoCaret);
 
       undo.redo();
 
@@ -220,7 +220,7 @@ describe('Undo', () => {
       expect(redoCaret).toEqual(nextCaret);
       expect(undo.baseData).toEqual(firstChange.blocks);
       expect(previousState).toEqual(nextState);
-      expect(perviousCaret).toEqual(nextCaret);
+      expect(previousCaret).toEqual(nextCaret);
     });
   });
 });
