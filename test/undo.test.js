@@ -411,4 +411,101 @@ describe('Undo', () => {
       expect(undo.baseData).toEqual(secondChange.blocks);
     });
   });
+
+  describe('Undo/redo events fired with custom shortcuts', () => {
+    let undo;
+
+    beforeEach(() => {
+      const { config } = tools.undo;
+      undo = new Undo({ editor, config });
+      undo.initialize(initialData.blocks);
+
+      // Apply the first change
+      editor.blocks.render(firstChange.blocks);
+      let renderedBlocks = document.querySelectorAll('.ce-block__content');
+      let countBlocks = renderedBlocks.length;
+      let target = renderedBlocks[countBlocks - 1];
+      setFocus(target.firstChild);
+
+      // Save the first change
+      undo.save(firstChange.blocks);
+
+      // Apply the second change
+      editor.blocks.render(secondChange.blocks);
+      renderedBlocks = document.querySelectorAll('.ce-block__content');
+      countBlocks = renderedBlocks.length;
+      target = renderedBlocks[countBlocks - 1];
+      setFocus(target.firstChild);
+
+      // Save the second change
+      undo.save(secondChange.blocks);
+    });
+
+    it('dispatches an undo event inside Editor\'s holder and has to cause changes in the stacks', () => {
+      const keyboardEvent = new KeyboardEvent('keydown', {
+        key: 'x',
+        metaKey: true,
+        ctrlKey: true,
+      });
+
+      editor.configuration.holder.dispatchEvent(keyboardEvent);
+
+      expect(undo.undoStack.length).toEqual(1);
+      expect(undo.redoStack.length).toEqual(1);
+      expect(undo.undoStack[0].state).toEqual(firstChange.diff);
+      expect(undo.redoStack[0].state).toEqual(secondChange.diff);
+      expect(undo.baseData).toEqual(firstChange.blocks);
+    });
+
+    it('dispatches a undo event, with default shortcut, inside Editor\'s holder has not to cause changes in the stacks', () => {
+      const keyboardEvent = new KeyboardEvent('keydown', {
+        key: 'z',
+        metaKey: true,
+        ctrlKey: true,
+      });
+
+      editor.configuration.holder.dispatchEvent(keyboardEvent);
+
+      expect(undo.undoStack.length).toEqual(2);
+      expect(undo.redoStack.length).toEqual(0);
+      expect(undo.undoStack[1].state).toEqual(secondChange.diff);
+      expect(undo.undoStack[0].state).toEqual(firstChange.diff);
+      expect(undo.baseData).toEqual(secondChange.blocks);
+    });
+
+    it('dispatches a redo event inside Editor\'s holder and has to cause changes in the stacks', () => {
+      undo.undo();
+      const keyboardEvent = new KeyboardEvent('keydown', {
+        key: 'c',
+        metaKey: true,
+        ctrlKey: true,
+        altKey: true,
+      });
+
+      editor.configuration.holder.dispatchEvent(keyboardEvent);
+
+      expect(undo.undoStack.length).toEqual(2);
+      expect(undo.redoStack.length).toEqual(0);
+      expect(undo.undoStack[0].state).toEqual(firstChange.diff);
+      expect(undo.undoStack[1].state).toEqual(secondChange.diff);
+      expect(undo.baseData).toEqual(secondChange.blocks);
+    });
+
+    it('dispatches a redo event, with default shortcut, inside Editor\'s holder has not to cause changes in the stacks', () => {
+      undo.undo();
+      const keyboardEvent = new KeyboardEvent('keydown', {
+        key: 'y',
+        metaKey: true,
+        ctrlKey: true,
+      });
+
+      editor.configuration.holder.dispatchEvent(keyboardEvent);
+
+      expect(undo.undoStack.length).toEqual(1);
+      expect(undo.redoStack.length).toEqual(1);
+      expect(undo.undoStack[0].state).toEqual(firstChange.diff);
+      expect(undo.redoStack[0].state).toEqual(secondChange.diff);
+      expect(undo.baseData).toEqual(firstChange.blocks);
+    });
+  });
 });
