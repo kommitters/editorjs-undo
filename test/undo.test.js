@@ -1,11 +1,13 @@
 /**
  * @jest-environment jsdom
- */
+*/
+
 import Undo from '../src/index';
 import { initialData, firstChange, secondChange } from './fixtures/data';
 import { startDocument, setFocus } from './testHelpers';
 import { editor, readOnlyEditor, tools } from './fixtures/editor';
 
+// Function to mock the answer for the 'diff' method in the 'jsondiffpatch' library
 const revolveDiff = (state) => {
   switch (state) {
     case firstChange.blocks:
@@ -19,6 +21,7 @@ const revolveDiff = (state) => {
   }
 };
 
+// Function to mock the answer for the 'reverse' method in the 'jsondiffpatch' library
 const revolveReverse = (lastState) => {
   switch (lastState) {
     case firstChange.diff:
@@ -32,6 +35,7 @@ const revolveReverse = (lastState) => {
   }
 };
 
+// Function to mock the answer for the 'format' method in the 'jsondiffpatch/formatters' library
 const resolveFormat = (lastState) => {
   switch (lastState) {
     case firstChange.diff:
@@ -51,6 +55,7 @@ const resolveFormat = (lastState) => {
   }
 };
 
+// Function to mock the answer for the 'applyPatch' method in the 'json-joy/lib/json-patch' library
 const resolveApplyPatch = (baseData, jsonPatch) => {
   switch (jsonPatch) {
     case firstChange.formattedReverse:
@@ -70,6 +75,7 @@ const resolveApplyPatch = (baseData, jsonPatch) => {
   }
 };
 
+// Mock for the 'jsondiffpatch' library
 jest.mock('jsondiffpatch', () => ({
   create: () => ({
     diff: (_baseData, state) => revolveDiff(state),
@@ -77,10 +83,12 @@ jest.mock('jsondiffpatch', () => ({
   }),
 }));
 
+// Mock for the 'jsondiffpatch/formatters' library
 jest.mock('jsondiffpatch/formatters/jsonpatch', () => ({
   format: (lastState) => resolveFormat(lastState),
 }));
 
+// Mock for the 'json-joy/lib/json-patch' library
 jest.mock('json-joy/lib/json-patch', () => ({
   applyPatch: (baseData, jsonPatch) => resolveApplyPatch(baseData, jsonPatch),
 }));

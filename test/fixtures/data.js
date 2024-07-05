@@ -1,9 +1,9 @@
-// Mocks user provided initial data.
+// Mocks user provided initial data
 const initialData = {
   blocks: [{ id: 'abk2', type: 'paragraph', data: { text: 'First paragraph' } }],
 };
 
-// Mocks first data to be recorded at the history stack.
+// Mocks first data to be recorded at the history stack
 const firstChange = {
   blocks: [
     { id: 'abk2', type: 'paragraph', data: { text: 'First paragraph' } },
@@ -21,7 +21,7 @@ const firstChange = {
   formattedReverse: [{ op: 'remove', path: '/1' }],
 };
 
-// Mocks second data to be recorded at the history stack.
+// Mocks second data to be recorded at the history stack
 const secondChange = {
   blocks: [
     { id: 'abk2', type: 'paragraph', data: { text: 'First paragraph' } },
@@ -53,21 +53,8 @@ const secondChange = {
   ],
 };
 
-/**
- * Mocks new data to be recorded at the history stack.
- */
-const newChange = {
-  blocks: [
-    { type: 'paragraph', data: { text: 'First paragraph' } },
-    { type: 'paragraph', data: { text: 'Second paragraph' } },
-    { type: 'paragraph', data: { text: 'New paragraph' } },
-  ],
-};
-
 export {
   initialData,
   firstChange,
   secondChange,
-  newChange,
-
 };

@@ -1,8 +1,6 @@
 import { createDefaultBlock } from '../testHelpers';
 
-/**
- * Mocks for Editor.js instance object.
- */
+// Mocks for Editor.js instance object
 const editor = {
   blocks: {
     render: (blocks) => {

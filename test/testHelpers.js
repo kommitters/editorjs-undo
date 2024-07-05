@@ -1,3 +1,4 @@
+// Creates the editor's holder
 export function startDocument() {
   document.body.innerHTML = '';
   const editorRedactor = document.createElement('div');
@@ -14,6 +15,7 @@ export function startDocument() {
   document.body.appendChild(editorJS);
 }
 
+// Creates a default block in the editor with the block data
 export function createDefaultBlock(block) {
   const newBlock = document.createElement('div');
   newBlock.classList.add('ce-block');
@@ -33,6 +35,7 @@ export function createDefaultBlock(block) {
   return newBlock;
 }
 
+// Sets focus to the target in the specified position
 export function setFocus(target, pos) {
   const selection = window.getSelection();
   const range = document.createRange();
