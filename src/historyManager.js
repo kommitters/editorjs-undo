@@ -126,7 +126,7 @@ export default class HistoryManager {
       const editorBlocks = document.getElementsByClassName('ce-block__content');
       const target = editorBlocks[indexInState];
 
-      if (target === undefined) {
+      if (target === undefined || target.firstChild.classList.contains('inline-image')) {
         await caret.setToLastBlock('end');
       } else {
         const holder = new Caret(target.firstChild);
