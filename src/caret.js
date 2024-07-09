@@ -17,7 +17,7 @@ export default class Caret {
   */
   getPosition() {
     this.target.focus();
-    const oldRange = document.getSelection().getRangeAt(0);
+    const oldRange = window.getSelection().getRangeAt(0);
     const range = oldRange.cloneRange();
 
     range.selectNodeContents(this.target);
@@ -35,13 +35,16 @@ export default class Caret {
     const range = document.createRange();
     let position = pos;
 
-    if (this.target.firstChild === null) {
+    const firstNode = this.target.firstChild;
+
+    if (firstNode === null) {
       this.target.innerHTML = '&nbsp';
       position = 0;
     }
 
-    const content = this.target.firstChild;
-    position = position > content.length ? content.length : position;
+    const content = firstNode.childNodes.length > 0 ? firstNode.firstChild : firstNode;
+
+    position = position > content.length || position < 0 || !pos ? content.length : position;
 
     range.setStart(content, position);
     range.collapse(true);

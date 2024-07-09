@@ -125,11 +125,12 @@ export default class HistoryManager {
       const { caretIndex, indexInState } = caretInfo;
       const editorBlocks = document.getElementsByClassName('ce-block__content');
       const target = editorBlocks[indexInState];
+      const mainNode = target.firstChild;
 
-      if (target === undefined) {
+      if (target === undefined || mainNode.classList.contains('inline-image')) {
         await caret.setToLastBlock('end');
       } else {
-        const holder = new Caret(target.firstChild);
+        const holder = new Caret(mainNode);
         holder.setPosition(caretIndex);
       }
     });
