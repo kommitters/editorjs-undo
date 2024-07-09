@@ -1,33 +1,104 @@
 /**
  * @jest-environment jsdom
- */
+*/
+
 import Undo from '../src/index';
-import {
-  initialData,
-  firstChange,
-  secondChange,
-  newChange,
-} from './fixtures/data';
+import { initialData, firstChange, secondChange } from './fixtures/data';
+import { startDocument, setFocus } from './testHelpers';
 import { editor, readOnlyEditor, tools } from './fixtures/editor';
 
-jest.mock('jsondiffpatch', () => ({ create: jest.fn() }));
-jest.mock('jsondiffpatch/formatters/jsonpatch', () => jest.fn());
+// Function to mock the answer for the 'diff' method in the 'jsondiffpatch' library
+const revolveDiff = (state) => {
+  switch (state) {
+    case firstChange.blocks:
+      return firstChange.diff;
+
+    case secondChange.blocks:
+      return secondChange.diff;
+
+    default:
+      return undefined;
+  }
+};
+
+// Function to mock the answer for the 'reverse' method in the 'jsondiffpatch' library
+const revolveReverse = (lastState) => {
+  switch (lastState) {
+    case firstChange.diff:
+      return firstChange.reverse;
+
+    case secondChange.diff:
+      return secondChange.reverse;
+
+    default:
+      return undefined;
+  }
+};
+
+// Function to mock the answer for the 'format' method in the 'jsondiffpatch/formatters' library
+const resolveFormat = (lastState) => {
+  switch (lastState) {
+    case firstChange.diff:
+      return firstChange.formattedChange;
+
+    case firstChange.reverse:
+      return firstChange.formattedReverse;
+
+    case secondChange.diff:
+      return secondChange.formattedChange;
+
+    case secondChange.reverse:
+      return secondChange.formattedReverse;
+
+    default:
+      return undefined;
+  }
+};
+
+// Function to mock the answer for the 'applyPatch' method in the 'json-joy/lib/json-patch' library
+const resolveApplyPatch = (baseData, jsonPatch) => {
+  switch (jsonPatch) {
+    case firstChange.formattedReverse:
+      return { doc: initialData.blocks };
+
+    case firstChange.formattedChange:
+      return { doc: firstChange.blocks };
+
+    case secondChange.formattedReverse:
+      return { doc: firstChange.blocks };
+
+    case secondChange.formattedChange:
+      return { doc: secondChange.blocks };
+
+    default:
+      return { doc: baseData };
+  }
+};
+
+// Mock for the 'jsondiffpatch' library
+jest.mock('jsondiffpatch', () => ({
+  create: () => ({
+    diff: (_baseData, state) => revolveDiff(state),
+    reverse: (lastState) => revolveReverse(lastState),
+  }),
+}));
+
+// Mock for the 'jsondiffpatch/formatters' library
+jest.mock('jsondiffpatch/formatters/jsonpatch', () => ({
+  format: (lastState) => resolveFormat(lastState),
+}));
+
+// Mock for the 'json-joy/lib/json-patch' library
+jest.mock('json-joy/lib/json-patch', () => ({
+  applyPatch: (baseData, jsonPatch) => resolveApplyPatch(baseData, jsonPatch),
+}));
 
 describe('Undo', () => {
   beforeEach(() => {
-    document.body.innerHTML = `<div id="editorjs">
-                                <div class="codex-editor">
-                                  <div class="codex-editor__redactor">
-                                    <div class="ce-block__content">
-                                      <div class="ce-paragraph cdx-block"></div>
-                                    </div>
-                                  </div>
-                                </div>
-                              </div>`;
-    // EditorJS uses as a holder an HTMLElement instead of a query selector.
-    // This has to be assigned each time that DOM is reset.
-    editor.configuration.holder = document.querySelector('#editorjs');
-    readOnlyEditor.configuration.holder = document.querySelector('#editorjs');
+    startDocument();
+    const holder = document.querySelector('#editorjs');
+    editor.configuration.holder = holder;
+    readOnlyEditor.configuration.holder = holder;
   });
 
   describe('Read-only mode active', () => {
@@ -44,7 +115,7 @@ describe('Undo', () => {
     });
   });
 
-  describe.skip('Custom debounce timer provided', () => {
+  describe('Custom debounce timer provided', () => {
     let undo;
 
     beforeEach(() => {
@@ -58,111 +129,227 @@ describe('Undo', () => {
     });
   });
 
-  describe.skip('Operations without changes', () => {
+  describe('Operations without changes', () => {
     let undo;
 
     beforeEach(() => {
       undo = new Undo({ editor });
     });
 
-    const intialStackData = { index: 0, state: [{ type: 'paragraph', data: {} }] };
-
     it('is unable to perform an undo operation in an empty stack', () => {
       expect(undo.canUndo()).toBe(false);
-      expect(undo.stack[0]).toEqual(intialStackData);
+      expect(undo.undoStack).toEqual([]);
     });
 
     it('is unable to perform a redo operation in an empty stack', () => {
       expect(undo.canRedo()).toBe(false);
-      expect(undo.stack[0]).toEqual(intialStackData);
+      expect(undo.redoStack).toEqual([]);
     });
 
     it('initializes the plugin with initial data', () => {
       undo.initialize(initialData.blocks);
-      expect(undo.count()).toEqual(0);
-      const { state } = undo.stack[0];
-      expect(state).toEqual(initialData.blocks);
+      const { baseData, undoStack } = undo;
+
+      expect(undoStack).toEqual([]);
+      expect(baseData).toEqual(initialData.blocks);
     });
   });
 
-  describe.skip('Operations with one change', () => {
+  describe('Operations with one change', () => {
     let undo;
 
     beforeEach(() => {
+      // Editor initialization
       undo = new Undo({ editor });
       undo.initialize(initialData.blocks);
+
+      // Apply the change
+      editor.blocks.render(firstChange.blocks);
+      const renderedBlocks = document.querySelectorAll('.ce-block__content');
+      const countBlocks = renderedBlocks.length;
+      const target = renderedBlocks[countBlocks - 1];
+      setFocus(target.firstChild);
+
+      // Save the change
       undo.save(firstChange.blocks);
     });
 
-    it('registers a change in the stack', () => {
-      expect(undo.count()).toEqual(1);
-      expect(undo.position).toEqual(1);
-      const { state } = undo.stack[1];
-      expect(state).toEqual(firstChange.blocks);
+    it('registers a change in the undoStack', () => {
+      const { state, caret } = undo.undoStack[0];
+      const insertedText = firstChange.diff[1][0].data.text;
+
+      expect(undo.undoStack.length).toEqual(1);
+      expect(state).toEqual(firstChange.diff);
+      expect(caret.caretIndex).toEqual(insertedText.length - 1);
+      expect(undo.baseData).toEqual(firstChange.blocks);
     });
 
-    it('decreases stack position when undo action is called', () => {
+    it('removes the state from undoStack and inserts it in redoStack when undo action is called', () => {
+      // Status when one change was applied but no redo or undo action has been performed
+      const { state: undoState, caret: undoCaret } = undo.undoStack[0];
+      const { text } = firstChange.reverse._1[0].data;
+
+      // Status when an undo action has been performed
       undo.undo();
-      expect(undo.position).toEqual(0);
-      const { state } = undo.stack[undo.position];
-      expect(state).toEqual(initialData.blocks);
+
+      const { state: redoState, caret: redoCaret } = undo.redoStack[0];
+
+      expect(undo.undoStack.length).toEqual(0);
+      expect(undo.redoStack.length).toEqual(1);
+      expect(redoState).toEqual(firstChange.diff);
+      expect(redoCaret.caretIndex).toEqual(text.length - 1);
+      expect(undo.baseData).toEqual(initialData.blocks);
+      expect(undoState).toEqual(redoState);
+      expect(undoCaret).toEqual(redoCaret);
     });
 
-    it('increases stack position when redo action is called', () => {
+    it('removes the state from redoStack and inserts it in undoStack when redo action is called', () => {
+      // Status when one change was applied but no redo or undo action has been performed
+      const { state: previousState, caret: previousCaret } = undo.undoStack[0];
+      const { text } = firstChange.diff[1][0].data;
+
+      // Status when an undo action has been performed
+      undo.undo();
+
+      const { state: redoState, caret: redoCaret } = undo.redoStack[0];
+
+      // Status when an redo action has been performed
       undo.redo();
-      expect(undo.position).toEqual(1);
-      const { state } = undo.stack[undo.position];
-      expect(state).toEqual(firstChange.blocks);
+
+      const { state: nextState, caret: nextCaret } = undo.undoStack[0];
+
+      expect(undo.undoStack.length).toEqual(1);
+      expect(undo.redoStack.length).toEqual(0);
+      expect(nextState).toEqual(firstChange.diff);
+      expect(nextCaret.caretIndex).toEqual(text.length - 1);
+      expect(redoState).toEqual(nextState);
+      expect(redoCaret).toEqual(nextCaret);
+      expect(undo.baseData).toEqual(firstChange.blocks);
+      expect(previousState).toEqual(nextState);
+      expect(previousCaret).toEqual(nextCaret);
     });
   });
 
-  describe.skip('Operations with two changes', () => {
+  describe('Operations with two changes', () => {
     let undo;
 
     beforeEach(() => {
       undo = new Undo({ editor });
       undo.initialize(initialData.blocks);
+
+      // Apply the first change
+      editor.blocks.render(firstChange.blocks);
+      let renderedBlocks = document.querySelectorAll('.ce-block__content');
+      let countBlocks = renderedBlocks.length;
+      let target = renderedBlocks[countBlocks - 1];
+      setFocus(target.firstChild);
+
+      // Save the first change
       undo.save(firstChange.blocks);
+
+      // Apply the second change
+      editor.blocks.render(secondChange.blocks);
+      renderedBlocks = document.querySelectorAll('.ce-block__content');
+      countBlocks = renderedBlocks.length;
+      target = renderedBlocks[countBlocks - 1];
+      setFocus(target.firstChild);
+
+      // Save the second change
       undo.save(secondChange.blocks);
     });
 
-    it('performs an undo and redo operation', () => {
-      undo.undo();
-      undo.redo();
-      expect(undo.position).toEqual(undo.count());
-      const { state } = undo.stack[undo.position];
-      expect(state).toEqual(secondChange.blocks);
+    it('registers two changes in the undoStack', () => {
+      const { text: secondText } = secondChange.diff[2][0].data;
+      const { text: firstText } = firstChange.diff[1][0].data;
+
+      expect(undo.undoStack.length).toEqual(2);
+      expect(undo.redoStack.length).toEqual(0);
+      expect(undo.undoStack[1].state).toEqual(secondChange.diff);
+      expect(undo.undoStack[0].state).toEqual(firstChange.diff);
+      expect(undo.undoStack[1].caret.caretIndex).toEqual(secondText.length - 1);
+      expect(undo.undoStack[0].caret.caretIndex).toEqual(firstText.length - 1);
+      expect(undo.baseData).toEqual(secondChange.blocks);
     });
 
-    it('performs a redo and undo operation', () => {
+    it('removes one state from undoStack and inserts it in redoStack when undo action is called', () => {
+      // Status when two changes were applied but no redo or undo action has been performed
+      const { length: previousLength } = undo.undoStack;
+      const { state: previousState, caret: previousCaret } = undo.undoStack[previousLength - 1];
+      const { text } = secondChange.diff[2][0].data;
+
+      // Status when an undo action has been performed
       undo.undo();
-      undo.redo();
-      undo.undo();
-      expect(undo.position).toEqual(1);
-      const { state } = undo.stack[undo.position];
-      expect(state).toEqual(firstChange.blocks);
+
+      const { length: redoLength } = undo.redoStack;
+      const { state: redoState, caret: redoCaret } = undo.redoStack[redoLength - 1];
+
+      expect(redoLength).toBe(1);
+      expect(undo.undoStack.length).toBe(1);
+      expect(redoState).toEqual(secondChange.diff);
+      expect(redoCaret.caretIndex).toEqual(text.length - 1);
+      expect(redoState).toEqual(previousState);
+      expect(redoCaret).toEqual(previousCaret);
+      expect(undo.baseData).toEqual(firstChange.blocks);
     });
 
-    it('performs an undo operation and creates a new change', () => {
+    it('removes one state from redoStack and inserts it in undoStack when redo action is called', () => {
+      // Status when two changes were applied but no redo or undo action has been performed
+      const { length: previousLength } = undo.undoStack;
+      const { state: previousState, caret: previousCaret } = undo.undoStack[previousLength - 1];
+
+      // Status when an undo action has been performed
       undo.undo();
-      undo.save(newChange.blocks);
-      expect(undo.position).toEqual(undo.position);
-      const { state } = undo.stack[undo.position];
-      expect(state).toEqual(newChange.blocks);
+
+      const { length: redoLength } = undo.redoStack;
+      const { state: redoState, caret: redoCaret } = undo.redoStack[redoLength - 1];
+
+      // Status when an redo action has been performed
+      undo.redo();
+
+      const { length: undoLength } = undo.undoStack;
+      const { state: nextState, caret: nextCaret } = undo.undoStack[undoLength - 1];
+
+      expect(undoLength).toBe(2);
+      expect(undo.redoStack.length).toBe(0);
+      expect(undo.undoStack[0].state).toEqual(firstChange.diff);
+      expect(nextState).toEqual(secondChange.diff);
+      expect(nextState).toEqual(redoState);
+      expect(nextCaret).toEqual(redoCaret);
+      expect(nextState).toEqual(previousState);
+      expect(nextCaret).toEqual(previousCaret);
+      expect(undo.baseData).toEqual(secondChange.blocks);
     });
   });
 
-  describe.skip('Undo/redo events fired inside and outside Editor\'s holder with default shortcuts', () => {
+  describe('Undo/redo events fired with default shortcuts', () => {
     let undo;
 
     beforeEach(() => {
       undo = new Undo({ editor });
       undo.initialize(initialData.blocks);
+
+      // Apply the first change
+      editor.blocks.render(firstChange.blocks);
+      let renderedBlocks = document.querySelectorAll('.ce-block__content');
+      let countBlocks = renderedBlocks.length;
+      let target = renderedBlocks[countBlocks - 1];
+      setFocus(target.firstChild);
+
+      // Save the first change
       undo.save(firstChange.blocks);
+
+      // Apply the second change
+      editor.blocks.render(secondChange.blocks);
+      renderedBlocks = document.querySelectorAll('.ce-block__content');
+      countBlocks = renderedBlocks.length;
+      target = renderedBlocks[countBlocks - 1];
+      setFocus(target.firstChild);
+
+      // Save the second change
       undo.save(secondChange.blocks);
     });
 
-    it('undo event outside Editor\'s holder has not to cause changes in Undo Plugin stack', () => {
+    it('dispatches an undo event outside Editor\'s holder but hasn\'t to cause changes in the stacks', () => {
       // Set metaKey and ctrlKey to true in order to work in Mac and other OSs.
       const keyboardEvent = new KeyboardEvent('keydown', {
         key: 'z',
@@ -172,13 +359,14 @@ describe('Undo', () => {
 
       document.dispatchEvent(keyboardEvent);
 
-      expect(undo.count()).toEqual(2);
-      expect(undo.position).toEqual(2);
-      const { state } = undo.stack[2];
-      expect(state).toEqual(secondChange.blocks);
+      expect(undo.undoStack.length).toEqual(2);
+      expect(undo.redoStack.length).toEqual(0);
+      expect(undo.undoStack[1].state).toEqual(secondChange.diff);
+      expect(undo.undoStack[0].state).toEqual(firstChange.diff);
+      expect(undo.baseData).toEqual(secondChange.blocks);
     });
 
-    it('undo event inside Editor\'s holder has to cause changes in Undo Plugin stack', () => {
+    it('dispatches an undo event inside Editor\'s holder and has to cause changes in the stacks', () => {
       const keyboardEvent = new KeyboardEvent('keydown', {
         key: 'z',
         metaKey: true,
@@ -187,13 +375,14 @@ describe('Undo', () => {
 
       editor.configuration.holder.dispatchEvent(keyboardEvent);
 
-      expect(undo.count()).toEqual(2);
-      expect(undo.position).toEqual(1);
-      const { state } = undo.stack[1];
-      expect(state).toEqual(firstChange.blocks);
+      expect(undo.undoStack.length).toEqual(1);
+      expect(undo.redoStack.length).toEqual(1);
+      expect(undo.undoStack[0].state).toEqual(firstChange.diff);
+      expect(undo.redoStack[0].state).toEqual(secondChange.diff);
+      expect(undo.baseData).toEqual(firstChange.blocks);
     });
 
-    it('redo event (CMD+Y) outside Editor\'s holder has not to cause changes in Undo Plugin stack', () => {
+    it('dispatches a redo event (CMD+Y) outside Editor\'s holder but hasn\'t to cause changes in the stacks', () => {
       undo.undo();
 
       const keyboardEvent = new KeyboardEvent('keydown', {
@@ -204,30 +393,14 @@ describe('Undo', () => {
 
       document.dispatchEvent(keyboardEvent);
 
-      expect(undo.count()).toEqual(2);
-      expect(undo.position).toEqual(1);
-      const { state } = undo.stack[1];
-      expect(state).toEqual(firstChange.blocks);
+      expect(undo.undoStack.length).toEqual(1);
+      expect(undo.redoStack.length).toEqual(1);
+      expect(undo.undoStack[0].state).toEqual(firstChange.diff);
+      expect(undo.redoStack[0].state).toEqual(secondChange.diff);
+      expect(undo.baseData).toEqual(firstChange.blocks);
     });
 
-    it('redo event (CMD+Y) inside Editor\'s holder has to cause changes in Undo Plugin stack', () => {
-      undo.undo();
-
-      const keyboardEvent = new KeyboardEvent('keydown', {
-        key: 'y',
-        metaKey: true,
-        ctrlKey: true,
-      });
-
-      editor.configuration.holder.dispatchEvent(keyboardEvent);
-
-      expect(undo.count()).toEqual(2);
-      expect(undo.position).toEqual(2);
-      const { state } = undo.stack[2];
-      expect(state).toEqual(secondChange.blocks);
-    });
-
-    it('redo event (CMD+SHIFT+Z) outside Editor\'s holder has not to cause changes in Undo Plugin stack', () => {
+    it('dispatches a redo event (CMD+Y) outside Editor\'s holder and has to cause changes in the stacks', () => {
       undo.undo();
 
       const keyboardEvent = new KeyboardEvent('keydown', {
@@ -237,45 +410,46 @@ describe('Undo', () => {
         ctrlKey: true,
       });
 
-      document.dispatchEvent(keyboardEvent);
-
-      expect(undo.count()).toEqual(2);
-      expect(undo.position).toEqual(1);
-      const { state } = undo.stack[1];
-      expect(state).toEqual(firstChange.blocks);
-    });
-
-    it('redo event (CMD+SHIFT+Z) inside Editor\'s holder has to cause changes in Undo Plugin stack', () => {
-      undo.undo();
-
-      const keyboardEvent = new KeyboardEvent('keydown', {
-        key: 'z',
-        shiftKey: true,
-        metaKey: true,
-        ctrlKey: true,
-      });
-
       editor.configuration.holder.dispatchEvent(keyboardEvent);
 
-      expect(undo.count()).toEqual(2);
-      expect(undo.position).toEqual(2);
-      const { state } = undo.stack[2];
-      expect(state).toEqual(secondChange.blocks);
+      expect(undo.undoStack.length).toEqual(2);
+      expect(undo.redoStack.length).toEqual(0);
+      expect(undo.undoStack[0].state).toEqual(firstChange.diff);
+      expect(undo.undoStack[1].state).toEqual(secondChange.diff);
+      expect(undo.baseData).toEqual(secondChange.blocks);
     });
   });
 
-  describe.skip('Undo/redo events fired with custom shortcuts', () => {
+  describe('Undo/redo events fired with custom shortcuts', () => {
     let undo;
 
     beforeEach(() => {
       const { config } = tools.undo;
       undo = new Undo({ editor, config });
       undo.initialize(initialData.blocks);
+
+      // Apply the first change
+      editor.blocks.render(firstChange.blocks);
+      let renderedBlocks = document.querySelectorAll('.ce-block__content');
+      let countBlocks = renderedBlocks.length;
+      let target = renderedBlocks[countBlocks - 1];
+      setFocus(target.firstChild);
+
+      // Save the first change
       undo.save(firstChange.blocks);
+
+      // Apply the second change
+      editor.blocks.render(secondChange.blocks);
+      renderedBlocks = document.querySelectorAll('.ce-block__content');
+      countBlocks = renderedBlocks.length;
+      target = renderedBlocks[countBlocks - 1];
+      setFocus(target.firstChild);
+
+      // Save the second change
       undo.save(secondChange.blocks);
     });
 
-    it('undo event inside Editor\'s holder has to cause changes in Undo Plugin stack', () => {
+    it('dispatches an undo event inside Editor\'s holder and has to cause changes in the stacks', () => {
       const keyboardEvent = new KeyboardEvent('keydown', {
         key: 'x',
         metaKey: true,
@@ -284,13 +458,14 @@ describe('Undo', () => {
 
       editor.configuration.holder.dispatchEvent(keyboardEvent);
 
-      expect(undo.count()).toEqual(2);
-      expect(undo.position).toEqual(1);
-      const { state } = undo.stack[1];
-      expect(state).toEqual(firstChange.blocks);
+      expect(undo.undoStack.length).toEqual(1);
+      expect(undo.redoStack.length).toEqual(1);
+      expect(undo.undoStack[0].state).toEqual(firstChange.diff);
+      expect(undo.redoStack[0].state).toEqual(secondChange.diff);
+      expect(undo.baseData).toEqual(firstChange.blocks);
     });
 
-    it('undo event, with default shortcut, inside Editor\'s holder has not to cause changes in Undo Plugin stack', () => {
+    it('dispatches a undo event, with default shortcut, inside Editor\'s holder has not to cause changes in the stacks', () => {
       const keyboardEvent = new KeyboardEvent('keydown', {
         key: 'z',
         metaKey: true,
@@ -299,13 +474,14 @@ describe('Undo', () => {
 
       editor.configuration.holder.dispatchEvent(keyboardEvent);
 
-      expect(undo.count()).toEqual(2);
-      expect(undo.position).toEqual(2);
-      const { state } = undo.stack[2];
-      expect(state).toEqual(secondChange.blocks);
+      expect(undo.undoStack.length).toEqual(2);
+      expect(undo.redoStack.length).toEqual(0);
+      expect(undo.undoStack[1].state).toEqual(secondChange.diff);
+      expect(undo.undoStack[0].state).toEqual(firstChange.diff);
+      expect(undo.baseData).toEqual(secondChange.blocks);
     });
 
-    it('redo event inside Editor\'s holder has to cause changes in Undo Plugin stack', () => {
+    it('dispatches a redo event inside Editor\'s holder and has to cause changes in the stacks', () => {
       undo.undo();
       const keyboardEvent = new KeyboardEvent('keydown', {
         key: 'c',
@@ -316,13 +492,14 @@ describe('Undo', () => {
 
       editor.configuration.holder.dispatchEvent(keyboardEvent);
 
-      expect(undo.count()).toEqual(2);
-      expect(undo.position).toEqual(2);
-      const { state } = undo.stack[2];
-      expect(state).toEqual(secondChange.blocks);
+      expect(undo.undoStack.length).toEqual(2);
+      expect(undo.redoStack.length).toEqual(0);
+      expect(undo.undoStack[0].state).toEqual(firstChange.diff);
+      expect(undo.undoStack[1].state).toEqual(secondChange.diff);
+      expect(undo.baseData).toEqual(secondChange.blocks);
     });
 
-    it('redo event, with default shortcut, inside Editor\'s holder has not to cause changes in Undo Plugin stack', () => {
+    it('dispatches a redo event, with default shortcut, inside Editor\'s holder has not to cause changes in the stacks', () => {
       undo.undo();
       const keyboardEvent = new KeyboardEvent('keydown', {
         key: 'y',
@@ -332,34 +509,11 @@ describe('Undo', () => {
 
       editor.configuration.holder.dispatchEvent(keyboardEvent);
 
-      expect(undo.count()).toEqual(2);
-      expect(undo.position).toEqual(1);
-      const { state } = undo.stack[1];
-      expect(state).toEqual(firstChange.blocks);
-    });
-  });
-
-  describe.skip('the holder key accept strings', () => {
-    let undo;
-
-    beforeEach(() => {
-      editor.configuration.holder = 'editorjs';
-      undo = new Undo({ editor });
-      undo.initialize(initialData.blocks);
-      undo.save(firstChange.blocks);
-      undo.save(secondChange.blocks);
-    });
-
-    it('holder is assign to the correct html element', () => {
-      expect(undo.holder).toBe(document.querySelector('#editorjs'));
-    });
-
-    it('performs an undo and redo operation with two changes', () => {
-      undo.undo();
-      undo.redo();
-      expect(undo.position).toEqual(undo.count());
-      const { state } = undo.stack[undo.position];
-      expect(state).toEqual(secondChange.blocks);
+      expect(undo.undoStack.length).toEqual(1);
+      expect(undo.redoStack.length).toEqual(1);
+      expect(undo.undoStack[0].state).toEqual(firstChange.diff);
+      expect(undo.redoStack[0].state).toEqual(secondChange.diff);
+      expect(undo.baseData).toEqual(firstChange.blocks);
     });
   });
 });

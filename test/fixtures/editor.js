@@ -1,14 +1,37 @@
-import { firstChange } from './data';
+import { createDefaultBlock } from '../testHelpers';
 
-/**
- * Mocks for Editor.js instance object.
- */
+// Mocks for Editor.js instance object
 const editor = {
   blocks: {
-    save: () => new Promise((resolve) => resolve(firstChange)),
-    render: () => new Promise((resolve) => resolve(true)),
-    getCurrentBlockIndex: () => 0,
-    getBlockByIndex: () => ({ id: '123id', type: 'paragraph', data: {} }),
+    render: (blocks) => {
+      const wrapperEditor = document.querySelector('#editorjs div.codex-editor__redactor');
+
+      wrapperEditor.replaceChildren();
+
+      blocks.forEach((block) => {
+        const defaultBlock = createDefaultBlock(block);
+        wrapperEditor.appendChild(defaultBlock);
+      });
+    },
+    getCurrentBlockIndex: () => {
+      const blocks = document.querySelector('#editorjs div.codex-editor__redactor').children;
+
+      return blocks.length - 1;
+    },
+    getBlockByIndex: (index) => {
+      const blocks = document.querySelector('#editorjs div.codex-editor__redactor').children;
+      const searchedBlock = blocks[index];
+      const blockId = searchedBlock.getAttribute('data-id');
+      const blockText = searchedBlock.firstChild.firstChild.innerHTML;
+
+      return ({
+        save: () => ({
+          id: blockId,
+          type: 'paragraph',
+          data: { text: blockText },
+        }),
+      });
+    },
     getBlocksCount: () => 1,
     update: () => {},
     delete: () => {},
@@ -16,6 +39,7 @@ const editor = {
   },
   caret: {
     setToBlock() {},
+    setToLastBlock() {},
   },
   configuration: {
     defaultBlock: 'paragraph',
@@ -24,12 +48,11 @@ const editor = {
 
 const readOnlyEditor = {
   blocks: {
-    save: () => new Promise((resolve) => resolve(firstChange)),
-    render: () => new Promise((resolve) => resolve(true)),
     getCurrentBlockIndex: () => 0,
   },
   caret: {
-    setToBlock() {},
+    setToBlock() { },
+    setToLastBlock() { },
   },
   configuration: {
     readOnly: true,
@@ -39,7 +62,7 @@ const readOnlyEditor = {
 const tools = {
   undo: {
     config: {
-      debounceTimer: 100,
+      debounceTimer: 50,
       shortcuts: {
         undo: 'CMD+X',
         redo: 'CMD+C',
