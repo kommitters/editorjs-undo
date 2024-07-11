@@ -127,8 +127,17 @@ export default class HistoryManager {
       const target = editorBlocks[index];
       const mainNode = target.firstChild;
 
-      if (target === undefined || mainNode.classList.contains('inline-image')) {
+      if (target === undefined) {
         await caret.setToLastBlock('end');
+      } else if (mainNode.classList.contains('inline-image')) {
+        setTimeout(() => {
+          const reloadedBlocks = document.getElementsByClassName('ce-block__content');
+          const imageBlock = reloadedBlocks[index];
+          const imageCaption = imageBlock.firstChild.lastChild;
+          const holder = new Caret(imageCaption);
+
+          holder.setPosition(caretIndex);
+        }, 100);
       } else {
         const holder = new Caret(mainNode);
         holder.setPosition(caretIndex);
