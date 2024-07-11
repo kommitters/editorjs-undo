@@ -71,11 +71,10 @@ export default class HistoryManager {
     const { path } = jsonPatchElement;
     const index = path.split('/')[1];
 
-    const { id, data } = await blocks.getBlockByIndex(index).save();
-    const { data: oldData } = baseData[index];
-    const updatedData = Object.assign(data, oldData);
+    const { id } = await blocks.getBlockByIndex(index).save();
+    const { data } = baseData[index];
 
-    await blocks.update(id, updatedData);
+    await blocks.update(id, data);
   }
 
   /**
