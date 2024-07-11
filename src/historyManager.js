@@ -124,7 +124,8 @@ export default class HistoryManager {
     restorationPromise.then(async () => {
       const { caretIndex, indexInState } = caretInfo;
       const editorBlocks = document.getElementsByClassName('ce-block__content');
-      const target = editorBlocks[indexInState];
+      const index = indexInState >= editorBlocks.length ? indexInState - 1 : indexInState;
+      const target = editorBlocks[index];
       const mainNode = target.firstChild;
 
       if (target === undefined || mainNode.classList.contains('inline-image')) {
