@@ -105,13 +105,31 @@ export default class HistoryManager {
           throw new Error('Invalid operation.');
         }
 
-        await this.operations[jsonPatchElement.op]({
-          jsonPatchElement,
-          blocks,
-          actionType,
-          state,
-          baseData,
-        });
+        // Starts workflow to handle the block of type list
+        const { length } = jsonPatchArray;
+        const firstPatchElement = jsonPatchArray[0].path.includes('/data/items');
+
+        if ((length === 2 && firstPatchElement && jsonPatchArray[1].path.includes('/data/items'))
+          || (length === 1 && firstPatchElement)) {
+          if (jsonPatchElement.op === 'add') {
+            await this.operations.replace({
+              jsonPatchElement,
+              blocks,
+              actionType,
+              state,
+              baseData,
+            });
+          }
+          // Ends workflow to handle the block of type list
+        } else {
+          await this.operations[jsonPatchElement.op]({
+            jsonPatchElement,
+            blocks,
+            actionType,
+            state,
+            baseData,
+          });
+        }
 
         if (index === jsonPatchArray.length - 1) {
           resolve();
@@ -129,7 +147,7 @@ export default class HistoryManager {
 
       if (target === undefined) {
         await caret.setToLastBlock('end');
-      } else if (mainNode.classList.contains('inline-image')) {
+      } else if (mainNode.classList.contains('inline-image') || mainNode.classList.contains('cdx-list')) {
         setTimeout(() => {
           const reloadedBlocks = document.getElementsByClassName('ce-block__content');
           const imageBlock = reloadedBlocks[index];
