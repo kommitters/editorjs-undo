@@ -65,6 +65,7 @@ export default class Undo {
     this.config = { debounceTimer, shortcuts: { undo, redo } }
     this.baseData = []
     this.historyManager = new HistoryManager()
+    this.childOperations = ["add", "remove", "move"]
 
     const observer = new Observer(
       () => this.registerChange(),
@@ -406,13 +407,18 @@ export default class Undo {
     holder.addEventListener("destroy", handleDestroy)
   }
 
+  /**
+   * Returns an array that supports operations on nested list properties
+   * @param {Array} List of operations to be performed in the editor
+   * @returns {Array}
+   */
   sanitizeJsonPatch(jsonPatch) {
     const operation = jsonPatch[0].op
     const pathLength = jsonPatch[0].path.split("/").length
 
     // Check if the operation is in a child of a block when pathLength is > 2 i.e operations other than this format "3/"
     if (this.childOperations.includes(operation) && pathLength > 2) {
-      return [{ op: "replace", path: reversedJsonPatch[0].path }]
+      return [{ op: "replace", path: jsonPatch[0].path }]
     }
 
     return jsonPatch
