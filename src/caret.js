@@ -35,11 +35,12 @@ export default class Caret {
     const range = document.createRange();
     let position = pos;
 
-    const firstNode = this.target.firstChild;
+    let firstNode = this.target.firstChild;
 
     if (firstNode === null) {
       this.target.innerHTML = '&nbsp';
       position = 0;
+      firstNode = this.target.firstChild;
     }
 
     const content = firstNode.childNodes.length > 0 ? firstNode.firstChild : firstNode;
