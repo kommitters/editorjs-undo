@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>EditorJs</title>
+  </head>
+  <body>
+    <h1>EditorJs examples</h1>
+
+    <!-- Container for Editor.js -->
+    <div id="editorjs"></div>
+
+    <!-- Script for Editor.js -->
+    <script src="https://cdn.jsdelivr.net/npm/@editorjs/editorjs@latest"></script>
+
+    <!-- Script for editorjs-undo -->
+    <script src="./dist/bundle.js"></script>
+
+    <script>
+      const editor = new EditorJS({
+        holder: "editorjs",
+        onReady: () => {
+          new Undo({ editor })
+        },
+      })
+
+      // Initialisation de editorjs-undo
+    </script>
+  </body>
+</html>

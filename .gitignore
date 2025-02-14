@@ -4,3 +4,6 @@ npm-debug.log
 .idea/
 .DS_Store
 dist/*.map
+.vscode/*
+!.vscode/settings.json.sample
+!.vscode/extensions.json

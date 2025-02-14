@@ -8,12 +8,46 @@ import {
   secondChange,
   newChange,
 } from './fixtures/data';
-import { editor, readOnlyEditor, tools } from './fixtures/editor';
+import { tools } from './fixtures/tools';
+import { EditorJsTest } from './fixtures/editorjs';
 
-jest.mock('vanilla-caret-js');
+vi.mock('vanilla-caret-js');
+
+vi.mock('./fixtures/editorjs', async () => {
+  return {
+    EditorJsTest: vi.fn(() => ({
+      blocks: {
+        getCurrentBlockIndex: vi.fn(() => 0),
+        save: () => new Promise((resolve) => resolve(firstChange)),
+        render: () => new Promise((resolve) => resolve(true)),
+        getBlockByIndex: vi.fn(() => ({
+          id: '123id',
+          type: 'paragraph',
+          data: {},
+        })),
+        getById: vi.fn(() => ({ id: '123id', type: 'paragraph', data: {} })),
+        getBlocksCount: vi.fn(() => 1),
+        update: vi.fn(() => {}),
+        delete: vi.fn(() => {}),
+        insert: vi.fn(() => {}),
+      },
+      caret: {
+        setToBlock: vi.fn(() => {}),
+      },
+      configuration: {
+        defaultBlock: 'paragraph',
+        holder: null,
+      },
+    })),
+  };
+});
 
 describe('Undo', () => {
+  let editor: EditorJsTest;
+  let readOnlyEditor: EditorJsTest;
   beforeEach(() => {
+    editor = new EditorJsTest();
+    readOnlyEditor = new EditorJsTest();
     document.body.innerHTML = `<div id="editorjs">
                                 <div class="codex-editor">
                                   <div class="codex-editor__redactor">
@@ -25,12 +59,14 @@ describe('Undo', () => {
                               </div>`;
     // EditorJS uses as a holder an HTMLElement instead of a query selector.
     // This has to be assigned each time that DOM is reset.
-    editor.configuration.holder = document.querySelector('#editorjs');
-    readOnlyEditor.configuration.holder = document.querySelector('#editorjs');
+    editor.configuration.holder =
+      document.querySelector<HTMLElement>('#editorjs') ?? undefined;
+    readOnlyEditor.configuration.holder =
+      document.querySelector<HTMLElement>('#editorjs') ?? undefined;
   });
 
   describe('Read-only mode active', () => {
-    let undo;
+    let undo: Undo;
 
     beforeEach(() => {
       undo = new Undo({ editor: readOnlyEditor });
@@ -44,7 +80,7 @@ describe('Undo', () => {
   });
 
   describe('Custom debounce timer provided', () => {
-    let undo;
+    let undo: Undo;
 
     beforeEach(() => {
       const { config } = tools.undo;
@@ -58,13 +94,16 @@ describe('Undo', () => {
   });
 
   describe('Operations without changes', () => {
-    let undo;
+    let undo: Undo;
 
     beforeEach(() => {
       undo = new Undo({ editor });
     });
 
-    const intialStackData = { index: 0, state: [{ type: 'paragraph', data: {} }] };
+    const intialStackData = {
+      index: 0,
+      state: [{ type: 'paragraph', data: {} }],
+    };
 
     it('is unable to perform an undo operation in an empty stack', () => {
       expect(undo.canUndo()).toBe(false);
@@ -85,7 +124,7 @@ describe('Undo', () => {
   });
 
   describe('Operations with one change', () => {
-    let undo;
+    let undo: Undo;
 
     beforeEach(() => {
       undo = new Undo({ editor });
@@ -116,7 +155,7 @@ describe('Undo', () => {
   });
 
   describe('Operations with two changes', () => {
-    let undo;
+    let undo: Undo;
 
     beforeEach(() => {
       undo = new Undo({ editor });
@@ -151,8 +190,8 @@ describe('Undo', () => {
     });
   });
 
-  describe('Undo/redo events fired inside and outside Editor\'s holder with default shortcuts', () => {
-    let undo;
+  describe("Undo/redo events fired inside and outside Editor's holder with default shortcuts", () => {
+    let undo: Undo;
 
     beforeEach(() => {
       undo = new Undo({ editor });
@@ -161,7 +200,7 @@ describe('Undo', () => {
       undo.save(secondChange.blocks);
     });
 
-    it('undo event outside Editor\'s holder has not to cause changes in Undo Plugin stack', () => {
+    it("undo event outside Editor's holder has not to cause changes in Undo Plugin stack", () => {
       // Set metaKey and ctrlKey to true in order to work in Mac and other OSs.
       const keyboardEvent = new KeyboardEvent('keydown', {
         key: 'z',
@@ -177,14 +216,16 @@ describe('Undo', () => {
       expect(state).toEqual(secondChange.blocks);
     });
 
-    it('undo event inside Editor\'s holder has to cause changes in Undo Plugin stack', () => {
+    it("undo event inside Editor's holder has to cause changes in Undo Plugin stack", () => {
       const keyboardEvent = new KeyboardEvent('keydown', {
         key: 'z',
         metaKey: true,
         ctrlKey: true,
       });
 
-      editor.configuration.holder.dispatchEvent(keyboardEvent);
+      if (typeof editor.configuration.holder !== 'string') {
+        editor.configuration.holder?.dispatchEvent(keyboardEvent);
+      }
 
       expect(undo.count()).toEqual(2);
       expect(undo.position).toEqual(1);
@@ -192,7 +233,7 @@ describe('Undo', () => {
       expect(state).toEqual(firstChange.blocks);
     });
 
-    it('redo event (CMD+Y) outside Editor\'s holder has not to cause changes in Undo Plugin stack', () => {
+    it("redo event (CMD+Y) outside Editor's holder has not to cause changes in Undo Plugin stack", () => {
       undo.undo();
 
       const keyboardEvent = new KeyboardEvent('keydown', {
@@ -209,7 +250,7 @@ describe('Undo', () => {
       expect(state).toEqual(firstChange.blocks);
     });
 
-    it('redo event (CMD+Y) inside Editor\'s holder has to cause changes in Undo Plugin stack', () => {
+    it("redo event (CMD+Y) inside Editor's holder has to cause changes in Undo Plugin stack", () => {
       undo.undo();
 
       const keyboardEvent = new KeyboardEvent('keydown', {
@@ -218,7 +259,9 @@ describe('Undo', () => {
         ctrlKey: true,
       });
 
-      editor.configuration.holder.dispatchEvent(keyboardEvent);
+      if (typeof editor.configuration.holder !== 'string') {
+        editor.configuration.holder?.dispatchEvent(keyboardEvent);
+      }
 
       expect(undo.count()).toEqual(2);
       expect(undo.position).toEqual(2);
@@ -226,7 +269,7 @@ describe('Undo', () => {
       expect(state).toEqual(secondChange.blocks);
     });
 
-    it('redo event (CMD+SHIFT+Z) outside Editor\'s holder has not to cause changes in Undo Plugin stack', () => {
+    it("redo event (CMD+SHIFT+Z) outside Editor's holder has not to cause changes in Undo Plugin stack", () => {
       undo.undo();
 
       const keyboardEvent = new KeyboardEvent('keydown', {
@@ -244,7 +287,7 @@ describe('Undo', () => {
       expect(state).toEqual(firstChange.blocks);
     });
 
-    it('redo event (CMD+SHIFT+Z) inside Editor\'s holder has to cause changes in Undo Plugin stack', () => {
+    it("redo event (CMD+SHIFT+Z) inside Editor's holder has to cause changes in Undo Plugin stack", () => {
       undo.undo();
 
       const keyboardEvent = new KeyboardEvent('keydown', {
@@ -254,7 +297,9 @@ describe('Undo', () => {
         ctrlKey: true,
       });
 
-      editor.configuration.holder.dispatchEvent(keyboardEvent);
+      if (typeof editor.configuration.holder !== 'string') {
+        editor.configuration.holder?.dispatchEvent(keyboardEvent);
+      }
 
       expect(undo.count()).toEqual(2);
       expect(undo.position).toEqual(2);
@@ -264,7 +309,7 @@ describe('Undo', () => {
   });
 
   describe('Undo/redo events fired with custom shortcuts', () => {
-    let undo;
+    let undo: Undo;
 
     beforeEach(() => {
       const { config } = tools.undo;
@@ -274,14 +319,16 @@ describe('Undo', () => {
       undo.save(secondChange.blocks);
     });
 
-    it('undo event inside Editor\'s holder has to cause changes in Undo Plugin stack', () => {
+    it("undo event inside Editor's holder has to cause changes in Undo Plugin stack", () => {
       const keyboardEvent = new KeyboardEvent('keydown', {
         key: 'x',
         metaKey: true,
         ctrlKey: true,
       });
 
-      editor.configuration.holder.dispatchEvent(keyboardEvent);
+      if (typeof editor.configuration.holder !== 'string') {
+        editor.configuration.holder?.dispatchEvent(keyboardEvent);
+      }
 
       expect(undo.count()).toEqual(2);
       expect(undo.position).toEqual(1);
@@ -289,14 +336,16 @@ describe('Undo', () => {
       expect(state).toEqual(firstChange.blocks);
     });
 
-    it('undo event, with default shortcut, inside Editor\'s holder has not to cause changes in Undo Plugin stack', () => {
+    it("undo event, with default shortcut, inside Editor's holder has not to cause changes in Undo Plugin stack", () => {
       const keyboardEvent = new KeyboardEvent('keydown', {
         key: 'z',
         metaKey: true,
         ctrlKey: true,
       });
 
-      editor.configuration.holder.dispatchEvent(keyboardEvent);
+      if (typeof editor.configuration.holder !== 'string') {
+        editor.configuration.holder?.dispatchEvent(keyboardEvent);
+      }
 
       expect(undo.count()).toEqual(2);
       expect(undo.position).toEqual(2);
@@ -304,7 +353,7 @@ describe('Undo', () => {
       expect(state).toEqual(secondChange.blocks);
     });
 
-    it('redo event inside Editor\'s holder has to cause changes in Undo Plugin stack', () => {
+    it("redo event inside Editor's holder has to cause changes in Undo Plugin stack", () => {
       undo.undo();
       const keyboardEvent = new KeyboardEvent('keydown', {
         key: 'c',
@@ -313,7 +362,9 @@ describe('Undo', () => {
         altKey: true,
       });
 
-      editor.configuration.holder.dispatchEvent(keyboardEvent);
+      if (typeof editor.configuration.holder !== 'string') {
+        editor.configuration.holder?.dispatchEvent(keyboardEvent);
+      }
 
       expect(undo.count()).toEqual(2);
       expect(undo.position).toEqual(2);
@@ -321,7 +372,7 @@ describe('Undo', () => {
       expect(state).toEqual(secondChange.blocks);
     });
 
-    it('redo event, with default shortcut, inside Editor\'s holder has not to cause changes in Undo Plugin stack', () => {
+    it("redo event, with default shortcut, inside Editor's holder has not to cause changes in Undo Plugin stack", () => {
       undo.undo();
       const keyboardEvent = new KeyboardEvent('keydown', {
         key: 'y',
@@ -329,7 +380,9 @@ describe('Undo', () => {
         ctrlKey: true,
       });
 
-      editor.configuration.holder.dispatchEvent(keyboardEvent);
+      if (typeof editor.configuration.holder !== 'string') {
+        editor.configuration.holder?.dispatchEvent(keyboardEvent);
+      }
 
       expect(undo.count()).toEqual(2);
       expect(undo.position).toEqual(1);
@@ -339,7 +392,7 @@ describe('Undo', () => {
   });
 
   describe('the holder key accept strings', () => {
-    let undo;
+    let undo: Undo;
 
     beforeEach(() => {
       editor.configuration.holder = 'editorjs';

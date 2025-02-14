@@ -1,6 +1,42 @@
-import deepEqual from "deep-equal";
-import VanillaCaret from "vanilla-caret-js";
-import Observer from "./observer";
+import type EditorJS from '@editorjs/editorjs';
+
+import deepEqual from 'deep-equal';
+import VanillaCaret from 'vanilla-caret-js';
+import Observer from './observer';
+import { EditorJsReady } from './types';
+import { OutputBlockData, OutputData } from '@editorjs/editorjs';
+import { Blocks, Caret } from '@editorjs/editorjs/types/api';
+
+export type UndoConfig = {
+  debounceTimer: number;
+  shortcuts: {
+    redo: string[];
+    undo: string[];
+  };
+};
+
+export type UndoSettings = {
+  debounceTimer?: number;
+  shortcuts?: {
+    redo?: string[] | string;
+    undo?: string[] | string;
+  };
+};
+
+type SpecialKeys = 'altKey' | 'ctrlKey' | 'metaKey' | 'shiftKey';
+
+interface StackStated {
+  caretIndex?: null | number;
+  index: number;
+  state: OutputBlockData[];
+}
+
+export type UndoConstructor = {
+  config?: UndoSettings;
+  maxLength?: number;
+  onUpdate?: () => void;
+  editor: EditorJS;
+};
 
 /**
  * Undo/Redo feature for Editor.js.
@@ -14,36 +50,56 @@ import Observer from "./observer";
  * @property {Object} initialItem - Initial data object.
  */
 export default class Undo {
+  blocks: Blocks;
+  caret: Caret;
+  config: UndoConfig;
+  defaultBlock: string | undefined;
+  editor: EditorJsReady;
+  holder: HTMLElement | null | undefined;
+  initialItem: null | StackStated;
+  maxLength: number;
+  onUpdate: () => void;
+  position = 0;
+  readOnly: boolean | undefined;
+  shouldSaveHistory: boolean;
+  stack: StackStated[] = [];
+
   /**
    * @param options — Plugin custom options.
    */
-  constructor({ editor, config = {}, onUpdate, maxLength }) {
+  constructor({ editor, config = {}, onUpdate, maxLength }: UndoConstructor) {
     const defaultOptions = {
       maxLength: 30,
       onUpdate() {},
       config: {
         debounceTimer: 200,
         shortcuts: {
-          undo: ["CMD+Z"],
-          redo: ["CMD+Y", "CMD+SHIFT+Z"],
+          undo: ['CMD+Z'],
+          redo: ['CMD+Y', 'CMD+SHIFT+Z'],
         },
       },
     };
 
-    const { blocks, caret } = editor;
-    const { configuration } = editor;
+    const editorTyped = editor as EditorJsReady;
+
+    const { blocks, caret } = editorTyped;
+    const { configuration } = editorTyped;
     const { holder, defaultBlock } = configuration;
     const defaultShortcuts = defaultOptions.config.shortcuts;
     const { shortcuts: configShortcuts } = config;
     const shortcuts = { ...defaultShortcuts, ...configShortcuts };
-    const undo = Array.isArray(shortcuts.undo) ? shortcuts.undo : [shortcuts.undo];
-    const redo = Array.isArray(shortcuts.redo) ? shortcuts.redo : [shortcuts.redo];
+    const undo = Array.isArray(shortcuts.undo)
+      ? (shortcuts.undo as string[])
+      : [shortcuts.undo];
+    const redo = Array.isArray(shortcuts.redo)
+      ? (shortcuts.redo as string[])
+      : [shortcuts.redo];
     const defaultDebounceTimer = defaultOptions.config.debounceTimer;
     const { debounceTimer = defaultDebounceTimer } = config;
 
     this.holder =
-      typeof holder === "string" ? document.getElementById(holder) : holder;
-    this.editor = editor;
+      typeof holder === 'string' ? document.getElementById(holder) : holder;
+    this.editor = editorTyped;
     this.defaultBlock = defaultBlock;
     this.blocks = blocks;
     this.caret = caret;
@@ -51,14 +107,17 @@ export default class Undo {
     this.readOnly = configuration.readOnly;
     this.maxLength = maxLength || defaultOptions.maxLength;
     this.onUpdate = onUpdate || defaultOptions.onUpdate;
+
     this.config = { debounceTimer, shortcuts: { undo, redo } };
 
-    const observer = new Observer(
-      () => this.registerChange(),
-      this.holder,
-      this.config.debounceTimer
-    );
-    observer.setMutationObserver();
+    if (this.holder) {
+      const observer = new Observer(
+        () => this.registerChange(),
+        this.holder,
+        this.config.debounceTimer
+      );
+      observer.setMutationObserver();
+    }
 
     this.setEventListeners();
     this.initialItem = null;
@@ -80,7 +139,7 @@ export default class Undo {
    * @param {Object} stack  Changes history stack.
    * @param {Number} stack  Limit of changes recorded by the history stack.
    */
-  truncate(stack, limit) {
+  truncate(stack: StackStated[], limit: number) {
     while (stack.length > limit) {
       stack.shift();
     }
@@ -91,9 +150,9 @@ export default class Undo {
    *
    * @param {Object} initialItem  Initial data provided by the user.
    */
-  initialize(initialItem) {
+  initialize(initialItem: OutputData | OutputBlockData[]) {
     const initialData =
-      "blocks" in initialItem ? initialItem.blocks : initialItem;
+      'blocks' in initialItem ? initialItem.blocks : initialItem;
     const initialIndex = initialData.length - 1;
     const firstElement = { index: initialIndex, state: initialData };
     this.stack[0] = firstElement;
@@ -106,7 +165,12 @@ export default class Undo {
   clear() {
     this.stack = this.initialItem
       ? [this.initialItem]
-      : [{ index: 0, state: [{ type: this.defaultBlock, data: {} }] }];
+      : [
+          {
+            index: 0,
+            state: [{ type: this.defaultBlock, data: {} }],
+          } as StackStated,
+        ];
     this.position = 0;
     this.onUpdate();
   }
@@ -116,7 +180,7 @@ export default class Undo {
    * @returns {Node} Indirectly shows if readOnly was set to true or false
    */
   setReadOnly() {
-    const toolbox = this.holder.querySelector(".ce-toolbox");
+    const toolbox = this.holder?.querySelector('.ce-toolbox');
     this.readOnly = !toolbox;
   }
 
@@ -142,7 +206,7 @@ export default class Undo {
    * @param {Object} newData  New data to be saved in the history stack.
    * @returns {Boolean}
    */
-  editorDidUpdate(newData) {
+  editorDidUpdate(newData: OutputBlockData[]) {
     const { state } = this.stack[this.position];
     if (!newData.length) return false;
     if (newData.length !== state.length) return true;
@@ -153,7 +217,7 @@ export default class Undo {
   /**
    * Adds the saved data in the history stack and updates current position.
    */
-  save(state) {
+  save(state: OutputBlockData[]) {
     if (this.position >= this.maxLength) {
       this.truncate(this.stack, this.maxLength);
     }
@@ -167,12 +231,13 @@ export default class Undo {
 
     if (!state[index]) indexInState -= blockCount - state.length;
     const caretIndex =
-      state[indexInState] && (
-        state[indexInState].type === "paragraph" ||
-        state[indexInState].type === "header")
+      state[indexInState] &&
+      (state[indexInState].type === 'paragraph' ||
+        state[indexInState].type === 'header')
         ? this.getCaretIndex(index)
         : null;
     this.stack.push({ index: indexInState, state, caretIndex });
+
     this.position += 1;
     this.onUpdate();
   }
@@ -182,11 +247,13 @@ export default class Undo {
    * @param {Number} index is the block index
    * @returns The caret position
    */
-  getCaretIndex(index) {
-    const blocks = this.holder.getElementsByClassName("ce-block__content");
-    const caretBlock = new VanillaCaret(blocks[index].firstChild);
-
-    return caretBlock.getPos();
+  getCaretIndex(index: number) {
+    const blocks = this.holder?.getElementsByClassName('ce-block__content');
+    if (blocks) {
+      const caretBlock = new VanillaCaret(blocks[index].firstChild);
+      return caretBlock.getPos();
+    }
+    return null;
   }
 
   /**
@@ -217,13 +284,13 @@ export default class Undo {
    * @param {Number} caretIndex is the caret position
    * @param {Array} state is the current state according to this.position.
    */
-  setCaretIndex(index, caretIndex) {
-    if (caretIndex && caretIndex !== -1) {
-      const blocks = this.holder.getElementsByClassName("ce-block__content");
+  setCaretIndex(index: number, caretIndex: number) {
+    const blocks = this.holder?.getElementsByClassName('ce-block__content');
+    if (caretIndex && caretIndex !== -1 && blocks) {
       const caretBlock = new VanillaCaret(blocks[index].firstChild);
       setTimeout(() => caretBlock.setPos(caretIndex), 50);
     } else {
-      this.caret.setToBlock(index, "end");
+      this.caret.setToBlock(index, 'end');
     }
   }
 
@@ -232,14 +299,8 @@ export default class Undo {
    * @param {Array} state is the current state according to this.position.
    * @param {Number} index is the block index
    */
-  insertBlock(state, index) {
-    this.blocks.insert(
-      state[index].type,
-      state[index].data,
-      {},
-      index,
-      true,
-    );
+  insertBlock(state: OutputBlockData[], index: number) {
+    this.blocks.insert(state[index].type, state[index].data, {}, index, true);
   }
 
   /**
@@ -247,9 +308,10 @@ export default class Undo {
    * @param {Array} state is the current state according to this.position.
    * @param {Number} index is the block index.
    */
-  async updateModifiedBlock(state, index) {
+  async updateModifiedBlock(state: OutputBlockData[], index: number) {
     const block = state[index];
-    if (this.editor.blocks.getById(block.id)) return this.blocks.update(block.id, block.data);
+    if (block.id && this.editor.blocks.getById(block.id))
+      return this.blocks.update(block.id, block.data);
     return this.blocks.render({ blocks: state });
   }
 
@@ -274,27 +336,39 @@ export default class Undo {
     }
   }
 
-  async switchState(stateToApply, stateToCompare) {
+  async switchState(
+    stateToApply: OutputBlockData[],
+    stateToCompare: OutputBlockData[]
+  ) {
     stateToCompare
-      .reduce((acc, x, idx) => (stateToApply.find((y) => y.id === x.id) ? acc : [...acc, idx]), [])
+      .reduce<number[]>(
+        (acc, x, idx) =>
+          stateToApply.find((y) => y.id === x.id) ? acc : [...acc, idx],
+        []
+      )
       .sort((a, b) => b - a)
       .forEach((i) => this.blocks.delete(i));
 
     stateToApply
-      .reduce((acc, x, idx) => (stateToCompare.find((y) => y.id === x.id) ? acc : [...acc, idx]), [])
+      .reduce<number[]>(
+        (acc, x, idx) =>
+          stateToCompare.find((y) => y.id === x.id) ? acc : [...acc, idx],
+        []
+      )
       .forEach((i) => this.insertBlock(stateToApply, i));
 
-
-    const idxToUpdate = stateToApply.reduce((acc, x, idxNew) => {
+    const idxToUpdate = stateToApply.reduce<number[]>((acc, x, idxNew) => {
       const idx = stateToCompare.findIndex((y) => y.id === x.id);
-      return idx > -1 && !deepEqual(x, stateToCompare[idx]) ? [...acc, idxNew] : acc;
+      return idx > -1 && !deepEqual(x, stateToCompare[idx])
+        ? [...acc, idxNew]
+        : acc;
     }, []);
 
     await Promise.all(
       idxToUpdate.map(async (idx) => {
         const rendered = await this.updateModifiedBlock(stateToApply, idx);
         return rendered;
-      }),
+      })
     );
   }
 
@@ -332,16 +406,18 @@ export default class Undo {
    * @returns {Array}
    */
 
-  parseKeys(keys) {
-    const specialKeys = {
-      CMD: /(Mac)/i.test(navigator.platform) ? "metaKey" : "ctrlKey",
-      ALT: "altKey",
-      SHIFT: "shiftKey",
+  parseKeys(keys: string[]) {
+    const specialKeys: Record<string, SpecialKeys> = {
+      CMD: /(Mac)/i.test(navigator.platform) ? 'metaKey' : 'ctrlKey',
+      ALT: 'altKey',
+      SHIFT: 'shiftKey',
     };
-    const parsedKeys = keys.slice(0, -1).map((key) => specialKeys[key]);
+    const parsedKeys: string[] = keys
+      .slice(0, -1)
+      .map((key) => specialKeys[key]);
 
     const letterKey =
-      parsedKeys.includes("shiftKey") && keys.length === 2
+      parsedKeys.includes('shiftKey') && keys.length === 2
         ? keys[keys.length - 1].toUpperCase()
         : keys[keys.length - 1].toLowerCase();
 
@@ -356,25 +432,50 @@ export default class Undo {
   setEventListeners() {
     const { holder } = this;
     const { shortcuts } = this.config;
-    const { undo, redo } = shortcuts;
-    const keysUndo = undo.map((undoShortcut) => undoShortcut.replace(/ /g, "").split("+"));
-    const keysRedo = redo.map((redoShortcut) => redoShortcut.replace(/ /g, "").split("+"));
+    const { redo, undo } = shortcuts;
+    const keysUndo = undo.map((undoShortcut) =>
+      undoShortcut.replace(/ /g, '').split('+')
+    );
+    const keysRedo = redo.map((redoShortcut) =>
+      redoShortcut.replace(/ /g, '').split('+')
+    );
 
     const keysUndoParsed = keysUndo.map((keys) => this.parseKeys(keys));
     const keysRedoParsed = keysRedo.map((keys) => this.parseKeys(keys));
 
-    const twoKeysPressed = (e, keys) =>
-      keys.length === 2 && e[keys[0]] && (e.key.toLowerCase() === keys[1]);
-    const threeKeysPressed = (e, keys) =>
-      keys.length === 3 && e[keys[0]] && e[keys[1]] && (e.key.toLowerCase() === keys[2]);
+    const twoKeysPressed = (e: KeyboardEvent, keys: string[]) =>
+      keys.length === 2 &&
+      e[keys[0] as SpecialKeys] &&
+      e.key.toLowerCase() === keys[1];
+    const threeKeysPressed = (e: KeyboardEvent, keys: string[]) =>
+      keys.length === 3 &&
+      e[keys[0] as SpecialKeys] &&
+      e[keys[1] as SpecialKeys] &&
+      e.key.toLowerCase() === keys[2];
 
-    const verifyListTwoKeysPressed = (e, keysList) =>
-      keysList.reduce((result, keys) => result || twoKeysPressed(e, keys), false);
-    const verifyListThreeKeysPressed = (e, keysList) =>
-      keysList.reduce((result, keys) => result || threeKeysPressed(e, keys), false);
+    const verifyListTwoKeysPressed = (e: KeyboardEvent, keysList: string[][]) =>
+      keysList.reduce(
+        (result, keys) => result || twoKeysPressed(e, keys),
+        false
+      );
+    const verifyListThreeKeysPressed = (
+      e: KeyboardEvent,
+      keysList: string[][]
+    ) =>
+      keysList.reduce(
+        (result, keys) => result || threeKeysPressed(e, keys),
+        false
+      );
 
-    const pressedKeys = (e, keys, compKeys) => {
-      if (verifyListTwoKeysPressed(e, keys) && !verifyListThreeKeysPressed(e, compKeys)) {
+    const pressedKeys = (
+      e: KeyboardEvent,
+      keys: string[][],
+      compKeys: string[][]
+    ) => {
+      if (
+        verifyListTwoKeysPressed(e, keys) &&
+        !verifyListThreeKeysPressed(e, compKeys)
+      ) {
         return true;
       }
       if (verifyListThreeKeysPressed(e, keys)) {
@@ -383,27 +484,29 @@ export default class Undo {
       return false;
     };
 
-    const handleUndo = (e) => {
+    const handleUndo = (e: KeyboardEvent) => {
       if (pressedKeys(e, keysUndoParsed, keysRedoParsed)) {
         e.preventDefault();
-        this.undo();
+        void this.undo();
       }
     };
 
-    const handleRedo = (e) => {
+    const handleRedo = (e: KeyboardEvent) => {
       if (pressedKeys(e, keysRedoParsed, keysUndoParsed)) {
         e.preventDefault();
-        this.redo();
+        void this.redo();
       }
     };
 
-    const handleDestroy = () => {
-      holder.removeEventListener("keydown", handleUndo);
-      holder.removeEventListener("keydown", handleRedo);
-    };
+    if (holder) {
+      const handleDestroy = () => {
+        holder.removeEventListener('keydown', handleUndo);
+        holder.removeEventListener('keydown', handleRedo);
+      };
 
-    holder.addEventListener("keydown", handleUndo);
-    holder.addEventListener("keydown", handleRedo);
-    holder.addEventListener("destroy", handleDestroy);
+      holder.addEventListener('keydown', handleUndo);
+      holder.addEventListener('keydown', handleRedo);
+      holder.addEventListener('destroy', handleDestroy);
+    }
   }
 }
