@@ -1,3 +1,4 @@
+import deepEqual from "deep-equal";
 import VanillaCaret from "vanilla-caret-js";
 import Observer from "./observer";
 
@@ -189,121 +190,23 @@ export default class Undo {
   }
 
   /**
-   * Inserts a block deleted previously
-   * @param {Array} state is the current state according to this.position.
-   * @param {Array} compState is the state to compare and know the deleted block.
-   * @param {Number} index is the block index in state.
-   */
-  insertDeletedBlock(state, compState, index) {
-    for (let i = 0; i < state.length; i += 1) {
-      if (!compState[i] || state[i].id !== compState[i].id) {
-        this.blocks.insert(state[i].type, state[i].data, {}, i, true);
-        this.caret.setToBlock(index, "end");
-        break;
-      }
-    }
-  }
-
-  /**
-   * Returns true if a block was dropped previously
-   * @param {Array} state is the current state according to this.position.
-   * @param {Array} compState is the state to compare and know the dropped block.
-   * @returns {Boolean} true if the block was dropped
-   */
-  blockWasDropped(state, compState) {
-    if (state.length === compState.length) {
-      return state.some((block, i) => block.id !== compState[i].id);
-    }
-    return false;
-  }
-
-  /**
-   * Returns true if the block has to be deleted because it was skipped previously.
-   * @param {Array} state is the current state according to this.position.
-   * @param {Array} compState is the state to compare if there was a deleted block.
-   * @returns {Boolean} true if a block was inserted previously.
-   */
-  blockWasSkipped(state, compState) {
-    return state.length !== compState.length;
-  }
-
-  /**
-   * Returns true if the content in a block without the focus was modified.
-   * @param {Number} index is the block index in state.
-   * @param {Number} compIndex is the index to compare and know if the block was inserted previously
-   * @returns true if the content in a block without the focus was modified.
-   */
-  contentChangedInNoFocusBlock(index, compIndex) {
-    return index !== compIndex;
-  }
-
-  /**
-   * Returns true if a block was deleted previously.
-   * @param {Array} state is the current state according to this.position.
-   * @param {Array} compState is the state to compare and know if a block was deleted.
-   * @returns {Boolean} true if a block was deleted previously.
-   */
-  blockWasDeleted(state, compState) {
-    return state.length > compState.length;
-  }
-
-  /**
-   * Returns true if the content was copied.
-   * @param {Array} state is the current state according to this.position.
-   * @param {Array} compState is the state to compare and know if the content was copied.
-   * @param {Number} index is the block index in state.
-   * @returns {Boolean} true if a block was deleted previously.
-   */
-  contentWasCopied(state, compState, index) {
-    return Object.keys(state[index].data).length === 0
-      && JSON.stringify(compState[index + 1]) !== JSON.stringify(state[index + 1]);
-  }
-
-  /**
    * Decreases the current position and update the respective block in the editor.
    */
   async undo() {
     if (this.canUndo()) {
-      const { index: nextIndex, state: nextState } = this.stack[this.position];
+      const { state: currentState } = this.stack[this.position];
 
       this.position -= 1;
       this.shouldSaveHistory = false;
-      let { index } = this.stack[this.position];
-      const { state, caretIndex } = this.stack[this.position];
+      const { caretIndex, index, state: prevState } = this.stack[this.position];
 
+      await this.switchState(prevState, currentState);
       this.onUpdate();
-      const blockCount = this.blocks.getBlocksCount();
-
-      if (!state[index]) {
-        index -= 1;
-        this.stack[this.position].index = index;
-      }
-
-      if (this.blockWasDeleted(state, nextState)) {
-        this.insertDeletedBlock(state, nextState, index);
-      } else if (this.contentWasCopied(state, nextState, index)) {
-        await this.blocks.render({ blocks: state });
-        this.caret.setToBlock(index, 'end');
-      } else if (index < nextIndex && this.blockWasSkipped(state, nextState)) {
-        await this.blocks.delete(nextIndex);
-        this.caret.setToBlock(index, "end");
-      } else if (blockCount > state.length) {
-        await this.blocks.render({ blocks: state });
-        this.setCaretIndex(index, caretIndex);
-      } else if (this.blockWasDropped(state, nextState)) {
-        await this.blocks.render({ blocks: state });
-        this.caret.setToBlock(index, 'end');
-      } else if (this.contentChangedInNoFocusBlock(index, nextIndex)) {
-        const { id } = this.blocks.getBlockByIndex(nextIndex);
-
-        await this.blocks.update(id, state[nextIndex].data);
-        this.setCaretIndex(index, caretIndex);
-      }
 
       const block = this.blocks.getBlockByIndex(index);
       if (block) {
-        await this.blocks.update(block.id, state[index].data);
-        this.setCaretIndex(index, caretIndex);
+        if (caretIndex) this.setCaretIndex(index, caretIndex);
+        else this.caret.setToBlock(index, 'end');
       }
     }
   }
@@ -329,8 +232,8 @@ export default class Undo {
    * @param {Array} state is the current state according to this.position.
    * @param {Number} index is the block index
    */
-  async insertBlock(state, index) {
-    await this.blocks.insert(
+  insertBlock(state, index) {
+    this.blocks.insert(
       state[index].type,
       state[index].data,
       {},
@@ -340,28 +243,12 @@ export default class Undo {
   }
 
   /**
-   * Inserts a block when is skipped and update the previous one if it changed.
-   * @param {Array} prevState is the previous state according to this.position.
-   * @param {Array} state is the current state according to this.position.
-   * @param {Number} index is the block index.
-   */
-  async insertSkippedBlocks(prevState, state, index) {
-    for (let i = prevState.length; i < state.length; i += 1) {
-      this.insertBlock(state, i);
-    }
-
-    if (JSON.stringify(prevState[index - 1]) !== JSON.stringify(state[index - 1])) {
-      await this.updateModifiedBlock(state, index);
-    }
-  }
-
-  /**
    * Updates the passed block or render the state when the content was copied.
    * @param {Array} state is the current state according to this.position.
    * @param {Number} index is the block index.
    */
   async updateModifiedBlock(state, index) {
-    const block = state[index - 1];
+    const block = state[index];
     if (this.editor.blocks.getById(block.id)) return this.blocks.update(block.id, block.data);
     return this.blocks.render({ blocks: state });
   }
@@ -373,28 +260,42 @@ export default class Undo {
     if (this.canRedo()) {
       this.position += 1;
       this.shouldSaveHistory = false;
-      const { index, state, caretIndex } = this.stack[(this.position)];
-      const { index: prevIndex, state: prevState } =
-        this.stack[this.position - 1];
+      const { caretIndex, index, state: nextState } = this.stack[this.position];
+      const { state: currentState } = this.stack[this.position - 1];
 
-      if (this.blockWasDeleted(prevState, state)) {
-        await this.blocks.delete();
-        this.caret.setToBlock(index, "end");
-      } else if (this.blockWasSkipped(state, prevState)) {
-        await this.insertSkippedBlocks(prevState, state, index);
-        this.caret.setToBlock(index, 'end');
-      } else if (this.blockWasDropped(state, prevState) && this.position !== 1) {
-        await this.blocks.render({ blocks: state });
-        this.caret.setToBlock(index, "end");
-      }
-
+      await this.switchState(nextState, currentState);
       this.onUpdate();
+
       const block = this.blocks.getBlockByIndex(index);
       if (block) {
-        await this.blocks.update(block.id, state[index].data);
-        this.setCaretIndex(index, caretIndex);
+        if (caretIndex) this.setCaretIndex(index, caretIndex);
+        else this.caret.setToBlock(index, 'end');
       }
     }
+  }
+
+  async switchState(stateToApply, stateToCompare) {
+    stateToCompare
+      .reduce((acc, x, idx) => (stateToApply.find((y) => y.id === x.id) ? acc : [...acc, idx]), [])
+      .sort((a, b) => b - a)
+      .forEach((i) => this.blocks.delete(i));
+
+    stateToApply
+      .reduce((acc, x, idx) => (stateToCompare.find((y) => y.id === x.id) ? acc : [...acc, idx]), [])
+      .forEach((i) => this.insertBlock(stateToApply, i));
+
+
+    const idxToUpdate = stateToApply.reduce((acc, x, idxNew) => {
+      const idx = stateToCompare.findIndex((y) => y.id === x.id);
+      return idx > -1 && !deepEqual(x, stateToCompare[idx]) ? [...acc, idxNew] : acc;
+    }, []);
+
+    await Promise.all(
+      idxToUpdate.map(async (idx) => {
+        const rendered = await this.updateModifiedBlock(stateToApply, idx);
+        return rendered;
+      }),
+    );
   }
 
   /**

@@ -49,6 +49,7 @@
     }
   },
   "dependencies": {
+    "deep-equal": "^2.2.3",
     "vanilla-caret-js": "^1.0.1"
   }
 }
