@@ -311,7 +311,7 @@ export default class Undo {
   async updateModifiedBlock(state: OutputBlockData[], index: number) {
     const block = state[index];
     if (block.id && this.editor.blocks.getById(block.id))
-      return this.blocks.update(block.id, block.data);
+      return this.blocks.update(block.id, block.data, block.tunes);
     return this.blocks.render({ blocks: state });
   }
 
@@ -350,11 +350,9 @@ export default class Undo {
       .forEach((i) => this.blocks.delete(i));
 
     stateToApply
-      .reduce<number[]>(
-        (acc, x, idx) =>
-          stateToCompare.find((y) => y.id === x.id) ? acc : [...acc, idx],
-        []
-      )
+      .reduce<
+        number[]
+      >((acc, x, idx) => (stateToCompare.find((y) => y.id === x.id) ? acc : [...acc, idx]), [])
       .forEach((i) => this.insertBlock(stateToApply, i));
 
     const idxToUpdate = stateToApply.reduce<number[]>((acc, x, idxNew) => {
