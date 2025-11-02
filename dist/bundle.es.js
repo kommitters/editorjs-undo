@@ -2635,7 +2635,13 @@ class Pi {
   /**
    * @param options — Plugin custom options.
    */
-  constructor({ editor: e, config: r = {}, onUpdate: o, maxLength: n }) {
+  constructor({
+    editor: e,
+    config: r = {},
+    onUpdate: o = () => {
+    },
+    maxLength: n
+  }) {
     X(this, "blocks");
     X(this, "caret");
     X(this, "config");

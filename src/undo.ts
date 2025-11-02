@@ -67,7 +67,12 @@ export default class Undo {
   /**
    * @param options — Plugin custom options.
    */
-  constructor({ editor, config = {}, onUpdate, maxLength }: UndoConstructor) {
+  constructor({
+    editor,
+    config = {},
+    onUpdate = () => {},
+    maxLength,
+  }: UndoConstructor) {
     const defaultOptions = {
       maxLength: 30,
       onUpdate() {},

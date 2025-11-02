@@ -54,7 +54,7 @@ export default class Undo {
     /**
      * @param options — Plugin custom options.
      */
-    constructor({ editor, config, onUpdate, maxLength }: UndoConstructor);
+    constructor({ editor, config, onUpdate, maxLength, }: UndoConstructor);
     /**
      * Notify core that read-only mode is suppoorted
      *
