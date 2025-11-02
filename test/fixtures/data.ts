@@ -37,9 +37,4 @@ const newChange = {
   ],
 };
 
-export {
-  initialData,
-  firstChange,
-  secondChange,
-  newChange,
-};
+export { initialData, firstChange, secondChange, newChange };

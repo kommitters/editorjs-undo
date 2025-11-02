@@ -3,7 +3,11 @@ src/
 test/
 assets/
 dev/
+.vscode/
 .eslintrc.js
+.prettierrc.json
 babel.config.json
-webpack.config.js
+vite.config.mts
+vitest.setup.ts
+tsconfig.json
 yarn.lock

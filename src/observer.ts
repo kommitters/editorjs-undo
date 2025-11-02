@@ -7,13 +7,22 @@
  * @property {Function} mutationDebouncer - Debouncer to delay the changes registration.
  */
 export default class Observer {
+  private debounceTimer: number;
+  private holder: Element;
+  private mutationDebouncer: (...args: any[]) => void;
+  private observer: MutationObserver | null;
+
   /**
    * Creates a new instance of the Observer object.
    * @param {Function} registerChange - Function that register a change in the history stack.
    * @param {String} holder - Editor.js holder id.
    * @param {Number} debounceTimer Delay time for the debouncer.
    */
-  constructor(registerChange, holder, debounceTimer) {
+  constructor(
+    registerChange: () => void,
+    holder: Element,
+    debounceTimer: number
+  ) {
     this.holder = holder;
     this.observer = null;
     this.debounceTimer = debounceTimer;
@@ -39,14 +48,14 @@ export default class Observer {
     this.observer = new MutationObserver((mutationList) => {
       this.mutationHandler(mutationList);
     });
-    this.observer.observe(target, observerOptions);
+    this.observer.observe(target as Node, observerOptions);
   }
 
   /**
    * Handles the mutations and checks if a new mutation has been produced.
    * @param {Object} mutationList The registered mutations
    */
-  mutationHandler(mutationList) {
+  mutationHandler(mutationList: MutationRecord[]) {
     let contentMutated = false;
 
     mutationList.forEach((mutation) => {
@@ -62,7 +71,11 @@ export default class Observer {
           contentMutated = true;
           break;
         case 'attributes':
-          if (!mutation.target.classList.contains('ce-block') && !mutation.target.classList.contains('tc-toolbox')) {
+          if (
+            mutation.target instanceof Element &&
+            !mutation.target.classList.contains('ce-block') &&
+            !mutation.target.classList.contains('tc-toolbox')
+          ) {
             contentMutated = true;
           }
           break;
@@ -79,18 +92,18 @@ export default class Observer {
    * @param {Function} callback The function to be delayed.
    * @param {Number} wait The deplay time in millis.
    */
-  debounce(callback, wait) {
-    let timeout;
-    return (...args) => {
+  debounce(callback: (...args: unknown[]) => void, wait: number) {
+    let timeout: number;
+    return (...args: unknown[]) => {
       const context = this;
-      clearTimeout(timeout);
-      timeout = setTimeout(() => callback.apply(context, args), wait);
+      window.clearTimeout(timeout);
+      timeout = window.setTimeout(() => callback.apply(context, args), wait);
     };
   }
 
   onDestroy() {
     const destroyEvent = new CustomEvent('destroy');
     document.dispatchEvent(destroyEvent);
-    this.observer.disconnect();
+    this.observer != null && this.observer.disconnect();
   }
 }

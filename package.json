@@ -9,15 +9,26 @@
   ],
   "description": "Undo tool for Editor.js",
   "main": "./dist/bundle.js",
+  "module": "./dist/bundle.es.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "import": "./dist/bundle.es.js",
+      "require": "./dist/bundle.js"
+    }
+  },
   "scripts": {
-    "build": "webpack --mode production",
-    "build:dev": "webpack --mode development --watch",
-    "test": "jest"
+    "build": "vite build --mode production",
+    "build:dev": "vite",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "server": "yarn http-server ./"
   },
   "repository": {
     "type": "git",
     "url": "git+https://github.com/kommitters/editorjs-undo"
   },
+  "type": "module",
   "author": {
     "name": "kommitters Open Source",
     "email": "oss@kommit.co"
@@ -28,28 +39,29 @@
   },
   "homepage": "https://github.com/kommitters/editorjs-undo#readme",
   "devDependencies": {
-    "@babel/core": "^7.10.2",
-    "@babel/plugin-transform-runtime": "^7.23.2",
-    "@babel/preset-env": "^7.10.2",
-    "babel-jest": "^29.0.0",
-    "babel-loader": "^9.0.0",
+    "@editorjs/editorjs": "^2.30.8",
+    "@testing-library/dom": "^10.4.0",
+    "@testing-library/jest-dom": "^6.6.3",
+    "@types/deep-equal": "^1.0.4",
+    "@vitest/coverage-v8": "^3.0.9",
     "eslint": "^8.3.0",
     "eslint-config-airbnb-base": "^15.0.0",
+    "eslint-config-prettier": "^10.0.2",
     "eslint-plugin-import": "^2.25.2",
     "eslint-plugin-jest": "^27.0.0",
+    "http-server": "^14.1.1",
     "jest": "^29.0.0",
     "jest-environment-jsdom": "^29.3.1",
-    "webpack": "^5.52.0",
-    "webpack-cli": "^5.0.0"
-  },
-  "jest": {
-    "transform": {
-      "^.+\\.jsx?$": "babel-jest",
-      "^.+\\.(css|svg)$": "<rootDir>/test/config/assetsTransform.js"
-    }
+    "typescript": "^5.7.3",
+    "vite": "^6.1.0",
+    "vite-plugin-dts": "^4.5.0",
+    "vitest": "^3.0.5"
   },
   "dependencies": {
     "deep-equal": "^2.2.3",
     "vanilla-caret-js": "^1.0.1"
+  },
+  "peerDependencies": {
+    "@editorjs/editorjs": ">=2"
   }
 }
